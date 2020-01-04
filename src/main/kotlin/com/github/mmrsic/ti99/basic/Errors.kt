@@ -1,6 +1,10 @@
 package com.github.mmrsic.ti99.basic
 
 sealed class TiBasicException(msg: String) : Exception(msg)
+sealed class TiBasicError(msg: String) : TiBasicException(msg)
+sealed class TiBasicWarning(msg: String) : TiBasicException(msg)
 
-class CantDoThatException : TiBasicException("CAN'T DO THAT")
-class BadLineNumber : TiBasicException("BAD LINE NUMBER")
+class BadLineNumber : TiBasicError("BAD LINE NUMBER")
+class CantDoThat : TiBasicError("CAN'T DO THAT")
+class IncorrectStatement : TiBasicError("INCORRECT STATEMENT")
+class NumberTooBig : TiBasicWarning("NUMBER TOO BIG")

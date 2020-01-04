@@ -124,13 +124,25 @@ class BasicReferenceSectionTest {
         interpreter.interpret("PRINT -98.77E21", machine)
         interpreter.interpret("PRINT -9E-130", machine)
         interpreter.interpret("PRINT 9E-142", machine)
-        interpreter.interpret("PRINT 97E-136", machine)
-        interpreter.interpret("PRINT -108E-144", machine)
+        interpreter.interpret("PRINT 97E136", machine)
+        interpreter.interpret("PRINT -108E144", machine)
         TestHelperScreen.assertPrintContents(
             mapOf(
-                19 to "  TI BASIC READY",
-                21 to " >PRINT 32640",
-                22 to "   1.2",
+                1 to "   32640",
+                3 to " >PRINT -98.77E21",
+                4 to "  -9.877E+22",
+                6 to " >PRINT -9E-130",
+                7 to "   0",
+                9 to " >PRINT 9E-142",
+                10 to "   0",
+                12 to " >PRINT 97E136",
+                14 to "  * WARNING:",
+                15 to "    NUMBER TOO BIG",
+                16 to "   9.99999E+**",
+                18 to " >PRINT -108E144",
+                20 to "  * WARNING:",
+                21 to "    NUMBER TOO BIG",
+                22 to "  -9.99999E+**",
                 24 to " >"
             ), machine.screen
         )

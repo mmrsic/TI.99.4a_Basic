@@ -6,6 +6,25 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+object NumberRanges {
+    private const val MIN_VALUE = 1e-128
+    private const val MAX_VALUE = 9.9999999999999e127
+
+    /** Whether a given number is in the TI Basic's number range. */
+    fun isInRange(value: Number): Boolean {
+        val absValue = abs(value.toDouble())
+        return absValue in MIN_VALUE..MAX_VALUE
+    }
+
+    fun isOverflow(value: Number): Boolean {
+        return abs(value.toDouble()) > MAX_VALUE
+    }
+
+    fun isUnderflow(value: Number): Boolean {
+        return value != 0 && abs(value.toDouble()) < MIN_VALUE
+    }
+}
+
 abstract class NumericExpr : Expression() {
     abstract override fun calculate(): Number
     override fun displayValue(): String {
@@ -65,11 +84,21 @@ private fun toTiNumber(original: Number): Number {
 
 private fun toTiDisplayNumber(original: Number): String {
     val originalDouble = original.toDouble()
+    if (original.toString().contains('E')) {
+        if (NumberRanges.isUnderflow(original)) {
+            return " 0 "
+        } else if (NumberRanges.isOverflow(original)) {
+            return (if (originalDouble < 0) "-" else " ") + "9.99999E+**"
+        }
+        return original.toString().replace("E", "E+")
+    }
+
     val text = if (originalDouble.roundToInt().toDouble() == originalDouble) {
         original.toInt().toString()
     } else {
         val numDigitsBeforeDot = if (original == 0) 0 else log10(abs(originalDouble)).toInt()
-        ("%." + (9 - numDigitsBeforeDot) + "f").format(Locale.US, original).trimEnd('0')
+        val formatSpec = "%." + (9 - numDigitsBeforeDot) + "f"
+        formatSpec.format(Locale.US, original).trimEnd('0')
     }
     return if (originalDouble >= 0) " $text " else "$text "
 }

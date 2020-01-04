@@ -10,14 +10,6 @@ import com.github.mmrsic.ti99.hw.TiBasicModule
 
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
 
-    private val quote by token("\"")
-    private val assign by token("=")
-    private val minus by token("-")
-    private val comma by token(",")
-    private val semicolon by token(";")
-    private val colon by token(":")
-    private val printSeparator by colon or comma or semicolon
-
     private val new by token("\\s*NEW.*")
     private val run by token("RUN")
     private val bye by token("BYE")
@@ -25,15 +17,31 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val print by token("PRINT")
     private val end by token("END")
 
+    private val assign by token("=")
+    private val minus by token("-")
+    private val plus by token("\\+")
+    private val comma by token(",")
+    private val semicolon by token(";")
+    private val colon by token(":")
+    private val quote by token("\"")
+    private val e by token("E")
+    private val printSeparator by colon or comma or semicolon
+
     private val ws by token("\\s+", ignore = true) // Token is used even if not referenced!
 
     private val positiveInt by token("[0-9]+")
     private val fractionConst by token("\\.[0-9]+")
     private val name by token("[A-Z]+")
 
-    private val numericConst by optional(minus) and positiveInt and optional(fractionConst) use {
-        val factor = if (t1==null) 1 else -1
-        NumericConstant(factor * (t2.text + (if (t3 != null) t3!!.text else "")).toDouble())
+    private val numericConst by optional(minus) and positiveInt and optional(fractionConst) and
+            optional(e and optional(minus or plus) and positiveInt) use {
+        val factor = if (t1 == null) 1 else -1
+        val mantissa = t2.text + (if (t3 != null) t3!!.text else "")
+        val exponent = if (t4 != null) {
+            val exponentValue = t4!!.t3.text
+            "e" + (if (t4?.t2?.text == "-") "-" else "+") + exponentValue
+        } else ""
+        NumericConstant(factor * (mantissa + exponent).toDouble())
     }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).calculate() }

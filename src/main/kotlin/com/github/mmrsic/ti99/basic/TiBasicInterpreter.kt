@@ -15,7 +15,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         val parseResult = parser.parseToEnd(inputLine)
         if (parseResult !is TiBasicExecutable) {
             println("Illegal command/statement: $inputLine")
-            throw Exception() // TODO throw IncorrectStatement
+            throw IncorrectStatement()
         }
 
         println("Executing $parseResult")
@@ -53,7 +53,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInterpreter(machine) {
 
     fun interpretAll() {
-        val program = machine.program ?: throw CantDoThatException()
+        val program = machine.program ?: throw CantDoThat()
         println("Executing $program")
         var pc: Int? = program.firstLineNumber()
         while (pc != null) {
