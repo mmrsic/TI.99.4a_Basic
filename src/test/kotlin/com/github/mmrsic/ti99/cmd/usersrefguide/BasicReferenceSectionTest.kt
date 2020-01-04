@@ -8,7 +8,7 @@ import org.junit.Test
 class BasicReferenceSectionTest {
 
     @Test
-    fun test_II_4() {
+    fun test_II_4_generalInformation() {
         val machine = TiBasicModule()
         val interpreter = TiBasicCommandLineInterpreter(machine)
 
@@ -41,7 +41,7 @@ class BasicReferenceSectionTest {
     }
 
     @Test
-    fun test_II_8() {
+    fun test_II_8_lineNumbers() {
         val machine = TiBasicModule()
         val interpreter = TiBasicCommandLineInterpreter(machine)
         interpreter.interpret("100 A=27.9", machine)
@@ -96,18 +96,44 @@ class BasicReferenceSectionTest {
     }
 
     @Test
-    fun test_II_9_printDecimalConstant() {
+    fun test_II_9_numberConstants() {
         val machine = TiBasicModule()
         val interpreter = TiBasicCommandLineInterpreter(machine)
         interpreter.interpret("PRINT 1.2", machine)
+        interpreter.interpret("PRINT -3", machine)
+        interpreter.interpret("PRINT 0", machine)
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                13 to "  TI BASIC READY",
+                15 to " >PRINT 1.2",
+                16 to "   1.2",
+                18 to " >PRINT -3",
+                19 to "  -3",
+                21 to " >PRINT 0",
+                22 to "   0",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_9_scientificNotation() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 3.264E4", machine)
+        interpreter.interpret("PRINT -98.77E21", machine)
+        interpreter.interpret("PRINT -9E-130", machine)
+        interpreter.interpret("PRINT 9E-142", machine)
+        interpreter.interpret("PRINT 97E-136", machine)
+        interpreter.interpret("PRINT -108E-144", machine)
         TestHelperScreen.assertPrintContents(
             mapOf(
                 19 to "  TI BASIC READY",
-                21 to " >PRINT 1.2",
+                21 to " >PRINT 32640",
                 22 to "   1.2",
                 24 to " >"
             ), machine.screen
         )
-
     }
+
 }
