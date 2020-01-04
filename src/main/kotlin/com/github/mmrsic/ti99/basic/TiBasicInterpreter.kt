@@ -21,12 +21,15 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         println("Executing $parseResult")
         try {
             parseResult.execute(machine)
+            if (parseResult !is StoreProgramLineCommand) {
+                screen.print("")
+            }
         } catch (e: BadLineNumber) {
             screen.print("")
-            screen.print("* BAD LINE NUMBER")
+            screen.print("* ${e.message}")
             screen.print("")
-        }
-        if (parseResult !is StoreProgramLineCommand) {
+        } catch (e: BadName) {
+            screen.print("* ${e.message}")
             screen.print("")
         }
         if (parseResult is NewCommand) {

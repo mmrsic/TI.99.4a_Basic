@@ -3,6 +3,7 @@ package com.github.mmrsic.ti99.cmd.usersrefguide
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import org.junit.Ignore
 import org.junit.Test
 
 class BasicReferenceSectionTest {
@@ -211,6 +212,79 @@ class BasicReferenceSectionTest {
                 18 to "  UST USE DOUBLE QUOTES.",
                 20 to "  TOM SAID, \"HI, MARY!\"",
                 22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_11_badNameWhenVariableTooLong() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("110 ABCDEFGHIJKLMNOPQ=3", machine)
+        interpreter.interpret("ABCDEFGHIJKLMNOPQ=13", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                16 to "  TI BASIC READY",
+                18 to " >110 ABCDEFGHIJKLMNOPQ=3",
+                19 to "  * BAD NAME",
+                21 to " >ABCDEFGHIJKLMNOPQ=13",
+                22 to "  * BAD NAME",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Ignore("Not yet implemented")
+    @Test
+    fun test_II_11_listIsNotAllowedAsNumericVariable_noProgram() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("LIST=1", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                18 to "  TI BASIC READY",
+                20 to " >LIST=1",
+                22 to "  * CAN'T DO THAT",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Ignore("Not yet implemented")
+    @Test
+    fun test_II_11_listIsNotAllowedAsNumericVariable_programPresent() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("10 A=0", machine)
+        interpreter.interpret("LIST=1", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                18 to "  TI BASIC READY",
+                20 to " >10 REM TEST LIST",
+                21 to " >LIST=1",
+                22 to "  * INCORRECT STATEMENT",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_11_listIsAllowedAsStringVariable() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("LIST$=\"1\"", machine)
+        interpreter.interpret("PRINT LIST$", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                17 to "  TI BASIC READY",
+                19 to " >LIST$=\"1\"",
+                21 to " >PRINT LIST$",
+                22 to "  1",
                 24 to " >"
             ), machine.screen
         )

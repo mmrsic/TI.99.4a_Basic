@@ -2,6 +2,7 @@ package com.github.mmrsic.ti99.basic
 
 import com.github.mmrsic.ti99.basic.expr.Expression
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
+import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
 
@@ -13,7 +14,7 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 
     override fun execute(machine: TiBasicModule) {
         val maxCol = TiBasicScreen.MAX_COLUMNS - 2
-        var currRow = 24
+        val currRow = 24
         var currCol = 3
         for (expression in expressions) {
             if (expression is Expression) {
@@ -44,6 +45,12 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 
 class AssignNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
     override fun execute(machine: TiBasicModule) = machine.setNumericVariable(varName, expr)
+}
+
+class AssignStringStatement(val varName: String, val expr: StringExpr) : Statement {
+    override fun execute(machine: TiBasicModule) {
+        machine.setStringVariable(varName, expr)
+    }
 }
 
 class EndStatement : Statement {

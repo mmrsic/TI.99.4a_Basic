@@ -8,3 +8,7 @@ abstract class StringExpr : Expression() {
 data class StringConstant(val constant: String) : StringExpr() {
     override fun calculate(): String = constant
 }
+
+data class StringVariable(val name: String, val calc: (String) -> String) : StringExpr() {
+    override fun calculate(): String = calc.invoke(name)
+}

@@ -6,10 +6,12 @@ import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericVariable
 import com.github.mmrsic.ti99.basic.expr.StringConstant
+import com.github.mmrsic.ti99.basic.expr.StringVariable
 import com.github.mmrsic.ti99.hw.TiBasicModule
 
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
 
+    private val stringVarName by token("[A-Za-z@\\[\\]\\\\_][A-Za-z@\\[\\]\\\\_0-9]*\\$")
     private val new by token("\\s*NEW.*")
     private val run by token("RUN")
     private val bye by token("BYE")
@@ -31,7 +33,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val positiveInt by token("[0-9]+")
     private val fractionConst by token("\\.[0-9]+")
-    private val name by token("[A-Z]+")
+    private val name by token("[A-Za-z@\\[\\]\\\\_][A-Za-z@\\[\\]\\\\_0-9]*")
 
     private val numericConst by optional(minus) and positiveInt and optional(fractionConst) and
             optional(e and optional(minus or plus) and positiveInt) use {
@@ -48,8 +50,12 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val numericExpr by numericConst or numericVarRef
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
+    private val stringVarRef by stringVarName use {
+        StringVariable(text) { varName -> machine.getStringVariableValue(varName).calculate() }
+    }
+    private val stringExpr by stringConst or stringVarRef
 
-    private val expr by numericExpr or stringConst
+    private val expr by numericExpr or stringExpr
 
     private val newCmd = new asJust NewCommand()
     private val runCmd by skip(run) and optional(positiveInt) map { RunCommand(it?.text?.toInt()) }
@@ -88,14 +94,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         PrintStatement(printArgs)
     }
 
-    private val assignNumberStmt by numericVarRef and skip(assign) and numericConst use {
+    private val assignNumberStmt by numericVarRef and skip(assign) and numericExpr use {
         AssignNumberStatement(t1.name, t2)
+    }
+    private val assignStringStmt by stringVarRef and skip(assign) and stringExpr use {
+        AssignStringStatement(t1.name, t2)
     }
     private val endStmt by end asJust EndStatement()
 
     private val cmdParser = newCmd or runCmd or byeCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
-    private val stmtParser = printStmt or assignNumberStmt or endStmt
+    private val stmtParser = printStmt or assignNumberStmt or assignStringStmt or endStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))

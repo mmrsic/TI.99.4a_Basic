@@ -8,6 +8,14 @@ class ProgramLine(val lineNumber: Int, val statements: List<Statement>)
 sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
 
     fun store(line: ProgramLine) {
+        if (line.lineNumber < 1 || line.lineNumber > 32767) {
+            throw BadLineNumber()
+        }
+        for (statement in line.statements) {
+            if (statement is AssignNumberStatement && statement.varName.length > 15) {
+                throw BadName()
+            }
+        }
         lines[line.lineNumber] = line
     }
 
