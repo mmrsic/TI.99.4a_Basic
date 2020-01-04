@@ -3,10 +3,7 @@ package com.github.mmrsic.ti99.basic.betterparse
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.mmrsic.ti99.basic.*
-import com.github.mmrsic.ti99.basic.expr.NumericConstant
-import com.github.mmrsic.ti99.basic.expr.NumericVariable
-import com.github.mmrsic.ti99.basic.expr.StringConstant
-import com.github.mmrsic.ti99.basic.expr.StringVariable
+import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
 
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
@@ -22,6 +19,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val assign by token("=")
     private val minus by token("-")
     private val plus by token("\\+")
+    private val ampersand by token("&")
     private val comma by token(",")
     private val semicolon by token(";")
     private val colon by token(":")
@@ -53,7 +51,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName).calculate() }
     }
-    private val stringExpr by stringConst or stringVarRef
+    private val stringExpr by stringConst or
+            (separated(stringVarRef, ampersand) use { StringConcatenation(terms) }) or
+            stringVarRef
 
     private val expr by numericExpr or stringExpr
 
@@ -95,10 +95,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
 
     private val assignNumberStmt by numericVarRef and skip(assign) and numericExpr use {
-        AssignNumberStatement(t1.name, t2)
+        LetNumberStatement(t1.name, t2)
     }
     private val assignStringStmt by stringVarRef and skip(assign) and stringExpr use {
-        AssignStringStatement(t1.name, t2)
+        LetStringStatement(t1.name, t2)
     }
     private val endStmt by end asJust EndStatement()
 

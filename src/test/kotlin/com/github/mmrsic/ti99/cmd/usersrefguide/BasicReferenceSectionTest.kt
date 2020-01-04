@@ -290,4 +290,39 @@ class BasicReferenceSectionTest {
         )
     }
 
+    @Test
+    fun test_II_11_stringsAreLimitedTo255Characters() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("TEN$=\"1234567890\"", machine)
+        interpreter.interpret("FIFTY$=TEN$&TEN$&TEN$&TEN$&TEN$", machine)
+        interpreter.interpret("THREEHUNDRED$=FIFTY$&FIFTY$&FIFTY$&FIFTY$&FIFTY$&FIFTY$", machine)
+        interpreter.interpret("PRINT FIFTY$", machine)
+        interpreter.interpret("PRINT THREEHUNDRED$", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                2 to " >FIFTY$=TEN$&TEN$&TEN$&TEN$&T",
+                3 to "  EN$",
+                5 to " >THREEHUNDRED$=FIFTY$&FIFTY$&",
+                6 to "  FIFTY$&FIFTY$&FIFTY$&FIFTY$",
+                8 to " >PRINT FIFTY$",
+                9 to "  1234567890123456789012345678",
+                10 to "  9012345678901234567890",
+                12 to " >PRINT THREEHUNDRED$",
+                13 to "  1234567890123456789012345678",
+                14 to "  9012345678901234567890123456",
+                15 to "  7890123456789012345678901234",
+                16 to "  5678901234567890123456789012",
+                17 to "  3456789012345678901234567890",
+                18 to "  1234567890123456789012345678",
+                19 to "  9012345678901234567890123456",
+                20 to "  7890123456789012345678901234",
+                21 to "  5678901234567890123456789012",
+                22 to "  345",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

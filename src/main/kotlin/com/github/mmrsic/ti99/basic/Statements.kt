@@ -43,14 +43,12 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
     }
 }
 
-class AssignNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
+class LetNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
     override fun execute(machine: TiBasicModule) = machine.setNumericVariable(varName, expr)
 }
 
-class AssignStringStatement(val varName: String, val expr: StringExpr) : Statement {
-    override fun execute(machine: TiBasicModule) {
-        machine.setStringVariable(varName, expr)
-    }
+class LetStringStatement(val varName: String, val expr: StringExpr) : Statement {
+    override fun execute(machine: TiBasicModule) = machine.setStringVariable(varName, expr)
 }
 
 class EndStatement : Statement {

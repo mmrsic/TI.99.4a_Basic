@@ -12,3 +12,7 @@ data class StringConstant(val constant: String) : StringExpr() {
 data class StringVariable(val name: String, val calc: (String) -> String) : StringExpr() {
     override fun calculate(): String = calc.invoke(name)
 }
+
+data class StringConcatenation(val expressions: List<StringExpr>) : StringExpr() {
+    override fun calculate(): String = expressions.joinToString("") { expr -> expr.calculate() }
+}

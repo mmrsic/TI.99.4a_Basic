@@ -12,7 +12,7 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
             throw BadLineNumber()
         }
         for (statement in line.statements) {
-            if (statement is AssignNumberStatement && statement.varName.length > 15) {
+            if (statement is LetNumberStatement && statement.varName.length > 15) {
                 throw BadName()
             }
         }

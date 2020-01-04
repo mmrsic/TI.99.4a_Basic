@@ -53,6 +53,7 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
 data class RunCommand(val line: Int?) : Command {
     override val name: String = "RUN"
     override fun execute(machine: TiBasicModule) {
+        machine.resetVariables()
         TiBasicProgramInterpreter(machine).interpretAll()
         machine.screen.print("")
         machine.screen.print("** DONE **")
