@@ -23,9 +23,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val comma by token(",")
     private val semicolon by token(";")
     private val colon by token(":")
-    private val quote by token("\"")
-    private val e by token("E")
     private val printSeparator by colon or comma or semicolon
+    private val quoted by token("\".*\"")
+    private val e by token("E")
 
     private val ws by token("\\s+", ignore = true) // Token is used even if not referenced!
 
@@ -47,7 +47,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).calculate() }
     }
     private val numericExpr by numericConst or numericVarRef
-    private val stringConst by skip(quote) and token(".*") and skip(quote) use { StringConstant(text) }
+    private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1)) }
 
     private val expr by numericExpr or stringConst
 

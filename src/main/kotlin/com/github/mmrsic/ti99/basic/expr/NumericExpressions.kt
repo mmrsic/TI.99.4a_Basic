@@ -1,5 +1,6 @@
 package com.github.mmrsic.ti99.basic.expr
 
+import com.github.mmrsic.ti99.basic.NumberTooBig
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.log10
@@ -79,7 +80,10 @@ private fun toTiNumber(original: Number): Number {
     if (asInt.compareTo(rounded) == 0) {
         return asInt
     }
-    return rounded
+    if (NumberRanges.isOverflow(rounded)) {
+        throw NumberTooBig(if (rounded < 0) -1 else 0)
+    }
+    return if (NumberRanges.isUnderflow(rounded)) 0 else rounded
 }
 
 private fun toTiDisplayNumber(original: Number): String {

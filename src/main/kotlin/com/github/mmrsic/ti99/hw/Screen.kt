@@ -18,12 +18,29 @@ abstract class Screen {
      * to the top.
      */
     fun print(characters: String) {
-        hchar(24, 3, characters)
+        var leftOver = hchar(24, 3, characters, 30)
+        while (leftOver.isNotEmpty()) {
+            scroll()
+            leftOver = hchar(24, 3, leftOver, 30)
+        }
+        scroll()
+    }
+
+    fun scroll() {
         codes.scroll()
     }
 
-    fun hchar(row: Int, startCol: Int, characters: String) {
-        codes.hchar(row, startCol, characters.map { c -> toAsciiCode(c) })
+    fun hchar(row: Int, startCol: Int, characters: String, maxCol: Int = TiBasicScreen.MAX_COLUMNS): String {
+        if (startCol > maxCol) {
+            throw Exception("Start column ($startCol) must not be greater than max column ($maxCol)")
+        }
+        if (characters.isEmpty()) {
+            return ""
+        }
+        val chunked = characters.chunked(1 + maxCol - startCol)
+        val charsToDisplay = chunked[0]
+        codes.hchar(row, startCol, charsToDisplay.map { c -> toAsciiCode(c) })
+        return chunked.subList(1, chunked.size).joinToString()
     }
 
     fun clear() = codes.clear()

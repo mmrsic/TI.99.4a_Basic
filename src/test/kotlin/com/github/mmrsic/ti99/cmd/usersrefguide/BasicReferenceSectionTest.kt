@@ -148,4 +148,38 @@ class BasicReferenceSectionTest {
         )
     }
 
+    @Test
+    fun test_II_10_stringConstants() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            listOf(
+                "100 PRINT \"HI!\"",
+                "110 PRINT \"THIS IS A STRING CONSTANT.\"",
+                "120 PRINT \"ALL CHARACTERS (+-*/ @,) MAY BE USED.\"",
+                "130 END",
+                "RUN"
+            ), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                8 to "  TI BASIC READY",
+                10 to " >100 PRINT \"HI!\"",
+                11 to " >110 PRINT \"THIS IS A STRING",
+                12 to "  CONSTANT.\"",
+                13 to " >120 PRINT \"ALL CHARACTERS (+",
+                14 to "  -*/ @,) MAY BE USED.\"",
+                15 to " >130 END",
+                16 to " >RUN",
+                17 to "  HI!",
+                18 to "  THIS IS A STRING CONSTANT.",
+                19 to "  ALL CHARACTERS (+-*/ @,) MAY",
+                20 to "   BE USED.",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
