@@ -182,4 +182,38 @@ class BasicReferenceSectionTest {
         )
     }
 
+    @Test
+    fun test_II_10_stringConstantsWithQuotes() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            listOf(
+                "100 PRINT \"TO PRINT \"\"QUOTE MARKS\"\" YOU MUST USE DOUBLE QUOTES.\"",
+                "110 PRINT",
+                "120 PRINT \"TOM SAID, \"\"HI, MARY!\"\"\"",
+                "130 END",
+                "RUN"
+            ), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                7 to "  TI BASIC READY",
+                9 to " >100 PRINT \"TO PRINT \"\"QUOTE",
+                10 to "  MARKS\"\" YOU MUST USE DOUBLE",
+                11 to "  QUOTES.\"",
+                12 to " >110 PRINT",
+                13 to " >120 PRINT \"TOM SAID, \"\"HI, M",
+                14 to "  ARY!\"\"\"",
+                15 to " >130 END",
+                16 to " >RUN",
+                17 to "  TO PRINT \"QUOTE MARKS\" YOU M",
+                18 to "  UST USE DOUBLE QUOTES.",
+                20 to "  TOM SAID, \"HI, MARY!\"",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

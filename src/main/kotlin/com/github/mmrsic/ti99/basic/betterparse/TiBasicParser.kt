@@ -47,7 +47,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).calculate() }
     }
     private val numericExpr by numericConst or numericVarRef
-    private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1)) }
+    private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
 
     private val expr by numericExpr or stringConst
 

@@ -40,7 +40,7 @@ abstract class Screen {
         val chunked = characters.chunked(1 + maxCol - startCol)
         val charsToDisplay = chunked[0]
         codes.hchar(row, startCol, charsToDisplay.map { c -> toAsciiCode(c) })
-        return chunked.subList(1, chunked.size).joinToString()
+        return chunked.subList(1, chunked.size).joinToString("")
     }
 
     fun clear() = codes.clear()
