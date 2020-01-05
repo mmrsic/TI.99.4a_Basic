@@ -8,9 +8,15 @@ import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
 
+/**
+ * [Grammar] for TI Basic.
+ */
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
+    /** Characters that may start a TI Basic variable. */
     private val nameStartChars = "A-Za-z@\\[\\]\\\\_"
+    /** Characters a TI Basic variable may consist of. */
     private val nameChars = nameStartChars + "0-9"
+    /** Suffix distinguishing a string variable from a numeric variable in TI Basic. */
     private val stringVarSuffix = "\\$"
 
     private val quoted by token("\".*\"")
@@ -36,12 +42,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val colon by token(":")
     private val printSeparator by colon or comma or semicolon
     private val e by token("\\B[Ee]")
-
-    private val ws by token("\\s+", ignore = true) // Token is used even if not referenced!
+    private val ws by token("\\s+", ignore = true)
 
     private val positiveInt by token("[0-9]+")
     private val fractionConst by token("\\.[0-9]+")
-
     private val numericConst by optional(minus) and positiveInt and optional(fractionConst) and
             optional(e and optional(minus or plus) and positiveInt) use {
         val factor = if (t1 == null) 1 else -1
@@ -83,15 +87,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val listRangeCmd by skip(list) and positiveInt and skip(minus) and positiveInt use {
         ListCommand(t1.text.toInt(), t2.text.toInt())
     }
-    private val listFromCmd by skip(list) and positiveInt and skip(minus) use {
-        ListCommand(text.toInt(), null)
-    }
-    private val listToCmd by skip(list) and skip(minus) and positiveInt use {
-        ListCommand(null, text.toInt())
-    }
-    private val listLineCmd by skip(list) and positiveInt use {
-        ListCommand(text.toInt())
-    }
+    private val listFromCmd by skip(list) and positiveInt and skip(minus) use { ListCommand(text.toInt(), null) }
+    private val listToCmd by skip(list) and skip(minus) and positiveInt use { ListCommand(null, text.toInt()) }
+    private val listLineCmd by skip(list) and positiveInt use { ListCommand(text.toInt()) }
     private val listCmd by list asJust ListCommand(null)
 
     private val printStmt by skip(print) and
