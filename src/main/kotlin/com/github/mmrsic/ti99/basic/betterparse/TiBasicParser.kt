@@ -2,36 +2,45 @@ package com.github.mmrsic.ti99.basic.betterparse
 
 import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
+import com.github.h0tk3y.betterParse.grammar.parser
+import com.github.h0tk3y.betterParse.parser.Parser
 import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
 
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
+    private val nameStartChars = "A-Za-z@\\[\\]\\\\_"
+    private val nameChars = nameStartChars + "0-9"
+    private val stringVarSuffix = "\\$"
 
-    private val stringVarName by token("[A-Za-z@\\[\\]\\\\_][A-Za-z@\\[\\]\\\\_0-9]*\\$")
-    private val new by token("\\s*NEW.*")
-    private val run by token("RUN")
-    private val bye by token("BYE")
-    private val list by token("LIST")
-    private val print by token("PRINT")
-    private val end by token("END")
+    private val quoted by token("\".*\"")
+    private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
+    private val bye by token("\\bBYE\\b")
+    private val end by token("\\bEND\\b")
+    private val list by token("\\bLIST\\b")
+    private val new by token("\\bNEW\\b")
+    private val print by token("\\bPRINT\\b")
+    private val run by token("\\bRUN\\b")
 
+    private val openParenthesis by token("\\(")
+    private val closeParenthesis by token("\\)")
     private val assign by token("=")
     private val minus by token("-")
     private val plus by token("\\+")
+    private val asterisk by token("\\*")
+    private val slash by token("/")
+    private val exponentiation by token("\\^")
     private val ampersand by token("&")
     private val comma by token(",")
     private val semicolon by token(";")
     private val colon by token(":")
     private val printSeparator by colon or comma or semicolon
-    private val quoted by token("\".*\"")
-    private val e by token("E")
+    private val e by token("\\B[Ee]")
 
     private val ws by token("\\s+", ignore = true) // Token is used even if not referenced!
 
     private val positiveInt by token("[0-9]+")
     private val fractionConst by token("\\.[0-9]+")
-    private val name by token("[A-Za-z@\\[\\]\\\\_][A-Za-z@\\[\\]\\\\_0-9]*")
 
     private val numericConst by optional(minus) and positiveInt and optional(fractionConst) and
             optional(e and optional(minus or plus) and positiveInt) use {
@@ -43,10 +52,23 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         } else ""
         NumericConstant(factor * (mantissa + exponent).toDouble())
     }
+    private val name by token("[$nameStartChars][$nameChars]*")
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).calculate() }
     }
-    private val numericExpr by numericConst or numericVarRef
+    private val term by numericConst or numericVarRef or
+            (skip(minus) and parser(this::numericExpr) map { NegatedExpression(it) }) or
+            (skip(openParenthesis) and parser(this::numericExpr) and skip(closeParenthesis))
+    private val expChain: Parser<NumericExpr> by leftAssociative(term, exponentiation) { a, _, b ->
+        Exponentiation(a, b)
+    }
+    private val mulDivChain by leftAssociative(expChain, asterisk or slash use { type }) { a, op, b ->
+        if (op == asterisk) Multiplication(a, b) else Division(a, b)
+    }
+    private val numericExpr by leftAssociative(mulDivChain, plus or minus use { type }) { a, op, b ->
+        if (op == plus) Addition(a, b) else Subtraction(a, b)
+    }
+
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName).calculate() }

@@ -12,9 +12,52 @@ class LetNumberStatementTest {
 
     @Test
     fun testAssignTwoToA() {
-        val result = TiBasicParser(TiBasicModule()).parseToEnd("A=2")
-        assertTrue(result is LetNumberStatement)
+        val result = parseLetNumberStatement("A=2")
         assertEquals("A", result.varName)
         assertEquals(2, result.expr.calculateToConstant().value())
     }
+
+    @Test
+    fun testAssignPlusConstants() {
+        val result = parseLetNumberStatement("A=1+2")
+        assertEquals("A", result.varName)
+        assertEquals(3.0, result.expr.calculate())
+    }
+
+    @Test
+    fun testAssignMinusConstants() {
+        val result = parseLetNumberStatement("B=4-3")
+        assertEquals("B", result.varName)
+        assertEquals(1.0, result.expr.calculate())
+    }
+
+    @Test
+    fun testAssignMultiplicationConstants() {
+        val result = parseLetNumberStatement("C=5*6")
+        assertEquals("C", result.varName)
+        assertEquals(30.0, result.expr.calculate())
+    }
+
+    @Test
+    fun testAssignDivisionConstants() {
+        val result = parseLetNumberStatement("D=7/8")
+        assertEquals("D", result.varName)
+        assertEquals(0.875, result.expr.calculate())
+    }
+
+    @Test
+    fun testAssignPlusChain() {
+        val result = parseLetNumberStatement("E=1+2+3+4+5")
+        assertEquals("E", result.varName)
+        assertEquals(15.0, result.expr.calculate())
+    }
+
+    // HELPERS //
+
+    private fun parseLetNumberStatement(input: String): LetNumberStatement {
+        val result = TiBasicParser(TiBasicModule()).parseToEnd(input)
+        assertTrue(result is LetNumberStatement)
+        return result
+    }
+
 }

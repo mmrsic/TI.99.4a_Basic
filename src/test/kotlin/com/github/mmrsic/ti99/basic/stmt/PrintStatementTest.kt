@@ -25,4 +25,12 @@ class PrintStatementTest {
         result.execute(machine)
     }
 
+    @Test
+    fun testPrintAPlusB() {
+        val machine = TiBasicModule()
+        val result = TiBasicParser(machine).parseToEnd("PRINT A+B")
+        assertTrue(result is PrintStatement)
+        result.execute(machine)
+    }
+
 }

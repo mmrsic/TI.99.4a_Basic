@@ -56,6 +56,9 @@ data class Exponentiation(val op1: NumericExpr, val op2: NumericExpr) : NumericE
     override fun calculate(): Number = op1.calculate().toDouble().pow(op2.calculate().toDouble())
 }
 
+data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
+    override fun calculate(): Number = -original.calculate().toDouble()
+}
 
 data class NumericConstant(private val constant: Number) : NumericExpr() {
     override fun calculate(): Number = constant

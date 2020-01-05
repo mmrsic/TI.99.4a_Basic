@@ -325,4 +325,120 @@ class BasicReferenceSectionTest {
         )
     }
 
+    @Test
+    fun test_II_12_numericExpressionsPlusMinusMultiplicationDivision() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("100 A=6", machine)
+        interpreter.interpret("110 B=4", machine)
+        interpreter.interpret("120 C=20", machine)
+        interpreter.interpret("130 D=2", machine)
+        interpreter.interpret("140 PRINT A*B/2", machine)
+        interpreter.interpret("150 PRINT C-D*3+6", machine)
+        interpreter.interpret("160 END", machine)
+        interpreter.interpret("RUN", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 A=6",
+                12 to " >110 B=4",
+                13 to " >120 C=20",
+                14 to " >130 D=2",
+                15 to " >140 PRINT A*B/2",
+                16 to " >150 PRINT C-D*3+6",
+                17 to " >160 END",
+                18 to " >RUN",
+                19 to "   12",
+                20 to "   20",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_12_threePlusNegativeOne() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 3+-1", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT 3+-1",
+                22 to "   2",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_12_twoMultipliedWithNegativeThree() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 2*-3", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT 2*-3",
+                22 to "  -6",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_12_sixDividedByNegativeThree() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 6/-3", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT 6/-3",
+                22 to "  -2",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_13_numericExpressionsParanthesisExponentiation() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("100 A=2", machine)
+        interpreter.interpret("110 B=3", machine)
+        interpreter.interpret("120 C=4", machine)
+        interpreter.interpret("130 PRINT A*(B+2)", machine)
+        interpreter.interpret("140 PRINT B^A-4", machine)
+        interpreter.interpret("150 PRINT -C^A;(-C)^A", machine)
+        interpreter.interpret("160 PRINT 10-B*C/6", machine)
+        interpreter.interpret("170 END", machine)
+        interpreter.interpret("RUN", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "  TI BASIC READY",
+                8 to " >100 A=2",
+                9 to " >110 B=3",
+                10 to " >120 C=4",
+                11 to " >130 PRINT A*(B+2)",
+                12 to " >140 PRINT B^A-4",
+                13 to " >150 PRINT -C^A;(-C)^A",
+                14 to " >160 PRINT 10-B*C/6",
+                15 to " >170 END",
+                16 to " >RUN",
+                17 to "   10",
+                18 to "   5",
+                19 to "  -16  16",
+                20 to "   8",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
