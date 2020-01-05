@@ -73,13 +73,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName).calculate() }
     }
-    private val stringExpr by stringConst or
-            (separated(stringVarRef, ampersand) use { StringConcatenation(terms) }) or
-            stringVarRef
+    private val stringExpr by stringConst or (separated(stringVarRef, ampersand) use { StringConcatenation(terms) })
 
     private val expr by numericExpr or stringExpr
 
-    private val newCmd = new asJust NewCommand()
+    private val newCmd = new and optional(ws and optional(numericExpr or name)) asJust NewCommand()
     private val runCmd by skip(run) and optional(positiveInt) map { RunCommand(it?.text?.toInt()) }
     private val byeCmd by bye asJust ByeCommand()
     private val listRangeCmd by skip(list) and positiveInt and skip(minus) and positiveInt use {
