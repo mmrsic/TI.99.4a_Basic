@@ -18,7 +18,7 @@ interface Command : TiBasicExecutable {
  */
 class NewCommand() : Command {
     override val name: String = "NEW"
-    override fun execute(machine: TiBasicModule) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.eraseProgram()
         machine.cancelBreak()
         machine.cancelTrace()
@@ -39,7 +39,7 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
         isRange = false
     }
 
-    override fun execute(machine: TiBasicModule) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (machine.program == null) {
             // TODO: throw CantDoThatError()
         } else {
@@ -52,7 +52,7 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
 
 data class RunCommand(val line: Int?) : Command {
     override val name: String = "RUN"
-    override fun execute(machine: TiBasicModule) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.resetVariables()
         TiBasicProgramInterpreter(machine).interpretAll()
         machine.screen.print("")
@@ -62,7 +62,7 @@ data class RunCommand(val line: Int?) : Command {
 
 class ByeCommand : Command {
     override val name: String = "BYE"
-    override fun execute(machine: TiBasicModule) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
@@ -70,7 +70,7 @@ class ByeCommand : Command {
 class StoreProgramLineCommand(private val programLine: ProgramLine) : Command {
     override val name = "-- IMPLICIT STORE --"
 
-    override fun execute(machine: TiBasicModule) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (programLine.lineNumber < 1 || programLine.lineNumber > 32767) {
             throw BadLineNumber()
         }

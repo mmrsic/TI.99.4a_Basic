@@ -406,7 +406,7 @@ class BasicReferenceSectionTest {
     }
 
     @Test
-    fun test_II_13_numericExpressionsParanthesisExponentiation() {
+    fun test_II_13_numericExpressionsParenthesisExponentiation() {
         val machine = TiBasicModule()
         val interpreter = TiBasicCommandLineInterpreter(machine)
         interpreter.interpret("100 A=2", machine)
@@ -435,6 +435,60 @@ class BasicReferenceSectionTest {
                 18 to "   5",
                 19 to "  -16  16",
                 20 to "   8",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_13_zeroExponentiationZeroGivesOne() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 0^0", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT 0^0",
+                22 to "   1",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test_II_13_programRunWithNumericUnderflowAndOverflow() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 PRINT 1E-200
+            110 PRINT 24+1E-139
+            120 PRINT 1E171
+            130 PRINT (1E60*1E76)/1E50
+            140 END
+            RUN
+        """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                3 to "  TI BASIC READY",
+                5 to " >100 PRINT 1E-200",
+                6 to " >110 PRINT 24+1E-139",
+                7 to " >120 PRINT 1E171",
+                8 to " >130 PRINT (1E60*1E76)/1E50",
+                9 to " >140 END",
+                10 to " >RUN",
+                11 to "   0",
+                12 to "   24",
+                14 to "  * WARNING:",
+                15 to "    NUMBER TOO BIG IN 120",
+                16 to "   9.99999E+**",
+                18 to "  * WARNING:",
+                19 to "    NUMBER TOO BIG IN 130",
+                20 to "   1.E+78",
                 22 to "  ** DONE **",
                 24 to " >"
             ), machine.screen

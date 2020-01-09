@@ -7,22 +7,24 @@ class ChrFunctionTest {
 
     @Test
     fun testCode72() {
-        val func = ChrFunction(NumericConstant(72))
-        assertEquals("H", func.calculate(), "CHR$(72) must yield \"H\"")
+        val result = ChrFunction(NumericConstant(72)).value()
+        assertEquals("H", result.toNative(), "CHR$(72) must yield \"H\"")
+        assertEquals("H", result.displayValue(), "CHR$(72) must yield \"H\"")
     }
 
     @Test
     fun testCode33() {
-        val func = ChrFunction(NumericConstant(33))
-        assertEquals("!", func.calculate(), "CHR$(33) must yield \"!\"")
+        val result = ChrFunction(NumericConstant(33)).value()
+        assertEquals("!", result.toNative(), "CHR$(33) must yield \"!\"")
+        assertEquals("!", result.displayValue(), "CHR$(33) must yield \"!\"")
     }
 
     @Test
     fun testInverseFunction() {
         for (c in '!'..'~') {
             val cString = c.toString()
-            val ascii = AscFunction(StringConstant(cString)).calculate()
-            assertEquals(cString, ChrFunction(NumericConstant(ascii)).calculate(), "CHR$($ascii)")
+            val ascii = AscFunction(StringConstant(cString)).value()
+            assertEquals(cString, ChrFunction(NumericConstant(ascii.toNative())).value().displayValue(), "CHR$($ascii)")
         }
     }
 

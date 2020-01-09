@@ -1,6 +1,10 @@
 package com.github.mmrsic.ti99.basic.expr
 
-abstract class Expression {
-    abstract fun calculate(): Any
-    abstract fun displayValue(): String
+interface Expression {
+    fun value(): Constant
+    fun displayValue(): String
+}
+
+interface Constant {
+    fun toNative(): Any
 }

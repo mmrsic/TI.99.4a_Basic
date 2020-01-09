@@ -8,22 +8,25 @@ class SgnFunctionTest {
     @Test
     fun testFivePointEight() {
         val argument = NumericConstant(5.8)
-        val func = SgnFunction(argument)
-        assertEquals(1, func.calculate(), "SGN($argument)")
+        val result = SgnFunction(argument).value()
+        assertEquals(1.0, result.toNative(), "SGN($argument)")
+        assertEquals(" 1 ", result.displayValue(), "SGN($argument)")
     }
 
     @Test
     fun testMinusFive() {
         val argument = NumericConstant(-5)
-        val func = SgnFunction(argument)
-        assertEquals(-1, func.calculate(), "SGN($argument)")
+        val result = SgnFunction(argument).value()
+        assertEquals(-1.0, result.toNative(), "SGN($argument)")
+        assertEquals("-1 ", result.displayValue(), "SGN($argument)")
     }
 
     @Test
     fun testZero() {
         val argument = NumericConstant(0)
-        val func = SgnFunction(argument)
-        assertEquals(0, func.calculate(), "SGN($argument)")
+        val result = SgnFunction(argument).value()
+        assertEquals(0.0, result.toNative(), "SGN($argument)")
+        assertEquals(" 0 ", result.displayValue(), "SGN($argument)")
     }
 
 }

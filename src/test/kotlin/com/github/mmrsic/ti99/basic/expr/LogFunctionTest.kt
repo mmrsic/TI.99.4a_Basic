@@ -8,16 +8,15 @@ class LogFunctionTest {
     @Test
     fun testThreePointFour() {
         val argument = 3.4
-        val func = LogFunction(NumericConstant(argument))
-        assertEquals(1.2237754316, func.calculateToConstant().value(), "LOG($argument)")
+        val result = LogFunction(NumericConstant(argument)).value()
+        assertEquals(1.2237754316, result.toNative(), "LOG($argument)")
     }
 
     @Test
     fun testInverseFunction() {
         val argument = 7.2
-        val exp = ExpFunction(NumericConstant(argument)).calculate()
-        val func = LogFunction(NumericConstant(exp))
-        assertEquals(argument, func.calculateToConstant().value())
+        val result = LogFunction(ExpFunction(NumericConstant(argument))).value()
+        assertEquals(argument, result.toNative())
     }
 
 }

@@ -12,20 +12,22 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 
     override val name: String = "PRINT"
 
-    override fun execute(machine: TiBasicModule) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val maxCol = TiBasicScreen.MAX_COLUMNS - 2
         val currRow = 24
         var currCol = 3
         for (expression in expressions) {
-            if (expression is Expression) {
-                val characters = try {
-                    expression.displayValue()
-                } catch (e: NumberTooBig) {
-                    machine.screen.print("")
-                    machine.screen.print("* WARNING:")
-                    machine.screen.print("  ${e.message}")
-                    (if (e.sign < 0) "-" else " ") + "9.99999E+**"
+            if (expression is NumericExpr) {
+                expression.visitAllValues { nc ->
+                    if (nc.isOverflow) {
+                        machine.screen.print("")
+                        machine.screen.print("* WARNING:")
+                        machine.screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
+                    }
                 }
+            }
+            if (expression is Expression) {
+                val characters = expression.displayValue()
                 var lefOver = machine.screen.hchar(currRow, currCol, characters, maxCol)
                 currCol += characters.length - lefOver.length
                 while (lefOver.isNotEmpty()) {
@@ -44,15 +46,15 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 }
 
 class LetNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
-    override fun execute(machine: TiBasicModule) = machine.setNumericVariable(varName, expr)
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setNumericVariable(varName, expr)
 }
 
 class LetStringStatement(val varName: String, val expr: StringExpr) : Statement {
-    override fun execute(machine: TiBasicModule) = machine.setStringVariable(varName, expr)
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setStringVariable(varName, expr)
 }
 
 class EndStatement : Statement {
-    override fun execute(machine: TiBasicModule) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         // TODO: End current program run
     }
 }

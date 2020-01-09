@@ -12,7 +12,7 @@ abstract class NumericFunction(val name: String) : NumericExpr()
  * The result of ABS is always a non-negative number.
  */
 data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("ABS") {
-    override fun calculate(): Number = abs(numericExpr.calculate().toDouble())
+    override fun value() = NumericConstant(abs(numericExpr.value().toNative()))
 }
 
 /**
@@ -20,7 +20,7 @@ data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * The ASC function is the inverse of the [ChrFunction] function
  */
 data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("ASC") {
-    override fun calculate(): Int = toAsciiCode(stringExpr.calculate()[0])
+    override fun value(): NumericConstant = NumericConstant(toAsciiCode(stringExpr.value().toNative()[0]))
 
 }
 
@@ -30,7 +30,7 @@ data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("AS
  * in the range -PI/2 < ATN(X) < PI/2.
  */
 data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("ATN") {
-    override fun calculate(): Number = atan(numericExpr.calculate().toDouble())
+    override fun value() = NumericConstant(atan(numericExpr.value().toNative()))
 }
 
 /**
@@ -38,7 +38,7 @@ data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * If the angle is in degrees, multiply the number of degrees by PI/180 to get the equivalent angle in radians.
  */
 data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("COS") {
-    override fun calculate(): Number = cos(radianExpr.calculate().toDouble())
+    override fun value() = NumericConstant(cos(radianExpr.value().toNative()))
 }
 
 /**
@@ -46,14 +46,14 @@ data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("C
  * The value of e is 2.718281828459.
  */
 data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("EXP") {
-    override fun calculate(): Number = exp(numericExpr.calculate().toDouble())
+    override fun value() = NumericConstant(exp(numericExpr.value().toNative()))
 }
 
 /**
  * The INT function returns the greatest integer less than or equal to numeric-expression.
  */
 data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("INT") {
-    override fun calculate(): Int = floor(numericExpr.calculate().toDouble()).toInt()
+    override fun value() = NumericConstant(floor(numericExpr.value().toNative()).toInt())
 }
 
 
@@ -62,7 +62,7 @@ data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * A space counts as a character.
  */
 data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LEN") {
-    override fun calculate(): Int = stringExpr.calculate().length
+    override fun value() = NumericConstant(stringExpr.value().toNative().length)
 }
 
 /**
@@ -70,7 +70,7 @@ data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LE
  * The LOG function is the inverse of [ExpFunction].
  */
 data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("LOG") {
-    override fun calculate(): Number = ln(numericExpr.calculate().toDouble())
+    override fun value() = NumericConstant(ln(numericExpr.value().toNative()))
 }
 
 /**
@@ -83,8 +83,12 @@ data class PosFunction(
     private val string2: StringExpr,
     private val numericExpr: NumericExpr
 ) : NumericFunction("POS") {
-    override fun calculate(): Number =
-        1 + string1.calculate().indexOf(string2.calculate(), numericExpr.calculate().toInt())
+    override fun value(): NumericConstant {
+        val source = string1.value().toNative()
+        val searchString = string2.value().toNative()
+        val startIndex = numericExpr.value().toNative().toInt()
+        return NumericConstant(1 + source.indexOf(searchString, startIndex))
+    }
 }
 
 /**
@@ -92,16 +96,16 @@ data class PosFunction(
  * The number returned is greater than or equal to zero and less than one. The sequence of random numbers returned
  * is the same every time a program is run unless the randomize statement appears in the program.
  */
-class RndFunction() : NumericFunction("RND") {
+class RndFunction : NumericFunction("RND") {
     private val generator: Random = Random(42)
-    override fun calculate(): Number = generator.nextDouble()
+    override fun value() = NumericConstant(generator.nextDouble())
 }
 
 /**
  * The SGN function returns 1 if numeric-expression is positive, 0 if it is zero, and -1 if it is negative.
  */
 data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("SGN") {
-    override fun calculate(): Number = sign(numericExpr.calculate().toDouble()).toInt()
+    override fun value() = NumericConstant(sign(numericExpr.value().toNative()))
 }
 
 /**
@@ -109,7 +113,7 @@ data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * If the angle is in degrees, multiply the number of degrees by ATN(1)/45 to get the equivalent angle in radians.
  */
 data class SinFunction(private val numericExpr: NumericExpr) : NumericFunction("SIN") {
-    override fun calculate(): Number = sin(numericExpr.calculate().toDouble())
+    override fun value() = NumericConstant(sin(numericExpr.value().toNative()))
 }
 
 /**
@@ -117,13 +121,11 @@ data class SinFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * SQR(X) is equivalent to X^(1/2). Numeric-expression may not be a negative number.
  */
 data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("SQR") {
-    override fun calculate(): Number = sqrt(numericExpr.calculate().toDouble())
+    override fun value() = NumericConstant(sqrt(numericExpr.value().toNative()))
 }
 
 
-/**
- * Convert a given character into its corresponding ASCII code.
- */
+/** Convert a given character into its corresponding ASCII code. */
 fun toAsciiCode(c: Char): Int {
     return c.toInt()
 }

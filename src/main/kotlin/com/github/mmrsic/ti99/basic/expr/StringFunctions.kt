@@ -7,7 +7,7 @@ abstract class StringFunction(val name: String) : StringExpr()
  * The CHR$ function is the inverse of the [AscFunction]
  */
 data class ChrFunction(private val numericExpr: NumericExpr) : StringFunction("CHR$") {
-    override fun calculate(): String = toChar(numericExpr.calculate().toInt())
+    override fun value() = StringConstant(toChar(numericExpr.value().toNative().toInt()))
 }
 
 /**
@@ -21,11 +21,11 @@ data class SegFunction(
     private val position: NumericExpr,
     private val length: NumericExpr
 ) : StringFunction("SEG$") {
-    override fun calculate(): String {
-        val original = stringExpr.calculate()
-        val kotlinStart = position.calculate().toInt() - 1
-        val kotlinEnd = kotlinStart + length.calculate().toInt()
-        return original.substring(kotlinStart, kotlinEnd)
+    override fun value(): StringConstant {
+        val original = stringExpr.value().toNative()
+        val kotlinStart = position.value().toNative().toInt() - 1
+        val kotlinEnd = kotlinStart + length.value().toNative().toInt()
+        return StringConstant(original.substring(kotlinStart, kotlinEnd))
     }
 }
 
@@ -35,7 +35,7 @@ data class SegFunction(
  * of numeric-expression. The STR$ is the inverse of the [ValFunction].
  */
 data class StrFunction(private val numericExpr: NumericExpr) : StringFunction("STR$") {
-    override fun calculate(): String = numericExpr.calculate().toString()
+    override fun value() = StringConstant(numericExpr.displayValue())
 }
 
 

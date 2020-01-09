@@ -8,8 +8,8 @@ class SinFunctionTest {
     @Test
     fun testPointFiveSomething() {
         val argument = NumericConstant(.5235987755982)
-        val func = SinFunction(argument)
-        assertEquals(.5, func.calculateToConstant().value(), "SIN($argument)")
+        val result = SinFunction(argument).value()
+        assertEquals(.5, result.toNative(), "SIN($argument)")
     }
 
 }

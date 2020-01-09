@@ -8,7 +8,7 @@ class RndFunctionTest {
     @Test
     fun testBordersZeroAndTen() {
         for (turn in 1..1000) {
-            val randomValue = 10 * RndFunction().calculate().toDouble()
+            val randomValue = 10 * RndFunction().value().toNative()
             assertTrue(randomValue >= 0, "Random value ($randomValue) must not be less than zero")
             assertTrue(randomValue < 10, "Random value ($randomValue) must be less than ten")
         }

@@ -52,12 +52,7 @@ class TiBasicModule {
         if (name.length > 15) {
             throw BadName()
         }
-        stringVariables.putIfAbsent(name, StringConstant(""))
-        val value = expr.calculate()
-        val maxStringSize = 255
-        stringVariables[name] = StringConstant(
-            if (value.length <= maxStringSize) value else value.substring(0, maxStringSize)
-        )
+        stringVariables[name] = StringConstant(expr.displayValue())
     }
 
     fun getNumericVariableValue(name: String): NumericConstant {
@@ -75,8 +70,7 @@ class TiBasicModule {
         if (name.length > 15) {
             throw BadName()
         }
-        numericVariables.putIfAbsent(name, NumericConstant(0))
-        numericVariables[name] = expr.calculateToConstant()
+        numericVariables[name] = expr.value()
     }
 
     fun initCommandScreen() {

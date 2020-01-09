@@ -10,8 +10,9 @@ class SegFunctionTest {
         val arg1 = StringConstant("FIRSTNAME LASTNAME")
         val arg2 = NumericConstant(1)
         val arg3 = NumericConstant(9)
-        val func = SegFunction(arg1, arg2, arg3)
-        assertEquals("FIRSTNAME", func.calculate())
+        val result = SegFunction(arg1, arg2, arg3).value()
+        assertEquals("FIRSTNAME", result.toNative())
+        assertEquals("FIRSTNAME", result.displayValue())
     }
 
     @Test
@@ -19,8 +20,9 @@ class SegFunctionTest {
         val arg1 = StringConstant("FIRSTNAME LASTNAME")
         val arg2 = NumericConstant(11)
         val arg3 = NumericConstant(8)
-        val func = SegFunction(arg1, arg2, arg3)
-        assertEquals("LASTNAME", func.calculate())
+        val result = SegFunction(arg1, arg2, arg3).value()
+        assertEquals("LASTNAME", result.toNative())
+        assertEquals("LASTNAME", result.displayValue())
     }
 
     @Test
@@ -28,8 +30,9 @@ class SegFunctionTest {
         val arg1 = StringConstant("FIRSTNAME LASTNAME")
         val arg2 = NumericConstant(10)
         val arg3 = NumericConstant(1)
-        val func = SegFunction(arg1, arg2, arg3)
-        assertEquals(" ", func.calculate())
+        val result = SegFunction(arg1, arg2, arg3).value()
+        assertEquals(" ", result.toNative())
+        assertEquals(" ", result.displayValue())
     }
 
 }

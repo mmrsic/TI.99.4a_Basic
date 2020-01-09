@@ -58,7 +58,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val name by token("[$nameStartChars][$nameChars]*")
     private val numericVarRef by name use {
-        NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).calculate() }
+        NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
     }
     private val term by numericConst or numericVarRef or
             (skip(minus) and parser(this::numericExpr) map { NegatedExpression(it) }) or
@@ -75,7 +75,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
     private val stringVarRef by stringVarName use {
-        StringVariable(text) { varName -> machine.getStringVariableValue(varName).calculate() }
+        StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
     }
     private val stringExpr by stringConst or (separated(stringVarRef, ampersand) use { StringConcatenation(terms) })
 

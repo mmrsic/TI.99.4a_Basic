@@ -14,42 +14,42 @@ class LetNumberStatementTest {
     fun testAssignTwoToA() {
         val result = parseLetNumberStatement("A=2")
         assertEquals("A", result.varName)
-        assertEquals(2, result.expr.calculateToConstant().value())
+        assertEquals(2.0, result.expr.value().toNative())
     }
 
     @Test
     fun testAssignPlusConstants() {
         val result = parseLetNumberStatement("A=1+2")
         assertEquals("A", result.varName)
-        assertEquals(3.0, result.expr.calculate())
+        assertEquals(3.0, result.expr.value().toNative())
     }
 
     @Test
     fun testAssignMinusConstants() {
         val result = parseLetNumberStatement("B=4-3")
         assertEquals("B", result.varName)
-        assertEquals(1.0, result.expr.calculate())
+        assertEquals(1.0, result.expr.value().toNative())
     }
 
     @Test
     fun testAssignMultiplicationConstants() {
         val result = parseLetNumberStatement("C=5*6")
         assertEquals("C", result.varName)
-        assertEquals(30.0, result.expr.calculate())
+        assertEquals(30.0, result.expr.value().toNative())
     }
 
     @Test
     fun testAssignDivisionConstants() {
         val result = parseLetNumberStatement("D=7/8")
         assertEquals("D", result.varName)
-        assertEquals(0.875, result.expr.calculate())
+        assertEquals(0.875, result.expr.value().toNative())
     }
 
     @Test
     fun testAssignPlusChain() {
         val result = parseLetNumberStatement("E=1+2+3+4+5")
         assertEquals("E", result.varName)
-        assertEquals(15.0, result.expr.calculate())
+        assertEquals(15.0, result.expr.value().toNative())
     }
 
     // HELPERS //

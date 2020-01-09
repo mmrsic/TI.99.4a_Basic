@@ -3,8 +3,20 @@ package com.github.mmrsic.ti99.basic
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiBasicScreen
 
-abstract class TiBasicInterpreter(machine: TiBasicModule)
+abstract class TiBasicInterpreter(machine: TiBasicModule) {
+
+    protected fun print(e: NumberTooBig, screen: TiBasicScreen, lineNumber: Int? = null) {
+        screen.print("")
+        screen.print("* WARNING:")
+        screen.print("  ${e.message}" + (if (lineNumber != null) " IN $lineNumber" else ""))
+        if (lineNumber == null) {
+            screen.print("")
+        }
+    }
+
+}
 
 class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter(machine) {
     private val parser = TiBasicParser(machine)
@@ -31,6 +43,8 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         } catch (e: BadName) {
             screen.print("* ${e.message}")
             screen.print("")
+        } catch (e: NumberTooBig) {
+            print(e, screen)
         }
         if (parseResult is NewCommand) {
             machine.initCommandScreen()
@@ -62,7 +76,11 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
         while (pc != null) {
             val stmt = program.getStatements(pc)[0]
             println("Executing $pc $stmt")
-            stmt.execute(machine)
+            try {
+                stmt.execute(machine, pc)
+            } catch (e: NumberTooBig) {
+                print(e, machine.screen, pc)
+            }
             pc = program.nextLineNumber(pc)
         }
         println("Stopped $program")
