@@ -28,18 +28,23 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val print by token("\\bPRINT\\b")
     private val run by token("\\bRUN\\b")
 
-    private val openParenthesis by token("\\(")
-    private val closeParenthesis by token("\\)")
-    private val assign by token("=")
     private val minus by token("-")
     private val plus by token("\\+")
     private val asterisk by token("\\*")
     private val slash by token("/")
     private val exponentiation by token("\\^")
+    private val arithmeticOperator by minus or plus or asterisk or slash or exponentiation
     private val ampersand by token("&")
+    private val stringOperator by ampersand
+    private val lessThan by token("<")
+    private val assign by token("=")
+    private val greaterThan by token(">")
+    private val openParenthesis by token("\\(")
+    private val closeParenthesis by token("\\)")
     private val comma by token(",")
     private val semicolon by token(";")
     private val colon by token(":")
+    private val numberSign by token("#")
     private val printSeparator by colon or comma or semicolon
     private val e by token("\\B[Ee]")
     private val ws by token("\\s+", ignore = true)

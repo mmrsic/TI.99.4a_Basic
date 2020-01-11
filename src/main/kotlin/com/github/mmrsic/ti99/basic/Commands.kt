@@ -42,11 +42,8 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (machine.program == null) {
             throw CantDoThat()
-        } else {
-//            for (line in machine.program.lines) {
-//                machine.screen.print(line)
-//            }
         }
+        machine.listProgram()
     }
 }
 

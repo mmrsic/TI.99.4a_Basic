@@ -6,11 +6,20 @@ import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
 
-interface Statement : TiBasicExecutable
+interface Statement : TiBasicExecutable {
+    fun listText(): String
+}
 
 class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 
     override val name: String = "PRINT"
+
+    override fun listText(): String {
+        if (expressions.isEmpty()) {
+            return name
+        }
+        return "$name " + expressions.forEach { if (it is Expression) it.displayValue() else it.toString() }
+    }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val maxCol = TiBasicScreen.MAX_COLUMNS - 2
@@ -46,15 +55,27 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 }
 
 class LetNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
+    override fun listText(): String {
+        return "$varName=${expr}" // TODO: Add optional LET and expression's original text
+    }
+
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setNumericVariable(varName, expr)
 }
 
 class LetStringStatement(val varName: String, val expr: StringExpr) : Statement {
+    override fun listText(): String {
+        return "$varName=$expr" // TODO: Add optional LET and expression's original text
+    }
+
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setStringVariable(varName, expr)
 }
 
 class EndStatement : Statement {
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         // TODO: End current program run
+    }
+
+    override fun listText(): String {
+        return "END"
     }
 }

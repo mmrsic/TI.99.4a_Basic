@@ -38,7 +38,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         println("Executing $parseResult")
         try {
             parseResult.execute(machine)
-            if (parseResult !is StoreProgramLineCommand) {
+            if (parseResult !is StoreProgramLineCommand && parseResult !is ListCommand) {
                 screen.print("")
             }
         } catch (e: BadLineNumber) {

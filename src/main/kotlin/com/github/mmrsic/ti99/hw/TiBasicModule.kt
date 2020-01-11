@@ -1,6 +1,7 @@
 package com.github.mmrsic.ti99.hw
 
 import com.github.mmrsic.ti99.basic.BadName
+import com.github.mmrsic.ti99.basic.CantDoThat
 import com.github.mmrsic.ti99.basic.ProgramLine
 import com.github.mmrsic.ti99.basic.TiBasicProgram
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
@@ -84,6 +85,19 @@ class TiBasicModule {
             program = TiBasicProgram()
         }
         program!!.store(programLine)
+    }
+
+    fun listProgram() {
+        if (program == null) {
+            throw CantDoThat()
+        }
+        val programToList = program!!
+        var lineNumber: Int? = programToList.firstLineNumber()
+        while (lineNumber != null) {
+            val statement = programToList.getStatements(lineNumber)[0]
+            screen.print("$lineNumber ${statement.listText()}")
+            lineNumber = programToList.nextLineNumber(lineNumber)
+        }
     }
 
 }
