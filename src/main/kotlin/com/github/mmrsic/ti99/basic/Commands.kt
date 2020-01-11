@@ -41,7 +41,7 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (machine.program == null) {
-            // TODO: throw CantDoThatError()
+            throw CantDoThat()
         } else {
 //            for (line in machine.program.lines) {
 //                machine.screen.print(line)
@@ -54,9 +54,11 @@ data class RunCommand(val line: Int?) : Command {
     override val name: String = "RUN"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.resetVariables()
-        TiBasicProgramInterpreter(machine).interpretAll()
-        machine.screen.print("")
-        machine.screen.print("** DONE **")
+        val runResult = TiBasicProgramInterpreter(machine).interpretAll()
+        if (runResult == null) {
+            machine.screen.print("")
+            machine.screen.print("** DONE **")
+        }
     }
 }
 

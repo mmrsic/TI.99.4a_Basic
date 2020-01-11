@@ -7,10 +7,15 @@ import com.github.mmrsic.ti99.hw.TiBasicScreen
 
 abstract class TiBasicInterpreter(machine: TiBasicModule) {
 
-    protected fun print(e: NumberTooBig, screen: TiBasicScreen, lineNumber: Int? = null) {
+    protected fun print(e: TiBasicException, screen: TiBasicScreen, lineNumber: Int? = null) {
+        // TODO? Use PrintStatement
         screen.print("")
-        screen.print("* WARNING:")
-        screen.print("  ${e.message}" + (if (lineNumber != null) " IN $lineNumber" else ""))
+        if (e is TiBasicWarning) {
+            screen.print("* WARNING:")
+            screen.print("  ${e.message}" + (if (lineNumber != null) " IN $lineNumber" else ""))
+        } else {
+            screen.print("* ${e.message}" + if (lineNumber != null) " IN $lineNumber" else "")
+        }
         if (lineNumber == null) {
             screen.print("")
         }
@@ -69,21 +74,32 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 
 class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInterpreter(machine) {
 
-    fun interpretAll() {
+    fun interpretAll(): TiBasicError? {
+        var breakReason: TiBasicError? = null
         val program = machine.program ?: throw CantDoThat()
         println("Executing $program")
         var pc: Int? = program.firstLineNumber()
-        while (pc != null) {
+        var stopRun = false
+        while (pc != null && !stopRun) {
             val stmt = program.getStatements(pc)[0]
             println("Executing $pc $stmt")
             try {
                 stmt.execute(machine, pc)
-            } catch (e: NumberTooBig) {
+            } catch (e: TiBasicException) {
                 print(e, machine.screen, pc)
+                if (e is TiBasicError) {
+                    breakReason = e
+                }
             }
             pc = program.nextLineNumber(pc)
+            stopRun = stmt is EndStatement
         }
-        println("Stopped $program")
+        if (breakReason != null) {
+            println("Broke $program: $breakReason")
+        } else {
+            println("Stopped $program")
+        }
+        return breakReason
     }
 
 }

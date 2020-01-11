@@ -1,5 +1,6 @@
 package com.github.mmrsic.ti99.basic.expr
 
+import com.github.mmrsic.ti99.basic.BadValue
 import com.github.mmrsic.ti99.basic.NumberTooBig
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -11,7 +12,7 @@ object NumberRanges {
     internal const val MAX_VALUE = 9.9999999999999e127
 
     fun isOverflow(value: Number): Boolean {
-        return abs(value.toDouble()) > MAX_VALUE
+        return value == Double.NEGATIVE_INFINITY || value == Double.NaN as Number || abs(value.toDouble()) > MAX_VALUE
     }
 
     fun isUnderflow(value: Number): Boolean {
@@ -21,7 +22,7 @@ object NumberRanges {
 
 abstract class NumericExpr : Expression {
     abstract override fun value(): NumericConstant
-    override fun displayValue(): String = toTiDisplayNumber(value().toNative())
+    override fun displayValue(): String = value().displayValue()
     open fun visitAllValues(lambda: (value: NumericConstant) -> Any) = lambda.invoke(value())
 }
 
@@ -50,7 +51,14 @@ class Division(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) 
 }
 
 class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
-    override fun value() = NumericConstant(op1.value().toNative().pow(op2.value().toNative()))
+    override fun value(): NumericConstant {
+        val baseValue = op1.value().toNative()
+        val expValue = op2.value().toNative()
+        if (baseValue < 0 && expValue is Double && BigDecimal(expValue).scale() > 0) {
+            throw BadValue()
+        }
+        return NumericConstant(baseValue.pow(expValue))
+    }
 }
 
 data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
@@ -59,6 +67,10 @@ data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
 
 data class NumericConstant(private val constant: Number) : NumericExpr(), Constant {
     val isOverflow = NumberRanges.isOverflow(constant)
+    val isUnderflow = NumberRanges.isUnderflow(constant)
+    val isInteger = constant.toDouble().roundToInt().toDouble() == constant.toDouble()
+    val isExponential =
+        listOf(Double.NaN, Double.NEGATIVE_INFINITY).contains(constant) || constant.toString().contains("E", true)
 
     override fun value(): NumericConstant = this
 
@@ -67,10 +79,29 @@ data class NumericConstant(private val constant: Number) : NumericExpr(), Consta
         if (isOverflow) sign(constant.toDouble()) * NumberRanges.MAX_VALUE else toTiNumber(constant).toDouble()
 
     override fun displayValue(): String {
-        if (!isOverflow) {
-            return super.displayValue()
+        val doubleValue = constant.toDouble()
+        val signCharacter = if (doubleValue < 0) "-" else " "
+        if (isUnderflow) {
+            return " 0 "
         }
-        return (if (constant.toDouble() < 0) "-" else " ") + "9.99999E+**"
+        if (isOverflow) {
+            return signCharacter + "9.99999E+**"
+        }
+        if (isInteger) {
+            return signCharacter + abs(constant.toInt()).toString() + " "
+        }
+        if (isExponential) {
+            val positiveSign = if (doubleValue < 0) "" else " "
+            val bigDecimal = BigDecimal(doubleValue)
+            val scaledDecimal = bigDecimal.setScale(-(bigDecimal.precision() - 9), RoundingMode.HALF_UP)
+            return positiveSign + scaledDecimal.toString().replace(Regex("(0+E)"), "E")
+        }
+
+        val numDigitsBeforeDot = if (doubleValue == 0.0) 0 else log10(abs(doubleValue)).toInt()
+        val numDigits = 9 - numDigitsBeforeDot + (if (abs(doubleValue) < 1) 1 else 0)
+        val formatSpec = "%." + numDigits + "f"
+        val numText = formatSpec.format(Locale.US, doubleValue).trimEnd('0').replace(Regex("^0+"), "")
+        return if (doubleValue < 0) "$numText " else " $numText "
     }
 }
 
@@ -94,30 +125,4 @@ private fun toTiNumber(original: Number): Number {
         throw NumberTooBig(if (rounded < 0) -1 * NumberRanges.MAX_VALUE else NumberRanges.MAX_VALUE)
     }
     return if (NumberRanges.isUnderflow(rounded)) 0 else rounded
-}
-
-private fun toTiDisplayNumber(original: Double): String {
-    if (original.toString().contains('E')) {
-        if (NumberRanges.isUnderflow(original)) {
-            return " 0 "
-        } else if (NumberRanges.isOverflow(original)) {
-            val sign = if (original < 0) "-" else " "
-            return sign + "9.99999E+**"
-        }
-
-        val positiveSign = if (original < 0) "" else " "
-        val bigDecimal = BigDecimal(original)
-        val scaledDecimal = bigDecimal.setScale(-(bigDecimal.precision() - 9), RoundingMode.HALF_UP)
-        return positiveSign + scaledDecimal.toString().replace(Regex("(0+E)"), "E")
-    }
-
-    val text = if (original.roundToInt().toDouble() == original) {
-        original.toInt().toString()
-    } else {
-        val numDigitsBeforeDot = if (original == 0.0) 0 else log10(abs(original)).toInt()
-        val numDigits = 9 - numDigitsBeforeDot + (if (abs(original) < 1) 1 else 0)
-        val formatSpec = "%." + numDigits + "f"
-        formatSpec.format(Locale.US, original).trimEnd('0').replace(Regex("^0+"), "")
-    }
-    return if (original >= 0) " $text " else "$text "
 }

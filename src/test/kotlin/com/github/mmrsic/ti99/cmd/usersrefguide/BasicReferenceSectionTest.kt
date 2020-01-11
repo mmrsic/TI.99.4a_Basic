@@ -495,4 +495,38 @@ class BasicReferenceSectionTest {
         )
     }
 
+    @Test
+    fun test_II_13_divisionByZero_zeroRaisedToNegativePower_negativeNumberRaisedToNonIntegralPower() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 PRINT -22/0
+            110 PRINT 0^-2
+            120 PRINT (-3)^1.2
+            130 END
+            RUN
+        """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "  TI BASIC READY",
+                8 to " >100 PRINT -22/0",
+                9 to " >110 PRINT 0^-2",
+                10 to " >120 PRINT (-3)^1.2",
+                11 to " >130 END",
+                12 to " >RUN",
+                14 to "  * WARNING:",
+                15 to "    NUMBER TOO BIG IN 100",
+                16 to "  -9.99999E+**",
+                18 to "  * WARNING:",
+                19 to "    NUMBER TOO BIG IN 110",
+                20 to "   9.99999E+**",
+                22 to "  * BAD VALUE IN 120",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
