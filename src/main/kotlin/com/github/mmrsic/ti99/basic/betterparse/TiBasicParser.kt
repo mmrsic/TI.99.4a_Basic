@@ -66,6 +66,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         NumericConstant(factor * (mantissa + exponent).toDouble())
     }
     private val name by token("[$nameStartChars][$nameChars]*")
+
+    private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
+    private val stringVarRef by stringVarName use {
+        StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
+    }
+    private val stringTerm: Parser<StringExpr> by stringConst or stringVarRef or
+            (skip(openParenthesis) and parser(this::stringExpr) and skip(closeParenthesis))
+
+    private val stringExpr by leftAssociative(stringTerm, stringOperator) { a, _, b ->
+        StringConcatenation(listOf(a, b))
+    }
+
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
     }
@@ -78,27 +90,19 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val mulDivChain by leftAssociative(expChain, asterisk or slash use { type }) { a, op, b ->
         if (op == asterisk) Multiplication(a, b) else Division(a, b)
     }
-    private val numericExpr by leftAssociative(mulDivChain, plus or minus use { type }) { a, op, b ->
+    private val plusMinusChain by leftAssociative(mulDivChain, plus or minus use { type }) { a, op, b ->
         if (op == plus) Addition(a, b) else Subtraction(a, b)
     }
-
-    private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
-    private val stringVarRef by stringVarName use {
-        StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
-    }
-    private val stringTerm: Parser<StringExpr> by stringConst or stringVarRef or
-            (skip(openParenthesis) and parser(this::stringExpr) and skip(closeParenthesis))
-    private val stringExpr by leftAssociative(stringTerm, stringOperator) { a, _, b ->
-        StringConcatenation(listOf(a, b))
-    }
-
     private val relationalOperator = equals or notEquals or lessThanOrEqualTo or lessThan or greaterThanOrEqualTo or
-            greaterThan
-    private val relationalExpr: Parser<Expression> by
-    leftAssociative(numericExpr or stringExpr, relationalOperator use { text }) { a, op, b ->
-        val symbol = RelationalExpr.Operator.fromSymbol(op)
-        RelationalExpr.create(a, symbol, b)
-    }
+            greaterThan use { RelationalExpr.Operator.fromSymbol(text) }
+
+    private val numericExpr by leftAssociative(plusMinusChain, relationalOperator) { a, op, b ->
+        RelationalNumericExpr(a, op, b)
+    } or ((stringExpr and relationalOperator and stringExpr) use {
+        RelationalStringExpr(t1, t2, t3)
+    })
+
+    private val expr by numericExpr or stringExpr
 
     private val newCmd = new and optional(ws and optional(numericExpr or name)) asJust NewCommand()
     private val runCmd by skip(run) and optional(positiveInt) map { RunCommand(it?.text?.toInt()) }
@@ -113,8 +117,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
-            optional(relationalExpr) and
-            zeroOrMore(oneOrMore(printSeparator) and relationalExpr) and
+            optional(expr) and
+            zeroOrMore(oneOrMore(printSeparator) and expr) and
             zeroOrMore(printSeparator) use {
         val printArgs = mutableListOf<Any>()
         // Add all leading separators
@@ -131,7 +135,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         PrintStatement(printArgs)
     }
 
-    private val assignNumberStmt by numericVarRef and skip(assign) and (relationalExpr) use {
+    private val assignNumberStmt by numericVarRef and skip(assign) and (numericExpr) use {
         LetNumberStatement(t1.name, t2 as NumericExpr)
     }
     private val assignStringStmt by stringVarRef and skip(assign) and stringExpr use {

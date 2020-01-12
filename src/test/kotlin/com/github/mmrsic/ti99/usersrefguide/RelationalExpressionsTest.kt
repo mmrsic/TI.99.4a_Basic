@@ -43,21 +43,25 @@ class RelationalExpressionsTest {
         interpreter.interpret("RUN", machine)
         interpreter.interpret("120 PRINT (A$&B$)>\"HI\"", machine)
         interpreter.interpret("RUN", machine)
-//        interpreter.interpret("120 PRINT (A$>B$)*4", machine)
-//        interpreter.interpret("RUN", machine)
+        interpreter.interpret("120 PRINT (A$>B$)*4", machine)
+        interpreter.interpret("RUN", machine)
 
         TestHelperScreen.assertPrintContents(
             mapOf(
-                8 to "  TI BASIC READY",
-                10 to " >100 A$=\"HI\"",
-                11 to " >110 B$=\" THERE!\"",
-                12 to " >120 PRINT (A$&B$)=\"HI!\"",
+                2 to "  TI BASIC READY",
+                4 to " >100 A$=\"HI\"",
+                5 to " >110 B$=\" THERE!\"",
+                6 to " >120 PRINT (A$&B$)=\"HI!\"",
+                7 to " >RUN",
+                8 to "   0",
+                10 to "  ** DONE **",
+                12 to " >120 PRINT (A$&B$)>\"HI\"",
                 13 to " >RUN",
-                14 to "   0",
+                14 to "  -1",
                 16 to "  ** DONE **",
-                18 to " >120 PRINT (A$&B$)>\"HI\"",
+                18 to " >120 PRINT (A$>B$)*4",
                 19 to " >RUN",
-                20 to "  -1",
+                20 to "  -4",
                 22 to "  ** DONE **",
                 24 to " >"
             ), machine.screen
