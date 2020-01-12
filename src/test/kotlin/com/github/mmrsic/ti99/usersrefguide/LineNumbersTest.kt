@@ -88,4 +88,28 @@ class LineNumbersTest {
         )
     }
 
+    @Test
+    fun testLineNumbersUnsorted() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("50 PRINT 2", machine)
+        interpreter.interpret("25 PRINT 1", machine)
+        interpreter.interpret("60 PRINT 3", machine)
+        interpreter.interpret("RUN", machine)
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                12 to "  TI BASIC READY",
+                14 to " >50 PRINT 2",
+                15 to " >25 PRINT 1",
+                16 to " >60 PRINT 3",
+                17 to " >RUN",
+                18 to "   1",
+                19 to "   2",
+                20 to "   3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
