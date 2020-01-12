@@ -91,4 +91,28 @@ class RelationalExpressionsTest {
         )
     }
 
+    @Test
+    fun testAdditionalUsagesAsNumericExpressions() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("100 A=2<4*3", machine)
+        interpreter.interpret("110 B=A=0", machine)
+        interpreter.interpret("120 PRINT A;B", machine)
+        interpreter.interpret("RUN", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                14 to "  TI BASIC READY",
+                16 to " >100 A=2<4*3",
+                17 to " >110 B=A=0",
+                18 to " >120 PRINT A;B",
+                19 to " >RUN",
+                20 to "  -1  0",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+
+    }
+
 }

@@ -136,7 +136,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
 
     private val assignNumberStmt by numericVarRef and skip(assign) and (numericExpr) use {
-        LetNumberStatement(t1.name, t2 as NumericExpr)
+        LetNumberStatement(t1.name, t2)
     }
     private val assignStringStmt by stringVarRef and skip(assign) and stringExpr use {
         LetStringStatement(t1.name, t2)
@@ -150,7 +150,6 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))
     }
-
 
     override val rootParser by cmdParser or stmtParser or programLineParser
 }
