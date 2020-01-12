@@ -2,6 +2,7 @@ package com.github.mmrsic.ti99.basic.expr
 
 import com.github.mmrsic.ti99.basic.BadValue
 import com.github.mmrsic.ti99.basic.NumberTooBig
+import com.github.mmrsic.ti99.basic.StringNumberMismatch
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
@@ -54,7 +55,7 @@ class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1,
     override fun value(): NumericConstant {
         val baseValue = op1.value().toNative()
         val expValue = op2.value().toNative()
-        if (baseValue < 0 && expValue is Double && BigDecimal(expValue).scale() > 0) {
+        if (baseValue < 0 && BigDecimal(expValue).scale() > 0) {
             throw BadValue()
         }
         return NumericConstant(baseValue.pow(expValue))
@@ -109,6 +110,85 @@ data class NumericVariable(val name: String, val calc: (String) -> NumericConsta
     override fun value(): NumericConstant = calc.invoke(name)
 }
 
+object RelationalExpr {
+    fun create(a: Expression, op: Operator, b: Expression): NumericExpr {
+        if (a is NumericExpr && b is NumericExpr) {
+            return RelationalNumericExpr(a, op, b)
+        }
+        if (a is StringExpr && b is StringExpr) {
+            return RelationalStringExpr(a, op, b)
+        }
+        if (a is StringExpr && b is NumericExpr) {
+            return StringNumberMismatchExpr(a, b)
+        }
+        if (a is NumericExpr && b is StringExpr) {
+            return StringNumberMismatchExpr(a, b)
+        }
+        throw IllegalStateException("Logic error in method: Not all possible combinations covered")
+    }
+
+    enum class Operator {
+        EQUAL_TO, NOT_EQUAL_TO, LESS_THAN, LESS_THAN_OR_EQUAL_TO, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO;
+
+        companion object {
+            fun fromSymbol(symbol: String): Operator {
+                return when (symbol) {
+                    "=" -> EQUAL_TO
+                    "!=" -> NOT_EQUAL_TO
+                    "<" -> LESS_THAN
+                    "<=" -> LESS_THAN_OR_EQUAL_TO
+                    ">" -> GREATER_THAN
+                    ">=" -> GREATER_THAN_OR_EQUAL_TO
+                    else -> throw IllegalArgumentException("No relational operator symbol: $symbol")
+                }
+            }
+        }
+    }
+}
+
+class RelationalNumericExpr(val a: NumericExpr, val op: RelationalExpr.Operator, val b: NumericExpr) :
+    TwoOpNumericExpr(a, b) {
+
+    override fun value(): NumericConstant {
+        val aNative = a.value().toNative()
+        val bNative = b.value().toNative()
+        val isTrue: Boolean = when (op) {
+            RelationalExpr.Operator.EQUAL_TO -> aNative == bNative
+            RelationalExpr.Operator.NOT_EQUAL_TO -> aNative != bNative
+            RelationalExpr.Operator.LESS_THAN -> aNative < bNative
+            RelationalExpr.Operator.LESS_THAN_OR_EQUAL_TO -> aNative <= bNative
+            RelationalExpr.Operator.GREATER_THAN -> aNative > bNative
+            RelationalExpr.Operator.GREATER_THAN_OR_EQUAL_TO -> aNative >= bNative
+        }
+        return NumericConstant(if (isTrue) -1 else 0)
+    }
+
+}
+
+class RelationalStringExpr(val a: StringExpr, val op: RelationalExpr.Operator, val b: StringExpr) : NumericExpr() {
+
+    override fun value(): NumericConstant {
+        val aNative = a.value().toNative()
+        val bNative = b.value().toNative()
+        val isTrue: Boolean = when (op) {
+            RelationalExpr.Operator.EQUAL_TO -> aNative == bNative
+            RelationalExpr.Operator.NOT_EQUAL_TO -> aNative != bNative
+            RelationalExpr.Operator.LESS_THAN -> aNative < bNative
+            RelationalExpr.Operator.LESS_THAN_OR_EQUAL_TO -> aNative <= bNative
+            RelationalExpr.Operator.GREATER_THAN -> aNative > bNative
+            RelationalExpr.Operator.GREATER_THAN_OR_EQUAL_TO -> aNative >= bNative
+        }
+        return NumericConstant(if (isTrue) -1 else 0)
+    }
+
+}
+
+class StringNumberMismatchExpr(val a: NumericExpr, val b: StringExpr) : NumericExpr() {
+    constructor(a: StringExpr, b: NumericExpr) : this(b, a)
+
+    override fun value() = throw StringNumberMismatch()
+    override fun displayValue() = throw StringNumberMismatch()
+}
 
 // HELPERS //
 

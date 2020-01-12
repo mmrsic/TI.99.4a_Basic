@@ -36,11 +36,15 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val arithmeticOperator by minus or plus or asterisk or slash or exponentiation
     private val ampersand by token("&")
     private val stringOperator by ampersand
+    private val lessThanOrEqualTo by token("<=")
+    private val notEquals by token("<>")
     private val lessThan by token("<")
-    private val assign by token("=")
+    private val greaterThanOrEqualTo by token(">=")
     private val greaterThan by token(">")
+    private val equals by token("=")
     private val openParenthesis by token("\\(")
     private val closeParenthesis by token("\\)")
+    private val assign by equals
     private val comma by token(",")
     private val semicolon by token(";")
     private val colon by token(":")
@@ -82,9 +86,19 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
     }
-    private val stringExpr by stringConst or (separated(stringVarRef, ampersand) use { StringConcatenation(terms) })
+    private val stringTerm: Parser<StringExpr> by stringConst or stringVarRef or
+            (skip(openParenthesis) and parser(this::stringExpr) and skip(closeParenthesis))
+    private val stringExpr by leftAssociative(stringTerm, stringOperator) { a, _, b ->
+        StringConcatenation(listOf(a, b))
+    }
 
-    private val expr by numericExpr or stringExpr
+    private val relationalOperator = equals or notEquals or lessThanOrEqualTo or lessThan or greaterThanOrEqualTo or
+            greaterThan
+    private val relationalExpr: Parser<Expression> by
+    leftAssociative(numericExpr or stringExpr, relationalOperator use { text }) { a, op, b ->
+        val symbol = RelationalExpr.Operator.fromSymbol(op)
+        RelationalExpr.create(a, symbol, b)
+    }
 
     private val newCmd = new and optional(ws and optional(numericExpr or name)) asJust NewCommand()
     private val runCmd by skip(run) and optional(positiveInt) map { RunCommand(it?.text?.toInt()) }
@@ -99,8 +113,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
-            optional(expr) and
-            zeroOrMore(oneOrMore(printSeparator) and expr) and
+            optional(relationalExpr) and
+            zeroOrMore(oneOrMore(printSeparator) and relationalExpr) and
             zeroOrMore(printSeparator) use {
         val printArgs = mutableListOf<Any>()
         // Add all leading separators
@@ -117,8 +131,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         PrintStatement(printArgs)
     }
 
-    private val assignNumberStmt by numericVarRef and skip(assign) and numericExpr use {
-        LetNumberStatement(t1.name, t2)
+    private val assignNumberStmt by numericVarRef and skip(assign) and (relationalExpr) use {
+        LetNumberStatement(t1.name, t2 as NumericExpr)
     }
     private val assignStringStmt by stringVarRef and skip(assign) and stringExpr use {
         LetStringStatement(t1.name, t2)
