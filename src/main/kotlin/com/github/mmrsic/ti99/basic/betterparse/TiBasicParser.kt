@@ -20,6 +20,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stringVarSuffix = "\\$"
 
     private val quoted by token("\".*\"")
+
+    private val seg by token("SEG\\$")
+
     private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
     private val bye by token("\\bBYE\\b")
     private val end by token("\\bEND\\b")
@@ -68,10 +71,14 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val name by token("[$nameStartChars][$nameChars]*")
 
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
+    private val segFun by skip(seg) and skip(openParenthesis) and
+            parser(this::stringExpr) and skip(comma) and parser(this::numericExpr) and skip(comma) and parser(this::numericExpr) and
+            skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
+    private val stringFun by segFun
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
     }
-    private val stringTerm: Parser<StringExpr> by stringConst or stringVarRef or
+    private val stringTerm: Parser<StringExpr> by stringConst or stringVarRef or stringFun or
             (skip(openParenthesis) and parser(this::stringExpr) and skip(closeParenthesis))
 
     private val stringExpr by leftAssociative(stringTerm, stringOperator) { a, _, b ->
