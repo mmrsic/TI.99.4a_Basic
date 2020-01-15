@@ -16,13 +16,17 @@ abstract class StringExpr : Expression {
 data class StringConstant(val constant: String) : StringExpr(), Constant {
     override fun value(): StringConstant = this
     override fun toNative(): String = constant
+    override fun listText(): String = "\"$constant\""
 }
 
 data class StringVariable(val name: String, val calc: (String) -> StringConstant) : StringExpr() {
-    override fun value() = calc.invoke(name)
+    override fun value(): StringConstant = calc.invoke(name)
+    override fun listText(): String = name
 }
 
 data class StringConcatenation(val expressions: List<StringExpr>) : StringExpr() {
     override fun value(): StringConstant =
         StringConstant(expressions.joinToString("") { expr -> expr.value().toNative() })
+
+    override fun listText(): String = expressions.joinToString("&") { expr -> expr.listText() }
 }

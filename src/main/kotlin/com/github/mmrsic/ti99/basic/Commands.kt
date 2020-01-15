@@ -29,9 +29,31 @@ class NewCommand() : Command {
     }
 }
 
+/**
+ * When the list command is entered, the program lines specified by the line-list are displayed. If a
+ * device-name is entered, then the specified program lines are printed on the specified device. Device-names
+ * for possible future accessory devices will be given in their respective manuals. If no device-name is
+ * entered, the specified lines are displayed on the screen.
+ * If the LIST command is entered with no line-list, then the entire program is displayed. The program lines
+ * are always listed in ascending order. Note that all unnecessary blank spaces that were present when you
+ * entered the program line were deleted when the computer accepted the line. Notice that when you list the
+ * lines, unnecessary blank spaces have been deleted.
+ *
+ * If the line-list is entered, it may consist of a single number, a single number preceded by a hyphen (for
+ * example: -10), a single number followed by a hyphen (for example: 10-), or a hyphenated range of line
+ * numbers. If the line-list is:
+ * * A single number - only the program line for the line number specified is displayed
+ * * A single number preceded by a hyphen - all program lines with line numbers less than or equal to the line
+ * number specified are displayed
+ * * A single number followed by a hyphen - all program lines with line numbers greater than or equal to the line
+ * number specified are displayed
+ * * A hyphenated range of line numbers - all program lines with line numbers not less than the first line number
+ * in the range and not greater than the second line number are displayed
+ */
 class ListCommand(val start: Int?, val end: Int?) : Command {
     override val name: String = "LIST"
 
+    /** Whether a hyphenated range of line numbers was specified. */
     var isRange = true
         private set
 

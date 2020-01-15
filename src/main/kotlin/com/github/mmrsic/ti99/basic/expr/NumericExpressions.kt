@@ -33,6 +33,8 @@ abstract class TwoOpNumericExpr(val op1: NumericExpr, val op2: NumericExpr) : Nu
         lambda.invoke(op2.value())
         return super.visitAllValues(lambda)
     }
+
+    override fun listText(): String = "${op1.listText()}${op2.listText()}"
 }
 
 class Addition(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
@@ -64,6 +66,7 @@ class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1,
 
 data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
     override fun value() = NumericConstant(-original.value().toNative())
+    override fun listText(): String = "-${original.listText()}"
 }
 
 data class NumericConstant(private val constant: Number) : NumericExpr(), Constant {
@@ -89,7 +92,7 @@ data class NumericConstant(private val constant: Number) : NumericExpr(), Consta
             return signCharacter + "9.99999E+**"
         }
         if (isInteger) {
-            return signCharacter + abs(constant.toInt()).toString() + " "
+            return signCharacter + abs(constant.toInt()) + " "
         }
         if (isExponential) {
             val positiveSign = if (doubleValue < 0) "" else " "
@@ -104,10 +107,13 @@ data class NumericConstant(private val constant: Number) : NumericExpr(), Consta
         val numText = formatSpec.format(Locale.US, doubleValue).trimEnd('0').replace(Regex("^0+"), "")
         return if (doubleValue < 0) "$numText " else " $numText "
     }
+
+    override fun listText(): String = displayValue()
 }
 
 data class NumericVariable(val name: String, val calc: (String) -> NumericConstant) : NumericExpr() {
     override fun value(): NumericConstant = calc.invoke(name)
+    override fun listText(): String = name
 }
 
 object RelationalExpr {
@@ -181,6 +187,8 @@ class RelationalStringExpr(val a: StringExpr, val op: RelationalExpr.Operator, v
         return NumericConstant(if (isTrue) -1 else 0)
     }
 
+    override fun listText(): String = "${a.listText()}$op${b.listText()}"
+
 }
 
 class StringNumberMismatchExpr(val a: NumericExpr, val b: StringExpr) : NumericExpr() {
@@ -188,6 +196,7 @@ class StringNumberMismatchExpr(val a: NumericExpr, val b: StringExpr) : NumericE
 
     override fun value() = throw StringNumberMismatch()
     override fun displayValue() = throw StringNumberMismatch()
+    override fun listText(): String = a.listText() + b.listText()
 }
 
 // HELPERS //

@@ -18,7 +18,7 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
         if (expressions.isEmpty()) {
             return name
         }
-        return "$name " + expressions.forEach { if (it is Expression) it.displayValue() else it.toString() }
+        return "$name " + expressions.joinToString("") { if (it is Expression) it.listText() else it.toString() }
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
@@ -55,17 +55,12 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 }
 
 class LetNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
-    override fun listText(): String {
-        return "$varName=${expr}" // TODO: Add optional LET and expression's original text
-    }
-
+    override fun listText(): String = "$varName=${expr.listText().trim()}" // TODO: Add optional LET
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setNumericVariable(varName, expr)
 }
 
 class LetStringStatement(val varName: String, val expr: StringExpr) : Statement {
-    override fun listText(): String {
-        return "$varName=$expr" // TODO: Add optional LET and expression's original text
-    }
+    override fun listText(): String = "$varName=${expr.listText()}" // TODO: Add optional LET
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setStringVariable(varName, expr)
 }

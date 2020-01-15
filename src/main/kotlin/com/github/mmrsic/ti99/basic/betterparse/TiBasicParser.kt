@@ -52,7 +52,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val semicolon by token(";")
     private val colon by token(":")
     private val numberSign by token("#")
-    private val printSeparator by colon or comma or semicolon
+    private val printSeparator by colon or comma or semicolon use { text }
     private val e by token("\\B[Ee]")
     private val ws by token("\\s+", ignore = true)
 

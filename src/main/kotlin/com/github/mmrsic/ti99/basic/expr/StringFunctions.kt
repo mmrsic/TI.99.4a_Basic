@@ -1,6 +1,13 @@
 package com.github.mmrsic.ti99.basic.expr
 
-abstract class StringFunction(val name: String) : StringExpr()
+abstract class StringFunction(val name: String) : StringExpr() {
+    override fun listText(): String {
+        return "$name(${listArgs()})"
+    }
+
+    /** Arguments of this function as provided by the LIST statement. */
+    abstract fun listArgs(): String
+}
 
 /**
  * The CHR$ function returns the character corresponding to the ASCII character code specified by numeric-expression.
@@ -8,6 +15,7 @@ abstract class StringFunction(val name: String) : StringExpr()
  */
 data class ChrFunction(private val numericExpr: NumericExpr) : StringFunction("CHR$") {
     override fun value() = StringConstant(toChar(numericExpr.value().toNative().toInt()))
+    override fun listArgs(): String = numericExpr.listText()
 }
 
 /**
@@ -16,17 +24,17 @@ data class ChrFunction(private val numericExpr: NumericExpr) : StringFunction("C
  * string-expression, an empty string is returned. If length extends beyond the end of string-expression, only the
  * characters to the end are returned.
  */
-data class SegFunction(
-    private val stringExpr: StringExpr,
-    private val position: NumericExpr,
-    private val length: NumericExpr
-) : StringFunction("SEG$") {
+data class SegFunction(private val str: StringExpr, private val pos: NumericExpr, private val len: NumericExpr) :
+    StringFunction("SEG$") {
+
     override fun value(): StringConstant {
-        val original = stringExpr.value().toNative()
-        val kotlinStart = position.value().toNative().toInt() - 1
-        val kotlinEnd = kotlinStart + length.value().toNative().toInt()
+        val original = str.value().toNative()
+        val kotlinStart = pos.value().toNative().toInt() - 1
+        val kotlinEnd = kotlinStart + len.value().toNative().toInt()
         return StringConstant(original.substring(kotlinStart, kotlinEnd))
     }
+
+    override fun listArgs(): String = "$str,$pos,$len"
 }
 
 /**
@@ -36,6 +44,7 @@ data class SegFunction(
  */
 data class StrFunction(private val numericExpr: NumericExpr) : StringFunction("STR$") {
     override fun value() = StringConstant(numericExpr.displayValue())
+    override fun listArgs(): String = numericExpr.listText()
 }
 
 

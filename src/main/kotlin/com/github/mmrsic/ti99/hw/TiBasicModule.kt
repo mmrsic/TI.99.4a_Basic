@@ -25,16 +25,24 @@ class TiBasicModule {
         program = null
     }
 
+    /** Cancel the effect of the BREAK command. */
     fun cancelBreak() {
+        println("Not yet implemented: Cancel BREAK")
     }
 
+    /** Cancel the effect of the TRACE command. */
     fun cancelTrace() {
+        println("Not yet implemented: Cancel TRACE")
     }
 
+    /** Close any currently open files. */
     fun closeOpenFiles() {
+        println("Not yet implemented: Close open files")
     }
 
+    /** Release all space that had been allocated for special characters. */
     fun resetCharacters() {
+        println("Not yet implemented: Reset characters")
     }
 
     fun resetVariables() {

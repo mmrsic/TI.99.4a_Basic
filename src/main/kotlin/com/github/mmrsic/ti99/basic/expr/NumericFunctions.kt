@@ -3,7 +3,10 @@ package com.github.mmrsic.ti99.basic.expr
 import kotlin.math.*
 import kotlin.random.Random
 
-abstract class NumericFunction(val name: String) : NumericExpr()
+abstract class NumericFunction(val name: String) : NumericExpr() {
+    override fun listText() = "$name(${listArgs()})"
+    abstract fun listArgs(): String
+}
 
 /**
  * The ABS function gives the absolute value of numeric-expression.
@@ -13,6 +16,7 @@ abstract class NumericFunction(val name: String) : NumericExpr()
  */
 data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("ABS") {
     override fun value() = NumericConstant(abs(numericExpr.value().toNative()))
+    override fun listArgs() = numericExpr.listText()
 }
 
 /**
@@ -21,7 +25,7 @@ data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("ASC") {
     override fun value(): NumericConstant = NumericConstant(toAsciiCode(stringExpr.value().toNative()[0]))
-
+    override fun listArgs() = stringExpr.listText()
 }
 
 /**
@@ -31,6 +35,7 @@ data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("AS
  */
 data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("ATN") {
     override fun value() = NumericConstant(atan(numericExpr.value().toNative()))
+    override fun listArgs() = numericExpr.listText()
 }
 
 /**
@@ -39,6 +44,7 @@ data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("COS") {
     override fun value() = NumericConstant(cos(radianExpr.value().toNative()))
+    override fun listArgs() = radianExpr.listText()
 }
 
 /**
@@ -47,6 +53,7 @@ data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("C
  */
 data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("EXP") {
     override fun value() = NumericConstant(exp(numericExpr.value().toNative()))
+    override fun listArgs() = numericExpr.listText()
 }
 
 /**
@@ -54,6 +61,7 @@ data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("INT") {
     override fun value() = NumericConstant(floor(numericExpr.value().toNative()).toInt())
+    override fun listArgs() = numericExpr.listText()
 }
 
 
@@ -63,6 +71,7 @@ data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LEN") {
     override fun value() = NumericConstant(stringExpr.value().toNative().length)
+    override fun listArgs() = stringExpr.listText()
 }
 
 /**
@@ -71,6 +80,7 @@ data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LE
  */
 data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("LOG") {
     override fun value() = NumericConstant(ln(numericExpr.value().toNative()))
+    override fun listArgs() = numericExpr.listText()
 }
 
 /**
@@ -78,17 +88,16 @@ data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * The search begins at the position specified by numeric-expression. If no match is found, the function returns
  * a value of zero.
  */
-data class PosFunction(
-    private val string1: StringExpr,
-    private val string2: StringExpr,
-    private val numericExpr: NumericExpr
-) : NumericFunction("POS") {
+data class PosFunction(private val str1: StringExpr, private val str2: StringExpr, private val pos: NumericExpr) :
+    NumericFunction("POS") {
     override fun value(): NumericConstant {
-        val source = string1.value().toNative()
-        val searchString = string2.value().toNative()
-        val startIndex = numericExpr.value().toNative().toInt()
+        val source = str1.value().toNative()
+        val searchString = str2.value().toNative()
+        val startIndex = pos.value().toNative().toInt()
         return NumericConstant(1 + source.indexOf(searchString, startIndex))
     }
+
+    override fun listArgs() = "${str1.listText()},${str2.listText()},$pos"
 }
 
 /**
@@ -99,6 +108,7 @@ data class PosFunction(
 class RndFunction : NumericFunction("RND") {
     private val generator: Random = Random(42)
     override fun value() = NumericConstant(generator.nextDouble())
+    override fun listArgs() = ""
 }
 
 /**
@@ -106,6 +116,7 @@ class RndFunction : NumericFunction("RND") {
  */
 data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("SGN") {
     override fun value() = NumericConstant(sign(numericExpr.value().toNative()))
+    override fun listArgs() = numericExpr.listText()
 }
 
 /**
@@ -114,6 +125,7 @@ data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class SinFunction(private val numericExpr: NumericExpr) : NumericFunction("SIN") {
     override fun value() = NumericConstant(sin(numericExpr.value().toNative()))
+    override fun listArgs() = numericExpr.listText()
 }
 
 /**
@@ -122,10 +134,9 @@ data class SinFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("SQR") {
     override fun value() = NumericConstant(sqrt(numericExpr.value().toNative()))
+    override fun listArgs() = numericExpr.listText()
 }
 
 
 /** Convert a given character into its corresponding ASCII code. */
-fun toAsciiCode(c: Char): Int {
-    return c.toInt()
-}
+fun toAsciiCode(c: Char) = c.toInt()
