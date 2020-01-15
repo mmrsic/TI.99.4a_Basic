@@ -65,7 +65,11 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
         if (machine.program == null) {
             throw CantDoThat()
         }
-        machine.listProgram()
+        when {
+            isRange -> machine.listProgram(start, end)
+            start != null -> machine.listProgram(start, start)
+            else -> machine.listProgram()
+        }
     }
 }
 

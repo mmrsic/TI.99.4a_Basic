@@ -95,13 +95,13 @@ class TiBasicModule {
         program!!.store(programLine)
     }
 
-    fun listProgram() {
+    fun listProgram(startLine: Int? = null, endLine: Int? = null) {
         if (program == null) {
             throw CantDoThat()
         }
         val programToList = program!!
-        var lineNumber: Int? = programToList.firstLineNumber()
-        while (lineNumber != null) {
+        var lineNumber: Int? = if (startLine != null) startLine else programToList.firstLineNumber()
+        while (lineNumber != null && (endLine == null || lineNumber <= endLine)) {
             val statement = programToList.getStatements(lineNumber)[0]
             screen.print("$lineNumber ${statement.listText()}")
             lineNumber = programToList.nextLineNumber(lineNumber)
