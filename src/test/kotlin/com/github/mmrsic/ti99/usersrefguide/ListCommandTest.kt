@@ -169,6 +169,91 @@ class ListCommandTest {
         )
     }
 
+    @Test
+    fun testListProgramLineZeroWhenProgramIsPresent() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        enterExampleProgram(machine, interpreter)
+        interpreter.interpret("LIST 0", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                14 to "  TI BASIC READY",
+                16 to " >100 A=279.3",
+                17 to " >120 PRINT A;B",
+                18 to " >110 B=-456.8",
+                19 to " >130 END",
+                20 to " >LIST 0",
+                22 to "  * BAD LINE NUMBER",
+                24 to " >"
+            ),
+            machine.screen
+        )
+    }
+
+    @Test
+    fun testListProgramLine32768WhenProgramIsPresent() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        enterExampleProgram(machine, interpreter)
+        interpreter.interpret("LIST 32768", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                14 to "  TI BASIC READY",
+                16 to " >100 A=279.3",
+                17 to " >120 PRINT A;B",
+                18 to " >110 B=-456.8",
+                19 to " >130 END",
+                20 to " >LIST 32768",
+                22 to "  * BAD LINE NUMBER",
+                24 to " >"
+            ),
+            machine.screen
+        )
+    }
+
+    @Test
+    fun testListProgramLineDecimalWhenProgramIsPresent() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        enterExampleProgram(machine, interpreter)
+        interpreter.interpret("LIST 32.7", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                14 to "  TI BASIC READY",
+                16 to " >100 A=279.3",
+                17 to " >120 PRINT A;B",
+                18 to " >110 B=-456.8",
+                19 to " >130 END",
+                20 to " >LIST 32.7",
+                22 to "  * INCORRECT STATEMENT",
+                24 to " >"
+            ),
+            machine.screen
+        )
+    }
+
+    @Test
+    fun testListProgramAfterNewCommand() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        enterExampleProgram(machine, interpreter)
+        interpreter.interpret("NEW", machine)
+        interpreter.interpret("LIST", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                18 to "  TI BASIC READY",
+                20 to " >LIST",
+                22 to "  * CAN'T DO THAT",
+                24 to " >"
+            ),
+            machine.screen
+        )
+    }
+
 
     // HELPERS //
 

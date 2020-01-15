@@ -1,6 +1,7 @@
 package com.github.mmrsic.ti99.basic
 
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
+import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
@@ -30,10 +31,17 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         val screen = machine.screen
         screen.print(inputLine)
         println("Parsing command line input: $inputLine")
-        val parseResult = parser.parseToEnd(inputLine)
+        val parseResult = try {
+            parser.parseToEnd(inputLine)
+        } catch (e: ParseException) {
+            println("Parse error: ${e.errorResult}")
+        }
         if (parseResult !is TiBasicExecutable) {
-            println("Illegal command/statement: $inputLine")
-            throw IncorrectStatement()
+            screen.print("")
+            screen.print("* INCORRECT STATEMENT")
+            screen.print("")
+            screen.acceptAt(24, 2, ">")
+            return
         }
 
         println("Executing $parseResult")
@@ -43,6 +51,10 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
                 screen.print("")
             }
         } catch (e: BadLineNumber) {
+            screen.print("")
+            screen.print("* ${e.message}")
+            screen.print("")
+        } catch (e: CantDoThat) {
             screen.print("")
             screen.print("* ${e.message}")
             screen.print("")

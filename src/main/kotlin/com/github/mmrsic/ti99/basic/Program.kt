@@ -27,7 +27,6 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
     fun hasLineNumber(lineNumber: Int): Boolean = lines.containsKey(lineNumber)
     fun firstLineNumber(): Int = lines.firstKey()
     fun nextLineNumber(lineNumber: Int): Int? = lines.higherKey(lineNumber)
-    fun previousLineNumber(lineNumber: Int): Int? = lines.lowerKey(lineNumber)
     fun lastLineNumber(): Int = lines.lastKey()
 
     class LineResult {

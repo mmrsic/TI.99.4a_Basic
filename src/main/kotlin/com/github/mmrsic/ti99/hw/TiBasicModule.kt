@@ -1,9 +1,6 @@
 package com.github.mmrsic.ti99.hw
 
-import com.github.mmrsic.ti99.basic.BadName
-import com.github.mmrsic.ti99.basic.CantDoThat
-import com.github.mmrsic.ti99.basic.ProgramLine
-import com.github.mmrsic.ti99.basic.TiBasicProgram
+import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.StringConstant
@@ -100,6 +97,12 @@ class TiBasicModule {
     fun listProgram(rangeStart: Int? = null, rangeEnd: Int? = null) {
         if (program == null) {
             throw CantDoThat()
+        }
+        if (rangeStart != null && (rangeStart == 0 || rangeStart > 32767)) {
+            throw BadLineNumber()
+        }
+        if (rangeEnd != null && (rangeEnd == 0 || rangeEnd > 32767)) {
+            throw BadLineNumber()
         }
         val programToList = program!!
         val firstLineNumber = programToList.firstLineNumber()
