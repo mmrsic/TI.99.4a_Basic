@@ -9,6 +9,8 @@ import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.basic.expr.StringExpr
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
 class TiBasicModule {
     var program: TiBasicProgram? = null
@@ -95,16 +97,25 @@ class TiBasicModule {
         program!!.store(programLine)
     }
 
-    fun listProgram(startLine: Int? = null, endLine: Int? = null) {
+    fun listProgram(rangeStart: Int? = null, rangeEnd: Int? = null) {
         if (program == null) {
             throw CantDoThat()
         }
         val programToList = program!!
-        var lineNumber: Int? = if (startLine != null) startLine else programToList.firstLineNumber()
-        while (lineNumber != null && (endLine == null || lineNumber <= endLine)) {
-            val statement = programToList.getStatements(lineNumber)[0]
-            screen.print("$lineNumber ${statement.listText()}")
-            lineNumber = programToList.nextLineNumber(lineNumber)
+        val firstLineNumber = programToList.firstLineNumber()
+        val lastLineNumber = programToList.lastLineNumber()
+        var currLineNum: Int? =
+            if (rangeStart == null) firstLineNumber else min(max(firstLineNumber, rangeStart), lastLineNumber)
+        if (!programToList.hasLineNumber(currLineNum!!)) {
+            val lineNumToList = programToList.nextLineNumber(currLineNum)!!
+            val statement = programToList.getStatements(lineNumToList)[0]
+            screen.print("$lineNumToList ${statement.listText()}")
+            return
+        }
+        while (currLineNum != null && (rangeEnd == null || currLineNum <= max(rangeEnd, firstLineNumber))) {
+            val statement = programToList.getStatements(currLineNum)[0]
+            screen.print("$currLineNum ${statement.listText()}")
+            currLineNum = programToList.nextLineNumber(currLineNum)
         }
     }
 

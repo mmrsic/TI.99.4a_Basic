@@ -6,7 +6,7 @@ import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
 /**
- * Test cases for examples in section Commands of User Reference Guide on page II-21.
+ * Test cases for examples in section Commands of User Reference Guide on page II-21 and II-22.
  */
 class ListCommandTest {
 
@@ -97,6 +97,72 @@ class ListCommandTest {
                 21 to " >LIST 120-",
                 22 to "  120 PRINT A;B",
                 23 to "  130 END",
+                24 to " >"
+            ),
+            machine.screen
+        )
+    }
+
+    @Test
+    fun testListProgramFromLineNumbersGreaterThanAnyInProgram() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        enterExampleProgram(machine, interpreter)
+        interpreter.interpret("LIST 150-", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                16 to "  TI BASIC READY",
+                18 to " >100 A=279.3",
+                19 to " >120 PRINT A;B",
+                20 to " >110 B=-456.8",
+                21 to " >130 END",
+                22 to " >LIST 150-",
+                23 to "  130 END",
+                24 to " >"
+            ),
+            machine.screen
+        )
+    }
+
+    @Test
+    fun testListProgramUntilLineNumbersLessThanAnyInProgram() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        enterExampleProgram(machine, interpreter)
+        interpreter.interpret("LIST -90", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                16 to "  TI BASIC READY",
+                18 to " >100 A=279.3",
+                19 to " >120 PRINT A;B",
+                20 to " >110 B=-456.8",
+                21 to " >130 END",
+                22 to " >LIST -90",
+                23 to "  100 A=279.3",
+                24 to " >"
+            ),
+            machine.screen
+        )
+    }
+
+    @Test
+    fun testListProgramLineWhichInBetweenExistentProgramLines() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        enterExampleProgram(machine, interpreter)
+        interpreter.interpret("LIST 105", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                16 to "  TI BASIC READY",
+                18 to " >100 A=279.3",
+                19 to " >120 PRINT A;B",
+                20 to " >110 B=-456.8",
+                21 to " >130 END",
+                22 to " >LIST 105",
+                23 to "  110 B=-456.8",
                 24 to " >"
             ),
             machine.screen

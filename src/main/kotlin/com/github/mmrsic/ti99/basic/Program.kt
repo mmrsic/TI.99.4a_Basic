@@ -20,20 +20,15 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
     }
 
     fun getStatements(lineNumber: Int): List<Statement> {
-        val line = lines[lineNumber]
-        if (line == null) {
-            throw Exception("No such line: $line") // TODO Simulate TI Basic
-        }
+        val line = lines[lineNumber] ?: throw Exception("No such line: $lineNumber")
         return line.statements
     }
 
-    fun firstLineNumber(): Int {
-        return lines.firstKey()
-    }
-
-    fun nextLineNumber(lineNumber: Int): Int? {
-        return lines.higherKey(lineNumber)
-    }
+    fun hasLineNumber(lineNumber: Int): Boolean = lines.containsKey(lineNumber)
+    fun firstLineNumber(): Int = lines.firstKey()
+    fun nextLineNumber(lineNumber: Int): Int? = lines.higherKey(lineNumber)
+    fun previousLineNumber(lineNumber: Int): Int? = lines.lowerKey(lineNumber)
+    fun lastLineNumber(): Int = lines.lastKey()
 
     class LineResult {
         object End
