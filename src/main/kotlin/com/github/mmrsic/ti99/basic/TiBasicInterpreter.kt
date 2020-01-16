@@ -51,7 +51,9 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
                 screen.print("")
             }
         } catch (e: BadLineNumber) {
-            screen.print("")
+            if (parseResult !is RunCommand) {
+                screen.print("")
+            }
             screen.print("* ${e.message}")
             screen.print("")
         } catch (e: CantDoThat) {
@@ -87,11 +89,11 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 
 class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInterpreter(machine) {
 
-    fun interpretAll(): TiBasicError? {
+    fun interpretAll(startLineNum: Int? = null): TiBasicError? {
         var breakReason: TiBasicError? = null
         val program = machine.program ?: throw CantDoThat()
         println("Executing $program")
-        var pc: Int? = program.firstLineNumber()
+        var pc: Int? = startLineNum ?: program.firstLineNumber()
         var stopRun = false
         while (pc != null && !stopRun) {
             val stmt = program.getStatements(pc)[0]

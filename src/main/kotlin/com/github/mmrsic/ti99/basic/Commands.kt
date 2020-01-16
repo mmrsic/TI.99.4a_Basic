@@ -76,8 +76,12 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
 data class RunCommand(val line: Int?) : Command {
     override val name: String = "RUN"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        if (line != null && machine.program != null && !machine.program!!.hasLineNumber(line)) {
+            throw BadLineNumber()
+        }
+        machine.resetCharacters()
         machine.resetVariables()
-        val runResult = TiBasicProgramInterpreter(machine).interpretAll()
+        val runResult = TiBasicProgramInterpreter(machine).interpretAll(line)
         if (runResult == null) {
             machine.screen.print("")
             machine.screen.print("** DONE **")
