@@ -108,3 +108,9 @@ class StoreProgramLineCommand(private val programLine: ProgramLine) : Command {
         machine.store(programLine)
     }
 }
+
+class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : TiBasicExecutable {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        println("Not yet implemented: NUM[BER] $initialLine,$increment")
+    }
+}

@@ -30,6 +30,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val new by token("\\bNEW\\b")
     private val print by token("\\bPRINT\\b")
     private val run by token("\\bRUN\\b")
+    private val num by token("""NUM(BER)?""")
 
     private val minus by token("-")
     private val plus by token("\\+")
@@ -121,6 +122,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val listToCmd by skip(list) and skip(minus) and positiveInt use { ListCommand(null, text.toInt()) }
     private val listLineCmd by skip(list) and positiveInt use { ListCommand(text.toInt()) }
     private val listCmd by list asJust ListCommand(null)
+    private val numberCmd by skip(num) and
+            optional(positiveInt use { Integer.parseInt(text) }) and
+            optional(skip(comma) and positiveInt use { Integer.parseInt(text) }) use {
+        when {
+            t1 == null && t2 == null -> NumberCommand()
+            t1 != null && t2 == null -> NumberCommand(initialLine = t1!!)
+            t1 == null && t2 != null -> NumberCommand(increment = t2!!)
+            t1 != null && t2 != null -> NumberCommand(initialLine = t1!!, increment = t2!!)
+            else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
+        }
+    }
 
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
@@ -150,7 +162,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val endStmt by end asJust EndStatement()
 
-    private val cmdParser = newCmd or runCmd or byeCmd or
+    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser = printStmt or assignNumberStmt or assignStringStmt or endStmt
 
