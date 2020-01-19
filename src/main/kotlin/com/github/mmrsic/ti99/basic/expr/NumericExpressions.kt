@@ -34,23 +34,29 @@ abstract class TwoOpNumericExpr(val op1: NumericExpr, val op2: NumericExpr) : Nu
         return super.visitAllValues(lambda)
     }
 
-    override fun listText(): String = "${op1.listText()}${op2.listText()}"
+    override fun listText(): String = "${op1.listText()}${opSymbol()}${op2.listText().trim()}"
+    /** Symbol of the operator used by this [TwoOpNumericExpr]. */
+    abstract fun opSymbol(): String
 }
 
 class Addition(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
     override fun value() = NumericConstant(op1.value().toNative() + op2.value().toNative())
+    override fun opSymbol(): String = "+"
 }
 
 class Subtraction(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
     override fun value() = NumericConstant(op1.value().toNative() - op2.value().toNative())
+    override fun opSymbol(): String = "-"
 }
 
 class Multiplication(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
     override fun value() = NumericConstant(op1.value().toNative() * op2.value().toNative())
+    override fun opSymbol(): String = "*"
 }
 
 class Division(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
     override fun value() = NumericConstant(op1.value().toNative() / op2.value().toNative())
+    override fun opSymbol(): String = "/"
 }
 
 class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
@@ -62,6 +68,8 @@ class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1,
         }
         return NumericConstant(baseValue.pow(expValue))
     }
+
+    override fun opSymbol(): String = "^"
 }
 
 data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
@@ -133,10 +141,12 @@ object RelationalExpr {
         throw IllegalStateException("Logic error in method: Not all possible combinations covered")
     }
 
+    /** Operator of a [RelationalExpr]. */
     enum class Operator {
         EQUAL_TO, NOT_EQUAL_TO, LESS_THAN, LESS_THAN_OR_EQUAL_TO, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO;
 
         companion object {
+            /** Create a [Operator] from a given symbol representing it. */
             fun fromSymbol(symbol: String): Operator {
                 return when (symbol) {
                     "=" -> EQUAL_TO
@@ -168,6 +178,8 @@ class RelationalNumericExpr(val a: NumericExpr, val op: RelationalExpr.Operator,
         }
         return NumericConstant(if (isTrue) -1 else 0)
     }
+
+    override fun opSymbol(): String = op.name
 
 }
 

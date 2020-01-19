@@ -114,3 +114,14 @@ class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : TiBas
         println("Not yet implemented: NUM[BER] $initialLine,$increment")
     }
 }
+
+/**
+ * When the RESEQUENCE command is entered, all lines in the program are assigned new line numbers
+ * according to the specified initial-line and increment.
+ */
+class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : TiBasicExecutable {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.resequenceProgram(initialLine, increment)
+    }
+
+}

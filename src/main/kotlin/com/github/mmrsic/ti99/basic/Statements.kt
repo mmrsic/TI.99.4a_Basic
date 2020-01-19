@@ -10,6 +10,13 @@ interface Statement : TiBasicExecutable {
     fun listText(): String
 }
 
+/**
+ * A [Statement] that may depend on at least one line number of a program
+ */
+interface LineNumberDependentStatement : Statement {
+    fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
+}
+
 class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 
     override val name: String = "PRINT"
@@ -73,4 +80,27 @@ class EndStatement : Statement {
     override fun listText(): String {
         return "END"
     }
+}
+
+class RemarkStatement(val text: String) : Statement {
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = println("Remark: $text")
+    override fun listText(): String = "REM $text"
+
+}
+
+class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
+
+    private var lineNumber: Int = originalLineNum
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        TODO("not implemented")
+    }
+
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+        lineNumber = lineNumbersMapping[lineNumber]!!
+    }
+
+    override fun listText(): String = "GO TO $lineNumber"
+
 }

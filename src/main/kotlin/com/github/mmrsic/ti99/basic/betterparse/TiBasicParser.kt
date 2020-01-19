@@ -30,7 +30,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val new by token("\\bNEW\\b")
     private val print by token("\\bPRINT\\b")
     private val run by token("\\bRUN\\b")
-    private val num by token("""NUM(BER)?""")
+    private val number by token("""NUM(BER)?""")
+    private val resequence by token("""RES(EQUENCE)?""")
+    private val remark by token("""REM(ARK)?.*""")
+    private val goto by token("""GO\s?TO""")
 
     private val minus by token("-")
     private val plus by token("\\+")
@@ -122,7 +125,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val listToCmd by skip(list) and skip(minus) and positiveInt use { ListCommand(null, text.toInt()) }
     private val listLineCmd by skip(list) and positiveInt use { ListCommand(text.toInt()) }
     private val listCmd by list asJust ListCommand(null)
-    private val numberCmd by skip(num) and
+    private val numberCmd by skip(number) and
             optional(positiveInt use { Integer.parseInt(text) }) and
             optional(skip(comma) and positiveInt use { Integer.parseInt(text) }) use {
         when {
@@ -130,6 +133,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             t1 != null && t2 == null -> NumberCommand(initialLine = t1!!)
             t1 == null && t2 != null -> NumberCommand(increment = t2!!)
             t1 != null && t2 != null -> NumberCommand(initialLine = t1!!, increment = t2!!)
+            else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
+        }
+    }
+    private val resequenceCmd by skip(resequence) and
+            optional(positiveInt use { Integer.parseInt(text) }) and
+            optional(skip(comma) and positiveInt use { Integer.parseInt(text) }) use {
+        when {
+            t1 == null && t2 == null -> ResequenceCommand()
+            t1 != null && t2 == null -> ResequenceCommand(initialLine = t1!!)
+            t1 == null && t2 != null -> ResequenceCommand(increment = t2!!)
+            t1 != null && t2 != null -> ResequenceCommand(initialLine = t1!!, increment = t2!!)
             else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
         }
     }
@@ -161,10 +175,20 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         LetStringStatement(t1.name, t2)
     }
     private val endStmt by end asJust EndStatement()
+    private val remarkStmt by remark use {
+        when {
+            text.startsWith("REMARK") -> RemarkStatement(text.substringAfter("REMARK"))
+            text.startsWith("REM") -> RemarkStatement(text.substringAfter("REM"))
+            else -> throw IllegalArgumentException("Illegal REMARK: $text")
+        }
+    }
+    private val gotoStmt by skip(goto) and (positiveInt use { Integer.parseInt(text) }) map { lineNum: Int ->
+        GoToStatement(lineNum)
+    }
 
-    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or
+    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
-    private val stmtParser = printStmt or assignNumberStmt or assignStringStmt or endStmt
+    private val stmtParser = printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))
