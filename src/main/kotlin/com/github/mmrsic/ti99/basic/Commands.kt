@@ -92,7 +92,7 @@ data class RunCommand(val line: Int?) : Command {
 class ByeCommand : Command {
     override val name: String = "BYE"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        machine.leave()
     }
 }
 

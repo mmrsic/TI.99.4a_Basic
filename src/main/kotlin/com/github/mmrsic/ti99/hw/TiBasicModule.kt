@@ -9,7 +9,7 @@ import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-class TiBasicModule {
+class TiBasicModule : TiModule {
     var program: TiBasicProgram? = null
         private set
     val screen = TiBasicScreen()
@@ -17,7 +17,14 @@ class TiBasicModule {
     private val numericVariables: MutableMap<String, NumericConstant> = TreeMap()
 
     init {
-        initCommandScreen()
+        enter()
+    }
+
+    override fun enter() = initCommandScreen()
+    override fun leave() {
+        closeOpenFiles()
+        eraseProgram()
+        resetVariables()
     }
 
     internal fun eraseProgram() {
@@ -44,36 +51,41 @@ class TiBasicModule {
         println("Not yet implemented: Reset characters")
     }
 
+    /** Reset [getAllNumericVariableValues] and [getAllStringVariableValues] of this instance to an empty map. */
     fun resetVariables() {
         numericVariables.clear()
         stringVariables.clear()
     }
 
+    /** The current value of a string value given by its name. */
     fun getStringVariableValue(name: String): StringConstant {
-        if (name.length > 15) {
-            throw BadName()
-        }
-        return if (stringVariables.containsKey(name)) stringVariables[name]!! else StringConstant("")
+        if (name.last() != '$') throw IllegalArgumentException("Illegal string variable name: $name")
+
+        if (name.length > 15) throw BadName()
+        if (!stringVariables.containsKey(name)) stringVariables[name] = StringConstant((""))
+        return stringVariables[name]!!
     }
 
+    /** Change the value of a numeric variable of this instance.*/
     fun setStringVariable(name: String, expr: StringExpr) {
-        if (name.length > 15) {
-            throw BadName()
-        }
+        if (name.length > 15) throw BadName()
         stringVariables[name] = StringConstant(expr.displayValue())
     }
 
+    /** All the string variable names and their string constant values currently known by this instance. */
+    fun getAllStringVariableValues(): Map<String, StringConstant> = stringVariables
+
+    /** The current value of a numeric value given by its name. */
     fun getNumericVariableValue(name: String): NumericConstant {
-        if (name.length > 15) {
-            throw BadName()
-        }
-        return if (numericVariables.containsKey(name)) numericVariables[name]!! else NumericConstant(0)
+        if (name.length > 15) throw BadName()
+        if (!numericVariables.containsKey(name)) numericVariables[name] = NumericConstant(0)
+        return numericVariables[name]!!
     }
 
-    fun getAllNumericVariableValues(): Map<String, NumericConstant> {
-        return numericVariables
-    }
+    /** All the numeric variable names and their numeric constant values currently known by this instance. */
+    fun getAllNumericVariableValues(): Map<String, NumericConstant> = numericVariables
 
+    /** Change the value of a numeric variable of this instance. */
     fun setNumericVariable(name: String, expr: NumericExpr) {
         if (name.length > 15) {
             throw BadName()
@@ -81,12 +93,14 @@ class TiBasicModule {
         numericVariables[name] = expr.value()
     }
 
+    /** Initialize the [screen] of this module to the command interpreter mode after entering the */
     fun initCommandScreen() {
         screen.clear()
         screen.strings.displayAt(22, 3, "TI BASIC READY")
         screen.acceptAt(24, 2, ">")
     }
 
+    /** Store a given [ProgramLine] into this instance's [program]. */
     fun store(programLine: ProgramLine) {
         if (program == null) {
             program = TiBasicProgram()
@@ -94,6 +108,7 @@ class TiBasicModule {
         program!!.store(programLine)
     }
 
+    /** List the [program] of this instance. */
     fun listProgram(rangeStart: Int? = null, rangeEnd: Int? = null) {
         if (program == null) {
             throw CantDoThat()
