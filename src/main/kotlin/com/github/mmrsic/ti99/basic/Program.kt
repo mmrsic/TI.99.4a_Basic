@@ -8,15 +8,12 @@ class ProgramLine(val lineNumber: Int, val statements: List<Statement>)
 sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
 
     fun store(line: ProgramLine) {
-        if (line.lineNumber < 1 || line.lineNumber > 32767) {
-            throw BadLineNumber()
-        }
+        val lineNumber = line.lineNumber
+        checkLineNumber(lineNumber)
         for (statement in line.statements) {
-            if (statement is LetNumberStatement && statement.varName.length > 15) {
-                throw BadName()
-            }
+            if (statement is LetNumberStatement && statement.varName.length > 15) throw BadName()
         }
-        lines[line.lineNumber] = line
+        lines[lineNumber] = line
     }
 
     fun getStatements(lineNumber: Int): List<Statement> {
@@ -33,15 +30,17 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
 
     /** RESEQUENCE the line numbers of this program for a given initial line number and a given increment. */
     fun resequence(initialLine: Int, increment: Int) {
-        val oldLines = lines.toMap()
-        lines.clear()
         val lineMapping = mutableMapOf<Int, Int>()
-        oldLines.values.forEachIndexed { entryIdx, oldProgramLine ->
+        lines.values.forEachIndexed { entryIdx, oldProgramLine ->
             val newLineNum = initialLine + increment * entryIdx
-            lines[newLineNum] = ProgramLine(newLineNum, oldProgramLine.statements)
+            checkLineNumber(newLineNum)
             lineMapping[oldProgramLine.lineNumber] = newLineNum
         }
-        for (programLine in lines.values) {
+        val oldLines = lines.toMap()
+        lines.clear()
+        for (programLine in oldLines.values) {
+            val newLineNum: Int = lineMapping[programLine.lineNumber]!!
+            lines[newLineNum] = ProgramLine(newLineNum, programLine.statements)
             for (stmt in programLine.statements) {
                 stmt.adjustLineNumbers(lineMapping)
             }
@@ -56,10 +55,19 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
         class Gosub(lineNumber: Int) : Execute(lineNumber)
     }
 
+    /**
+     * Check whether a given line number is acceptable
+     * @param lineNumber the line number to check
+     * @throws BadLineNumber if the specified line number is not acceptable
+     */
+    private fun checkLineNumber(lineNumber: Int) {
+        if (!isCorrectLineNumber(lineNumber)) throw BadLineNumber()
+    }
+
+    private fun isCorrectLineNumber(lineNumber: Int) = lineNumber in 1..32767
+
     private fun Statement.adjustLineNumbers(linNumbersMapping: Map<Int, Int>) {
-        if (this is LineNumberDependentStatement) {
-            this.changeLineNumbers(linNumbersMapping)
-        }
+        if (this is LineNumberDependentStatement) this.changeLineNumbers(linNumbersMapping)
     }
 
 }

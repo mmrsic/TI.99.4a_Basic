@@ -27,7 +27,9 @@ abstract class NumericExpr : Expression {
     open fun visitAllValues(lambda: (value: NumericConstant) -> Any) = lambda.invoke(value())
 }
 
+/** An [NumericExpr] representing a TI Basic arithmetic expression of exactly two numeric expressions. */
 abstract class TwoOpNumericExpr(val op1: NumericExpr, val op2: NumericExpr) : NumericExpr() {
+
     override fun visitAllValues(lambda: (value: NumericConstant) -> Any): Any {
         lambda.invoke(op1.value())
         lambda.invoke(op2.value())
@@ -35,7 +37,11 @@ abstract class TwoOpNumericExpr(val op1: NumericExpr, val op2: NumericExpr) : Nu
     }
 
     override fun listText(): String = "${op1.listText()}${opSymbol()}${op2.listText().trim()}"
-    /** Symbol of the operator used by this [TwoOpNumericExpr]. */
+
+    /**
+     * Symbol of the operator used by this [TwoOpNumericExpr].
+     * @return [String] representation of the operator symbol
+     */
     abstract fun opSymbol(): String
 }
 
@@ -116,7 +122,7 @@ data class NumericConstant(private val constant: Number) : NumericExpr(), Consta
         return if (doubleValue < 0) "$numText " else " $numText "
     }
 
-    override fun listText(): String = displayValue()
+    override fun listText(): String = displayValue().trim()
 }
 
 data class NumericVariable(val name: String, val calc: (String) -> NumericConstant) : NumericExpr() {

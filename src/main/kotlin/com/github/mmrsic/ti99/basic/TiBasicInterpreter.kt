@@ -52,7 +52,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
                 screen.print("")
             }
         } catch (e: BadLineNumber) {
-            if (parseResult !is RunCommand) {
+            if (!setOf(RunCommand::class, ResequenceCommand::class).contains(parseResult::class)) {
                 screen.print("")
             }
             screen.print("* ${e.message}")

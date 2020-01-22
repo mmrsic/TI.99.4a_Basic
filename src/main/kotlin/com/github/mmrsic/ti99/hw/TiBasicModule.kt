@@ -139,9 +139,7 @@ class TiBasicModule : TiModule {
 
     /** RESEQUENCE command for [program] of this instance. */
     fun resequenceProgram(initialLine: Int, increment: Int) {
-        if (program == null) {
-            throw CantDoThat()
-        }
+        if (program == null) throw CantDoThat()
         program!!.resequence(initialLine, increment)
     }
 

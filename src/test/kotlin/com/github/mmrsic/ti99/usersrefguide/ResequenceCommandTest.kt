@@ -127,4 +127,51 @@ class ResequenceCommandTest {
         )
     }
 
+    @Test
+    fun testComputedLineTooHigh() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 PRINT 1
+            110 PRINT 2
+            120 PRINT 3
+            RESEQUENCE 32600,100
+            LIST
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                12 to "  TI BASIC READY",
+                14 to " >100 PRINT 1",
+                15 to " >110 PRINT 2",
+                16 to " >120 PRINT 3",
+                17 to " >RESEQUENCE 32600,100",
+                18 to "  * BAD LINE NUMBER",
+                20 to " >LIST",
+                21 to "  100 PRINT 1",
+                22 to "  110 PRINT 2",
+                23 to "  120 PRINT 3",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testWhileNoProgramIsInMemory() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("RESEQUENCE", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                18 to "  TI BASIC READY",
+                20 to " >RESEQUENCE",
+                22 to "  * CAN'T DO THAT",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
