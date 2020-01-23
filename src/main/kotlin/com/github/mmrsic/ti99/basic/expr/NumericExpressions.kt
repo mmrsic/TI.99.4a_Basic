@@ -69,9 +69,7 @@ class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1,
     override fun value(): NumericConstant {
         val baseValue = op1.value().toNative()
         val expValue = op2.value().toNative()
-        if (baseValue < 0 && BigDecimal(expValue).scale() > 0) {
-            throw BadValue()
-        }
+        if (baseValue < 0 && BigDecimal(expValue).scale() > 0) throw BadValue()
         return NumericConstant(baseValue.pow(expValue))
     }
 

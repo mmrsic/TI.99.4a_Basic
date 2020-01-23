@@ -34,6 +34,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val resequence by token("""RES(EQUENCE)?""")
     private val remark by token("""REM(ARK)?.*""")
     private val goto by token("""GO\s?TO""")
+    private val breakToken by token("BREAK")
+    private val continueToken by token("CONTINUE")
 
     private val minus by token("-")
     private val plus by token("\\+")
@@ -147,6 +149,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
         }
     }
+    private val breakCmd by skip(breakToken) and
+            separated(positiveInt use { Integer.parseInt(text) }, comma, acceptZero = false) use {
+        BreakCommand(terms)
+    }
+    private val continueCmd by continueToken asJust ContinueCommand()
 
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
@@ -186,14 +193,15 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         GoToStatement(lineNum)
     }
 
-    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
+    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or breakCmd or continueCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser = printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))
     }
+    private val removeProgramLineParser by positiveInt use { RemoveProgramLineCommand(Integer.parseInt(text)) }
 
-    override val rootParser by cmdParser or stmtParser or programLineParser
+    override val rootParser by cmdParser or stmtParser or programLineParser or removeProgramLineParser
 }
 

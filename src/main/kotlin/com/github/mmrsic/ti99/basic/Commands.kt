@@ -62,31 +62,21 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (machine.program == null) {
-            throw CantDoThat()
-        }
+        if (machine.program == null) throw CantDoThat()
         when {
             isRange -> machine.listProgram(start, end)
             start != null -> machine.listProgram(start, start)
             else -> machine.listProgram()
         }
     }
+
+    override fun requiresEmptyLineAfterExecution() = false
 }
 
 data class RunCommand(val line: Int?) : Command {
     override val name: String = "RUN"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (line != null && machine.program != null && !machine.program!!.hasLineNumber(line)) {
-            throw BadLineNumber()
-        }
-        machine.resetCharacters()
-        machine.resetVariables()
-        val runResult = TiBasicProgramInterpreter(machine).interpretAll(line)
-        if (runResult == null) {
-            machine.screen.print("")
-            machine.screen.print("** DONE **")
-        }
-    }
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.runProgram(line)
+    override fun requiresEmptyLineAfterExecution() = false
 }
 
 class ByeCommand : Command {
@@ -107,6 +97,14 @@ class StoreProgramLineCommand(private val programLine: ProgramLine) : Command {
         machine.resetVariables()
         machine.store(programLine)
     }
+
+    override fun requiresEmptyLineAfterExecution() = false
+}
+
+class RemoveProgramLineCommand(private val lineNumber: Int) : Command {
+    override val name = "-- IMPLICIT REMOVAL --"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.removeProgramLine(lineNumber)
+    override fun requiresEmptyLineAfterExecution() = false
 }
 
 class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : TiBasicExecutable {
@@ -124,4 +122,24 @@ class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : T
         machine.resequenceProgram(initialLine, increment)
     }
 
+    override fun requiresEmptyLineAfterExecution() = false
+}
+
+/**
+ * When a BREAK command is entered, breakpoints are set at the program lines listed in the line-list.
+ */
+class BreakCommand(private val lineNumbers: List<Int>) : TiBasicExecutable {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        if (programLineNumber != null) throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
+        machine.setBreakpoints(lineNumbers)
+    }
+}
+
+class ContinueCommand : TiBasicExecutable {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        if (programLineNumber != null) throw IllegalArgumentException("Continue command may not be used in program: $programLineNumber")
+        machine.continueProgram()
+    }
+
+    override fun requiresEmptyLineAfterExecution() = false
 }

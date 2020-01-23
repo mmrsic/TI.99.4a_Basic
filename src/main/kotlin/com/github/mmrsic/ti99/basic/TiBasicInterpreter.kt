@@ -6,8 +6,12 @@ import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
 
+/**
+ * A TI Basic interpreter for a given [TiBasicModule].
+ */
 abstract class TiBasicInterpreter(machine: TiBasicModule) {
 
+    /** Print a given [TiBasicException] onto a given [TiBasicScreen]. */
     protected fun print(e: TiBasicException, screen: TiBasicScreen, lineNumber: Int? = null) {
         // TODO? Use PrintStatement
         screen.print("")
@@ -17,9 +21,7 @@ abstract class TiBasicInterpreter(machine: TiBasicModule) {
         } else {
             screen.print("* ${e.message}" + if (lineNumber != null) " IN $lineNumber" else "")
         }
-        if (lineNumber == null) {
-            screen.print("")
-        }
+        screen.print("")
     }
 
 }
@@ -37,9 +39,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
             println("Parse error: ${e.errorResult}")
         }
         if (parseResult !is TiBasicExecutable) {
-            screen.print("")
-            screen.print("* INCORRECT STATEMENT")
-            screen.print("")
+            print(IncorrectStatement(), screen)
             screen.acceptAt(24, 2, ">")
             return
         }
@@ -47,10 +47,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         println("Executing $parseResult")
         try {
             parseResult.execute(machine)
-            if (!setOf(StoreProgramLineCommand::class, ListCommand::class, ResequenceCommand::class)
-                        .contains(parseResult::class)) {
-                screen.print("")
-            }
+            if (parseResult.requiresEmptyLineAfterExecution()) screen.print("")
         } catch (e: BadLineNumber) {
             if (!setOf(RunCommand::class, ResequenceCommand::class).contains(parseResult::class)) {
                 screen.print("")
@@ -66,6 +63,9 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
             screen.print("")
         } catch (e: NumberTooBig) {
             print(e, screen)
+        } catch (e: CantContinue) {
+            screen.print("* ${e.message}")
+            screen.print("")
         }
         if (parseResult is NewCommand) {
             machine.initCommandScreen()
@@ -90,13 +90,18 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 
 class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInterpreter(machine) {
 
-    fun interpretAll(startLineNum: Int? = null): TiBasicError? {
-        var breakReason: TiBasicError? = null
+    fun interpretAll(startLineNum: Int? = null): Any? {
+        var errorReason: TiBasicError? = null
         val program = machine.program ?: throw CantDoThat()
         println("Executing $program")
         var pc: Int? = startLineNum ?: program.firstLineNumber()
         var stopRun = false
         while (pc != null && !stopRun) {
+            if (machine.checkBreakpoint(pc)) {
+                machine.screen.print("")
+                machine.screen.print("* BREAKPOINT AT $pc")
+                return "Breakpoint"
+            }
             val stmt = program.getStatements(pc)[0]
             println("Executing $pc $stmt")
             try {
@@ -104,18 +109,18 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
             } catch (e: TiBasicException) {
                 print(e, machine.screen, pc)
                 if (e is TiBasicError) {
-                    breakReason = e
+                    errorReason = e
                 }
             }
             pc = program.nextLineNumber(pc)
             stopRun = stmt is EndStatement
         }
-        if (breakReason != null) {
-            println("Broke $program: $breakReason")
+        if (errorReason != null) {
+            println("Error in $program: $errorReason")
         } else {
             println("Stopped $program")
         }
-        return breakReason
+        return errorReason
     }
 
 }

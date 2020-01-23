@@ -16,6 +16,11 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
         lines[lineNumber] = line
     }
 
+    fun remove(lineNumber: Int): Boolean {
+        return lines.remove(lineNumber) != null
+    }
+
+    /** All the statements found on a given line number. */
     fun getStatements(lineNumber: Int): List<Statement> {
         val line = lines[lineNumber] ?: throw Exception("No such line: $lineNumber")
         return line.statements
@@ -24,8 +29,13 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
     /** Check whether this program statements for a given line number. */
     fun hasLineNumber(lineNumber: Int): Boolean = lines.containsKey(lineNumber)
 
+    /** The first, i.e. lowest, line number of this program. */
     fun firstLineNumber(): Int = lines.firstKey()
+
+    /** The line number after a given line number as proposed by all line numbers of this program. */
     fun nextLineNumber(lineNumber: Int): Int? = lines.higherKey(lineNumber)
+
+    /** The last, i.e. highest, line number of this program. */
     fun lastLineNumber(): Int = lines.lastKey()
 
     /** RESEQUENCE the line numbers of this program for a given initial line number and a given increment. */
@@ -41,18 +51,16 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
         for (programLine in oldLines.values) {
             val newLineNum: Int = lineMapping[programLine.lineNumber]!!
             lines[newLineNum] = ProgramLine(newLineNum, programLine.statements)
-            for (stmt in programLine.statements) {
-                stmt.adjustLineNumbers(lineMapping)
-            }
+            for (stmt in programLine.statements) stmt.adjustLineNumbers(lineMapping)
         }
         println("Resequenced: $lineMapping")
     }
 
     class LineResult {
-
         object End
         open class Execute(val lineNumber: Int)
         class Gosub(lineNumber: Int) : Execute(lineNumber)
+
     }
 
     /**
@@ -64,12 +72,13 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
         if (!isCorrectLineNumber(lineNumber)) throw BadLineNumber()
     }
 
+    /** Check whether a given line number is in the allowed range. */
     private fun isCorrectLineNumber(lineNumber: Int) = lineNumber in 1..32767
 
+    /** Adjust the line numbers of a statement to a given mapping from old to new line numbers. */
     private fun Statement.adjustLineNumbers(linNumbersMapping: Map<Int, Int>) {
         if (this is LineNumberDependentStatement) this.changeLineNumbers(linNumbersMapping)
     }
-
 }
 
 class TiBasicProgram : Program()

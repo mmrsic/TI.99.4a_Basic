@@ -12,6 +12,11 @@ import kotlin.math.min
 class TiBasicModule : TiModule {
     var program: TiBasicProgram? = null
         private set
+    /** Current breakpoints of this program. */
+    private val breakpoints = HashSet<Int>()
+    /** Last hit breakpoint. */
+    private var continueLine: Int? = null
+
     val screen = TiBasicScreen()
     private val stringVariables: MutableMap<String, StringConstant> = TreeMap()
     private val numericVariables: MutableMap<String, NumericConstant> = TreeMap()
@@ -106,19 +111,24 @@ class TiBasicModule : TiModule {
             program = TiBasicProgram()
         }
         program!!.store(programLine)
+        continueLine = null
+    }
+
+    /** Remove a given line number from the program of this module. */
+    fun removeProgramLine(lineNumber: Int) {
+        val programToChange = program
+        if (programToChange == null) {
+            return
+        }
+        if (programToChange.remove(lineNumber)) continueLine = null
     }
 
     /** List the [program] of this instance. */
     fun listProgram(rangeStart: Int? = null, rangeEnd: Int? = null) {
-        if (program == null) {
-            throw CantDoThat()
-        }
-        if (rangeStart != null && (rangeStart == 0 || rangeStart > 32767)) {
-            throw BadLineNumber()
-        }
-        if (rangeEnd != null && (rangeEnd == 0 || rangeEnd > 32767)) {
-            throw BadLineNumber()
-        }
+        if (program == null) throw CantDoThat()
+        if (rangeStart != null && (rangeStart == 0 || rangeStart > 32767)) throw BadLineNumber()
+        if (rangeEnd != null && (rangeEnd == 0 || rangeEnd > 32767)) throw BadLineNumber()
+
         val programToList = program!!
         val firstLineNumber = programToList.firstLineNumber()
         val lastLineNumber = programToList.lastLineNumber()
@@ -141,6 +151,51 @@ class TiBasicModule : TiModule {
     fun resequenceProgram(initialLine: Int, increment: Int) {
         if (program == null) throw CantDoThat()
         program!!.resequence(initialLine, increment)
+    }
+
+    fun runProgram(startLine: Int?) {
+        val programToRun = program
+        if (startLine != null && programToRun != null && !programToRun.hasLineNumber(startLine)) {
+            throw BadLineNumber()
+        }
+        resetCharacters()
+        resetVariables()
+        interpretProgram(startLine)
+    }
+
+    /**
+     * Set new breakpoints at given program lines of this program. Any previously present breakpoints will be
+     * preserved.
+     */
+    fun setBreakpoints(lineNumbers: List<Int>) {
+        breakpoints.addAll(lineNumbers)
+    }
+
+    /**
+     *  Check whether a given line number is set in the breakpoints of this module, and removes it if it is present.
+     *  @return true if the program should break at the specified line number, false otherwise
+     */
+    fun checkBreakpoint(lineNumber: Int): Boolean {
+        val result = breakpoints.remove(lineNumber)
+        continueLine = if (result) lineNumber else null
+        return result
+    }
+
+    /** Continue the program of this module after a breakpoint was hit. */
+    fun continueProgram() {
+        if (continueLine == null) throw CantContinue()
+        interpretProgram(continueLine)
+    }
+
+    // HELPERS //
+
+    private fun interpretProgram(startLine: Int?) {
+        val runResult = TiBasicProgramInterpreter(this).interpretAll(startLine)
+        if (runResult == null) {
+            screen.print("")
+            screen.print("** DONE **")
+            screen.print("")
+        }
     }
 
 }
