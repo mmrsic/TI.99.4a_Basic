@@ -128,4 +128,46 @@ class BreakCommandTest {
         )
     }
 
+    @Test
+    fun testRemoveBreakpointsWithUnbreak() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=26.7
+            110 C=19.3
+            120 PRINT A
+            130 PRINT C
+            140 END
+            BREAK 110,130
+            RUN
+            UNBREAK
+            CONTINUE
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to " >110 C=19.3",
+                2 to " >120 PRINT A",
+                3 to " >130 PRINT C",
+                4 to " >140 END",
+                5 to " >BREAK 110,130",
+                7 to " >RUN",
+                9 to "  * BREAKPOINT AT 110",
+                10 to " >UNBREAK",
+                12 to " >CONTINUE",
+                13 to "   26.7",
+                14 to "   19.3",
+                16 to "  ** DONE **",
+                18 to " >RUN",
+                19 to "   26.7",
+                20 to "   19.3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

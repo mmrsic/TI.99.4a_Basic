@@ -6,7 +6,11 @@ import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
 
+/**
+ * A [TiBasicExecutable] that may be used within a [TiBasicProgram].
+ */
 interface Statement : TiBasicExecutable {
+    /** Text used to print this statement on the screen when the LIST command is executed. */
     fun listText(): String
 }
 

@@ -2,6 +2,9 @@ package com.github.mmrsic.ti99.basic
 
 import com.github.mmrsic.ti99.hw.TiBasicModule
 
+/**
+ * A command is a [TiBasicExecutable] which may be interpreted by a [TiBasicCommandLineInterpreter].
+ */
 interface Command : TiBasicExecutable {
     /** Name of this command.*/
     val name: String
@@ -16,7 +19,7 @@ interface Command : TiBasicExecutable {
  * After the NEW command is performed, the screen is cleared and the message "TI BASIC READY" is displayed
  * on the screen. The prompt and flashing cursor indicate that you may enter another command or a program line.
  */
-class NewCommand() : Command {
+class NewCommand : Command {
     override val name: String = "NEW"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.eraseProgram()
@@ -79,6 +82,10 @@ data class RunCommand(val line: Int?) : Command {
     override fun requiresEmptyLineAfterExecution() = false
 }
 
+/**
+ * The BYE command ends TI Basic and returns the computer to the master title screen. All open files are closed, all
+ * program lines are erased and the computer is reset.
+ */
 class ByeCommand : Command {
     override val name: String = "BYE"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
@@ -107,7 +114,8 @@ class RemoveProgramLineCommand(private val lineNumber: Int) : Command {
     override fun requiresEmptyLineAfterExecution() = false
 }
 
-class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : TiBasicExecutable {
+class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : Command {
+    override val name = "NUMBER"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         println("Not yet implemented: NUM[BER] $initialLine,$increment")
     }
@@ -116,8 +124,11 @@ class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : TiBas
 /**
  * When the RESEQUENCE command is entered, all lines in the program are assigned new line numbers
  * according to the specified initial-line and increment.
+ * @param initialLine a strictly positive value less than or equal to 32767
+ * @param increment a strictly positive value
  */
-class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : TiBasicExecutable {
+class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : Command {
+    override val name = "RESEQUENCE"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.resequenceProgram(initialLine, increment)
     }
@@ -126,20 +137,48 @@ class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : T
 }
 
 /**
- * When a BREAK command is entered, breakpoints are set at the program lines listed in the line-list.
+ * The BREAK [Command] requires a line-number-list. It causes the program to stop immediately before the lines in
+ * the line-number-list are executed. After a breakpoint is taken because the line is listed in the line-number-
+ * list, the breakpoint is removed and no more breakpoints occur at that line unless a new break command or [Statement]
+ * is given.
+ * BREAK is useful in finding out why a program is not running exactly as you expect it to. When the program has
+ * stopped you can print values of variables to find out what is happening in the program. You may enter any command
+ * or statement that can be used as a command. If you edit the program, however, you cannot resume with the
+ * [ContinueCommand].
+ * A way to remove breakpoints set with BREAK followed by line numbers is the [UnbreakCommand]. Also, if a breakpoint
+ * is set at a program line and that line is deleted, the breakpoint is removed. Breakpoints are also removed when a
+ * program is saved with the [SaveCommand]. See the [OnBreakStatement] for a way to handle breakpoints.
+ * Whenever a breakpoint occurs, the standard character set is restored. Thus any standard characters that had been
+ * redefined by the [CharSubprogram] are restored to the standard characters. A breakpoint also restores the standard
+ * colors.
  */
-class BreakCommand(private val lineNumbers: List<Int>) : TiBasicExecutable {
+class BreakCommand(private val lineNumberList: List<Int>) : Command, Statement {
+    override val name = "BREAK"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (programLineNumber != null) throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
-        machine.setBreakpoints(lineNumbers)
+        machine.setBreakpoints(lineNumberList)
     }
+
+    override fun listText() = "$name $lineNumberList"
 }
 
-class ContinueCommand : TiBasicExecutable {
+class ContinueCommand : Command {
+    override val name = "CONTINUE"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (programLineNumber != null) throw IllegalArgumentException("Continue command may not be used in program: $programLineNumber")
         machine.continueProgram()
     }
 
     override fun requiresEmptyLineAfterExecution() = false
+}
+
+/**
+ * The UNBREAK [Command] removes all breakpoints. It can optionally set for only those in line-list. UNBREAK can be
+ * used as a [Statement].
+ */
+class UnbreakCommand(private val lineList: List<Int> = listOf()) : Command, Statement {
+    override val name: String = "UNBREAK"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.removeBreakpoints(lineList)
+
+    override fun listText() = "$name $lineList"
 }

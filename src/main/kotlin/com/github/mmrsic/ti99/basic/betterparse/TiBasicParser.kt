@@ -36,6 +36,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val goto by token("""GO\s?TO""")
     private val breakToken by token("BREAK")
     private val continueToken by token("CONTINUE")
+    private val unbreak by token("UNBREAK")
 
     private val minus by token("-")
     private val plus by token("\\+")
@@ -154,6 +155,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         BreakCommand(terms)
     }
     private val continueCmd by continueToken asJust ContinueCommand()
+    private val unbreakCmd by skip(unbreak) and optional(separatedTerms(positiveInt, comma)) use {
+        if (this == null) UnbreakCommand() else UnbreakCommand(this.map { Integer.parseInt(it.text) })
+    }
 
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
@@ -193,7 +197,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         GoToStatement(lineNum)
     }
 
-    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or breakCmd or continueCmd or
+    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
+            breakCmd or continueCmd or unbreakCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser = printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt
 

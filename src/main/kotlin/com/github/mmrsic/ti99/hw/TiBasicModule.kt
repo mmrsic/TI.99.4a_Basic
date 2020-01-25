@@ -56,6 +56,11 @@ class TiBasicModule : TiModule {
         println("Not yet implemented: Reset characters")
     }
 
+    /** Reset all color sets to the standard colors. */
+    fun resetColors() {
+        println("Not yet implemented: Reset colors")
+    }
+
     /** Reset [getAllNumericVariableValues] and [getAllStringVariableValues] of this instance to an empty map. */
     fun resetVariables() {
         numericVariables.clear()
@@ -176,9 +181,17 @@ class TiBasicModule : TiModule {
      *  @return true if the program should break at the specified line number, false otherwise
      */
     fun checkBreakpoint(lineNumber: Int): Boolean {
-        val result = breakpoints.remove(lineNumber)
-        continueLine = if (result) lineNumber else null
-        return result
+        val breakpointHit = breakpoints.remove(lineNumber)
+        continueLine = if (breakpointHit) lineNumber else null
+        if (breakpointHit) {
+            resetCharacters()
+            resetColors()
+        }
+        return breakpointHit
+    }
+
+    fun removeBreakpoints(lineNumbers: List<Int> = listOf()) {
+        if (lineNumbers.isEmpty()) breakpoints.clear() else breakpoints.removeAll(lineNumbers)
     }
 
     /** Continue the program of this module after a breakpoint was hit. */

@@ -3,8 +3,12 @@ package com.github.mmrsic.ti99.basic.expr
 import kotlin.math.*
 import kotlin.random.Random
 
+/**
+ * A numeric function is a TI Basic function which returns a [NumericExpr].
+ */
 abstract class NumericFunction(val name: String) : NumericExpr() {
     override fun listText() = "$name(${listArgs()})"
+    /** Argument(s) description of this numeric expression as given by the LIST command. */
     abstract fun listArgs(): String
 }
 
