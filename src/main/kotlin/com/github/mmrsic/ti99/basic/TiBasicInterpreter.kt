@@ -12,16 +12,12 @@ import com.github.mmrsic.ti99.hw.TiBasicScreen
 abstract class TiBasicInterpreter(machine: TiBasicModule) {
 
     /** Print a given [TiBasicException] onto a given [TiBasicScreen]. */
-    protected fun print(e: TiBasicException, screen: TiBasicScreen, lineNumber: Int? = null) {
+    fun print(e: TiBasicException, screen: TiBasicScreen) {
         // TODO? Use PrintStatement
         screen.print("")
-        if (e is TiBasicWarning) {
-            screen.print("* WARNING:")
-            screen.print("  ${e.message}" + (if (lineNumber != null) " IN $lineNumber" else ""))
-        } else {
-            screen.print("* ${e.message}" + if (lineNumber != null) " IN $lineNumber" else "")
-        }
-        screen.print("")
+        if (e is TiBasicWarning) screen.print("* WARNING:")
+        screen.print("* ${e.message}")
+        if (e !is TiBasicProgramException || e.delegate !is Breakpoint) screen.print("")
     }
 
 }
@@ -90,37 +86,23 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 
 class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInterpreter(machine) {
 
-    fun interpretAll(startLineNum: Int? = null): Any? {
-        var errorReason: TiBasicError? = null
+    fun interpretAll(startLineNum: Int? = null) {
         val program = machine.program ?: throw CantDoThat()
         println("Executing $program")
         var pc: Int? = startLineNum ?: program.firstLineNumber()
         var stopRun = false
         while (pc != null && !stopRun) {
-            if (machine.checkBreakpoint(pc)) {
-                machine.screen.print("")
-                machine.screen.print("* BREAKPOINT AT $pc")
-                return "Breakpoint"
-            }
+            if (machine.hasBreakpoint(pc)) throw TiBasicProgramException(pc, Breakpoint())
             val stmt = program.getStatements(pc)[0]
             println("Executing $pc $stmt")
             try {
                 stmt.execute(machine, pc)
-            } catch (e: TiBasicException) {
-                print(e, machine.screen, pc)
-                if (e is TiBasicError) {
-                    errorReason = e
-                }
+            } catch (e: TiBasicError) {
+                throw TiBasicProgramException(pc, e)
             }
             pc = program.nextLineNumber(pc)
             stopRun = stmt is EndStatement
         }
-        if (errorReason != null) {
-            println("Error in $program: $errorReason")
-        } else {
-            println("Stopped $program")
-        }
-        return errorReason
     }
 
 }

@@ -200,6 +200,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val gotoStmt by skip(goto) and (positiveInt use { Integer.parseInt(text) }) map { lineNum: Int ->
         GoToStatement(lineNum)
     }
+    private val breakStmt by skip(breakToken) and
+            separated(positiveInt use { Integer.parseInt(text) }, comma, acceptZero = true) use {
+        BreakStatement(terms)
+    }
 
     private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and
             numericExpr and skip(comma) and stringConst and skip(closeParenthesis) use { CharSubprogram(t1, t2) }
@@ -216,7 +220,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             breakCmd or continueCmd or unbreakCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
-            callParser
+            callParser or breakStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))

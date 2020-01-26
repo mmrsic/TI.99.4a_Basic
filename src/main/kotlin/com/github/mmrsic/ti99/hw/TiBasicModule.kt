@@ -121,10 +121,7 @@ class TiBasicModule : TiModule {
 
     /** Remove a given line number from the program of this module. */
     fun removeProgramLine(lineNumber: Int) {
-        val programToChange = program
-        if (programToChange == null) {
-            return
-        }
+        val programToChange = program ?: return
         if (programToChange.remove(lineNumber)) continueLine = null
     }
 
@@ -174,35 +171,35 @@ class TiBasicModule : TiModule {
      */
     fun setBreakpoints(lineNumbers: List<Int>) {
         breakpoints.addAll(lineNumbers)
+        println("Set new breakpoints: $lineNumbers")
     }
 
-    /**
-     *  Check whether a given line number is set in the breakpoints of this module, and removes it if it is present.
-     *  @return true if the program should break at the specified line number, false otherwise
+    /** Check whether a given line number is set in the breakpoints of this module. */
+    fun hasBreakpoint(lineNumber: Int) = breakpoints.contains(lineNumber)
+
+    /** Remove all breakpoints or breakpoints at a list of given line numbers.
+     * @param lineNumbers if empty, all breakpoints are removed, otherwise only breakpoints at the specidied line
+     * numbers are removed
      */
-    fun checkBreakpoint(lineNumber: Int): Boolean {
-        val breakpointHit = breakpoints.remove(lineNumber)
-        continueLine = if (breakpointHit) lineNumber else null
-        if (breakpointHit) {
-            resetCharacters()
-            resetColors()
-        }
-        return breakpointHit
-    }
-
     fun removeBreakpoints(lineNumbers: List<Int> = listOf()) {
         if (lineNumbers.isEmpty()) breakpoints.clear() else breakpoints.removeAll(lineNumbers)
     }
 
     /** Continue the program of this module after a breakpoint was hit. */
     fun continueProgram() {
-        if (continueLine == null) throw CantContinue()
-        interpretProgram(continueLine)
+        val programToContinue = program ?: throw CantContinue()
+        val lastBreakLine = continueLine ?: throw CantContinue()
+        if (programToContinue.getStatements(lastBreakLine)[0] is SkippedOnContinue) {
+            val lineAfterSkip = programToContinue.nextLineNumber(lastBreakLine)
+            if (lineAfterSkip != null) interpretProgram(lineAfterSkip)
+        } else {
+            interpretProgram(lastBreakLine)
+        }
     }
 
     /** Define the character pattern of a given character code. */
     fun defineCharacter(characterCode: Int, patternIdentifier: String) {
-        characterPatterns.put(characterCode, patternIdentifier)
+        characterPatterns[characterCode] = patternIdentifier
     }
 
     /** Return the current pattern for a given character code. */
@@ -216,11 +213,20 @@ class TiBasicModule : TiModule {
     // HELPERS //
 
     private fun interpretProgram(startLine: Int?) {
-        val runResult = TiBasicProgramInterpreter(this).interpretAll(startLine)
-        if (runResult == null) {
+        val interpreter = TiBasicProgramInterpreter(this)
+        try {
+            interpreter.interpretAll(startLine)
             screen.print("")
             screen.print("** DONE **")
             screen.print("")
+        } catch (e: TiBasicException) {
+            if (e is TiBasicProgramException && e.delegate is Breakpoint) {
+                breakpoints.remove(e.lineNumber)
+                continueLine = e.lineNumber
+                resetCharacters()
+                resetColors()
+            }
+            interpreter.print(e, screen)
         }
     }
 

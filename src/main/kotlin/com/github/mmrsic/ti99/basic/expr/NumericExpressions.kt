@@ -218,16 +218,10 @@ class StringNumberMismatchExpr(val a: NumericExpr, val b: StringExpr) : NumericE
 // HELPERS //
 
 private fun toTiNumber(original: Number): Number {
-    if (original is Int) {
-        return original
-    }
+    if (original is Int) return original
     val rounded = "%.10f".format(Locale.US, original).toDouble()
     val asInt = original.toInt()
-    if (asInt.compareTo(rounded) == 0) {
-        return original
-    }
-    if (NumberRanges.isOverflow(rounded)) {
-        throw NumberTooBig(if (rounded < 0) -1 * NumberRanges.MAX_VALUE else NumberRanges.MAX_VALUE)
-    }
+    if (asInt.compareTo(rounded) == 0) return original
+    if (NumberRanges.isOverflow(rounded)) throw NumberTooBig()
     return if (NumberRanges.isUnderflow(rounded)) 0 else rounded
 }

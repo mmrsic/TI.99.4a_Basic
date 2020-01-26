@@ -14,8 +14,19 @@ interface Statement : TiBasicExecutable {
     fun listText(): String
 }
 
+interface SkippedOnContinue
+
+class BreakStatement(private val lineNumberList: List<Int>? = null) : Statement, SkippedOnContinue {
+    override fun listText() = if (lineNumberList != null) "BREAK $lineNumberList" else "BREAK"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        programLineNumber ?: throw IllegalArgumentException("Break statement may not be used without program")
+        if (lineNumberList == null) throw Breakpoint()
+        if (lineNumberList.isNotEmpty()) machine.setBreakpoints(lineNumberList) else throw Breakpoint()
+    }
+}
+
 /**
- * A [Statement] that may depend on at least one line number of a program
+* A [Statement] that may depend on at least one line number of a program
  */
 interface LineNumberDependentStatement : Statement {
     fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)

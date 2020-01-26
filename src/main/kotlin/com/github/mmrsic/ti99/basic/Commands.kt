@@ -152,14 +152,12 @@ class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : C
  * redefined by the [CharSubprogram] are restored to the standard characters. A breakpoint also restores the standard
  * colors.
  */
-class BreakCommand(private val lineNumberList: List<Int>) : Command, Statement {
+class BreakCommand(private val lineNumberList: List<Int>) : Command {
     override val name = "BREAK"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (programLineNumber != null) throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
         machine.setBreakpoints(lineNumberList)
     }
-
-    override fun listText() = "$name $lineNumberList"
 }
 
 class ContinueCommand : Command {
