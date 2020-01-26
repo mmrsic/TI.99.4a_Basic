@@ -1,10 +1,7 @@
 package com.github.mmrsic.ti99.hw
 
 import com.github.mmrsic.ti99.basic.*
-import com.github.mmrsic.ti99.basic.expr.NumericConstant
-import com.github.mmrsic.ti99.basic.expr.NumericExpr
-import com.github.mmrsic.ti99.basic.expr.StringConstant
-import com.github.mmrsic.ti99.basic.expr.StringExpr
+import com.github.mmrsic.ti99.basic.expr.*
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -17,9 +14,12 @@ class TiBasicModule : TiModule {
     /** Last hit breakpoint. */
     private var continueLine: Int? = null
 
-    val screen = TiBasicScreen()
     private val stringVariables: MutableMap<String, StringConstant> = TreeMap()
     private val numericVariables: MutableMap<String, NumericConstant> = TreeMap()
+
+    private val characterPatterns: MutableMap<Int, String> = TreeMap()
+
+    val screen = TiBasicScreen { code -> getCharacterPattern(code) }
 
     init {
         enter()
@@ -53,7 +53,7 @@ class TiBasicModule : TiModule {
 
     /** Release all space that had been allocated for special characters. */
     fun resetCharacters() {
-        println("Not yet implemented: Reset characters")
+        characterPatterns.clear() // TODO: Clear only the character patterns in the standard character set
     }
 
     /** Reset all color sets to the standard colors. */
@@ -200,6 +200,19 @@ class TiBasicModule : TiModule {
         interpretProgram(continueLine)
     }
 
+    /** Define the character pattern of a given character code. */
+    fun defineCharacter(characterCode: Int, patternIdentifier: String) {
+        characterPatterns.put(characterCode, patternIdentifier)
+    }
+
+    /** Return the current pattern for a given character code. */
+    fun getCharacterPattern(characterCode: Int): String {
+        if (characterPatterns.containsKey(characterCode)) {
+            return characterPatterns[characterCode]!!
+        }
+        return defaultCharacterPattern(characterCode)
+    }
+
     // HELPERS //
 
     private fun interpretProgram(startLine: Int?) {
@@ -208,6 +221,23 @@ class TiBasicModule : TiModule {
             screen.print("")
             screen.print("** DONE **")
             screen.print("")
+        }
+    }
+
+    private fun defaultCharacterPattern(code: Int): String {
+        return when (code) {
+            toAsciiCode('A') -> "003844447C444444"
+            toAsciiCode('B') -> "0078242438242478"
+            toAsciiCode('C') -> "0038444040404438"
+            toAsciiCode('D') -> "0078242424242478"
+            toAsciiCode('E') -> "007C40407840407C"
+            toAsciiCode('I') -> "0038101010101038"
+            toAsciiCode('R') -> "0078444478504844"
+            toAsciiCode('S') -> "0038444038044438"
+            toAsciiCode('T') -> "007C101010101010"
+            toAsciiCode('Y') -> "0044442810101010"
+            toAsciiCode('>') -> "0020100804081020"
+            else -> "0000000000000000"
         }
     }
 

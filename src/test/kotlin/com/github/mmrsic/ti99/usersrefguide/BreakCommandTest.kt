@@ -170,4 +170,30 @@ class BreakCommandTest {
         )
     }
 
+    @Test
+    fun testCharactersAreResetAtBreakpoint() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("100 CALL CLEAR", machine)
+        interpreter.interpret("110 CALL CHAR(42,\"FFFFFFFFFFFFFFFF\")", machine)
+        interpreter.interpret(" 120 CALL HCHAR(12,12,42,10)", machine)
+        interpreter.interpret("130 FOR I=1 TO 500", machine)
+        interpreter.interpret("140 NEXT I", machine)
+        interpreter.interpret("150 END", machine)
+        interpreter.interpret("BREAK 150", machine)
+        interpreter.interpret("RUN", machine)
+        interpreter.interpret("CONTINUE", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "           **********",
+                19 to "  * BREAKPOINT AT 150",
+                20 to " >CONTINUE",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+        TestHelperScreen.assertCursorAt(24, 3, machine.screen)
+    }
+
 }

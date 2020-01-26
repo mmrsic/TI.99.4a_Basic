@@ -3,9 +3,18 @@ package com.github.mmrsic.ti99.hw
 import com.github.mmrsic.ti99.basic.expr.toAsciiCode
 import com.github.mmrsic.ti99.basic.expr.toChar
 
-abstract class Screen {
+/**
+ * Representation of the TI 99/4a's screen (graphics chip) where codes, strings, and patterns may be printed.
+ */
+abstract class Screen(getCharPattern: (Int) -> String) {
+    /** Screen representation with ASCII codes for all cells of 24 rows * 32 columns. */
     val codes: CodeScreen = CodeScreen()
+    /** Screen representation where the [codes] are interpreted as rows of [String]s. */
     val strings: StringScreen = StringScreen(codes)
+
+    /** Screen representation where the [codes] are interpreted as rows of character patterns. */
+    val patterns: PatternScreen = PatternScreen(codes, getCharPattern)
+    /** The optional cursor currently placed on this screen. */
     var cursor: Cursor? = null
         internal set
 
@@ -26,10 +35,12 @@ abstract class Screen {
         scroll()
     }
 
+    /** Scroll the screen contents up one row. */
     fun scroll() {
         codes.scroll()
     }
 
+    /** Place a given characters string onto this screen. */
     fun hchar(row: Int, startCol: Int, characters: String, maxCol: Int = TiBasicScreen.MAX_COLUMNS): String {
         if (startCol > maxCol) {
             throw Exception("Start column ($startCol) must not be greater than max column ($maxCol)")
@@ -43,8 +54,15 @@ abstract class Screen {
         return chunked.subList(1, chunked.size).joinToString("")
     }
 
+    /** Place a given code (repeatedly) onto this screen. */
+    fun hchar(row: Int, col: Int, code: Int, repetition: Int) {
+        codes.hchar(row, col, List(repetition) { code })
+    }
+
+    /** Clear the whole screen, that is, set code 32 (space) at each and every position. */
     fun clear() = codes.clear()
 
+    /** Place the input accepting cursor with an optional prompt text onto this screen. */
     fun acceptAt(row: Int, column: Int, prompt: String = "") {
         if (prompt.isNotEmpty()) {
             strings.displayAt(row, column, prompt)
@@ -54,7 +72,10 @@ abstract class Screen {
 
 }
 
-class TiBasicScreen : Screen() {
+/**
+ * TI Basic's representation of the [Screen].
+ */
+class TiBasicScreen(getCharPattern: (Int) -> String) : Screen(getCharPattern) {
 
     companion object {
         const val MAX_ROWS = 24
@@ -80,22 +101,10 @@ class CodeScreen {
         }
     }
 
-    private fun patternAt(row: Int, col: Int): String {
-        return defaultCharPattern(codeAt(row, col))
-    }
-
     /** Put a given list of ASCII codes into a given row starting at a given column of that row. */
     internal fun putAll(row: Int, column: Int, codes: List<Int>) {
         for ((colOffset, code) in codes.withIndex()) {
             codeTable[Pair(row, column + colOffset)] = code
-        }
-    }
-
-    fun patternsDo(lambda: (Int, Int, String) -> Unit) {
-        for (row in 1..TiBasicScreen.MAX_ROWS) {
-            for (col in 1..TiBasicScreen.MAX_COLUMNS) {
-                lambda.invoke(row, col, patternAt(row, col))
-            }
         }
     }
 
@@ -164,20 +173,25 @@ class StringScreen(private val codes: CodeScreen) {
 
 }
 
+class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: (Int) -> String) {
 
-fun defaultCharPattern(code: Int): String {
-    return when (code) {
-        toAsciiCode('A') -> "003844447C444444"
-        toAsciiCode('B') -> "0078242438242478"
-        toAsciiCode('C') -> "0038444040404438"
-        toAsciiCode('D') -> "0078242424242478"
-        toAsciiCode('E') -> "007C40407840407C"
-        toAsciiCode('I') -> "0038101010101038"
-        toAsciiCode('R') -> "0078444478504844"
-        toAsciiCode('S') -> "0038444038044438"
-        toAsciiCode('T') -> "007C101010101010"
-        toAsciiCode('Y') -> "0044442810101010"
-        toAsciiCode('>') -> "0020100804081020"
-        else -> "0000000000000000"
+    private val definedPatterns: Map<Int, String> = mutableMapOf()
+
+    /** Execute a piece of code for all character patterns at each and every cell of this pattern screen. */
+    fun patternsDo(lambda: (Int, Int, String) -> Unit) {
+        for (row in 1..TiBasicScreen.MAX_ROWS) {
+            for (col in 1..TiBasicScreen.MAX_COLUMNS) {
+                lambda.invoke(row, col, patternAt(row, col))
+            }
+        }
     }
+
+    // HELPERS //
+
+    private fun patternAt(row: Int, col: Int): String {
+        val code = codes.codeAt(row, col)
+        if (definedPatterns.containsKey(code)) return definedPatterns[code]!!
+        return defaultPatterns(code)
+    }
+
 }

@@ -22,20 +22,24 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val quoted by token("\".*\"")
 
     private val seg by token("SEG\\$")
-
     private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
+
+    private val breakToken by token("BREAK")
     private val bye by token("\\bBYE\\b")
+    private val call by token("CALL")
+    private val char by token("CHAR")
+    private val clear by token("CLEAR")
+    private val continueToken by token("CONTINUE")
     private val end by token("\\bEND\\b")
+    private val goto by token("""GO\s?TO""")
+    private val hchar by token("HCHAR")
     private val list by token("\\bLIST\\b")
     private val new by token("\\bNEW\\b")
-    private val print by token("\\bPRINT\\b")
-    private val run by token("\\bRUN\\b")
     private val number by token("""NUM(BER)?""")
-    private val resequence by token("""RES(EQUENCE)?""")
+    private val print by token("\\bPRINT\\b")
     private val remark by token("""REM(ARK)?.*""")
-    private val goto by token("""GO\s?TO""")
-    private val breakToken by token("BREAK")
-    private val continueToken by token("CONTINUE")
+    private val resequence by token("""RES(EQUENCE)?""")
+    private val run by token("\\bRUN\\b")
     private val unbreak by token("UNBREAK")
 
     private val minus by token("-")
@@ -197,10 +201,22 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         GoToStatement(lineNum)
     }
 
-    private val cmdParser = newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
+    private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and
+            numericExpr and skip(comma) and stringConst and skip(closeParenthesis) use { CharSubprogram(t1, t2) }
+    private val callClear: Parser<Statement> by skip(call) and clear asJust ClearSubprogram()
+    private val callHchar: Parser<Statement> by skip(call and hchar and openParenthesis) and
+            numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and
+            optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
+        val repetition = t4
+        if (repetition != null) HcharSubprogram(t1, t2, t3, repetition) else HcharSubprogram(t1, t2, t3)
+    }
+    private val callParser: Parser<Statement> by callChar or callClear or callHchar
+
+    private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
             breakCmd or continueCmd or unbreakCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
-    private val stmtParser = printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt
+    private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
+            callParser
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))

@@ -47,8 +47,7 @@ class Ti994aBasicScreenView : View("TI 99/4a: Screen") {
     }
 
     private fun displayScreen(screen: Screen, gc: GraphicsContext) {
-        val screenCodes = screen.codes
-        screenCodes.patternsDo { row, col, pattern ->
+        screen.patterns.patternsDo { row, col, pattern ->
             val fgColor = Color.BLACK // TODO: Introduce character code color map
             val bgColor = Color.CYAN // TODO: Introduce character code color map
             val pixelPattern = toPixelPattern(pattern)
