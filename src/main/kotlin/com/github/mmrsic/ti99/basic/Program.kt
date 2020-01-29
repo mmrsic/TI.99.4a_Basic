@@ -1,5 +1,6 @@
 package com.github.mmrsic.ti99.basic
 
+import com.github.mmrsic.ti99.hw.checkLineNumber
 import java.util.*
 
 class ProgramLine(val lineNumber: Int, val statements: List<Statement>)
@@ -59,21 +60,10 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
     class LineResult {
         object End
         open class Execute(val lineNumber: Int)
+
         class Gosub(lineNumber: Int) : Execute(lineNumber)
 
     }
-
-    /**
-     * Check whether a given line number is acceptable
-     * @param lineNumber the line number to check
-     * @throws BadLineNumber if the specified line number is not acceptable
-     */
-    private fun checkLineNumber(lineNumber: Int) {
-        if (!isCorrectLineNumber(lineNumber)) throw BadLineNumber()
-    }
-
-    /** Check whether a given line number is in the allowed range. */
-    private fun isCorrectLineNumber(lineNumber: Int) = lineNumber in 1..32767
 
     /** Adjust the line numbers of a statement to a given mapping from old to new line numbers. */
     private fun Statement.adjustLineNumbers(linNumbersMapping: Map<Int, Int>) {

@@ -14,28 +14,28 @@ interface Statement : TiBasicExecutable {
     fun listText(): String
 }
 
+/** Marker for instances which are skipped on [ContinueCommand]. */
 interface SkippedOnContinue
+
+/**
+ * A [Statement] that may depend on at least one line number of a program
+ */
+interface LineNumberDependentStatement : Statement {
+    fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
+}
 
 class BreakStatement(private val lineNumberList: List<Int>? = null) : Statement, SkippedOnContinue {
     override fun listText() = if (lineNumberList != null) "BREAK $lineNumberList" else "BREAK"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         programLineNumber ?: throw IllegalArgumentException("Break statement may not be used without program")
         if (lineNumberList == null) throw Breakpoint()
-        if (lineNumberList.isNotEmpty()) machine.setBreakpoints(lineNumberList) else throw Breakpoint()
+        if (lineNumberList.isEmpty()) throw Breakpoint()
+        machine.addBreakpoints(lineNumberList, programLineNumber)
     }
 }
 
-/**
-* A [Statement] that may depend on at least one line number of a program
- */
-interface LineNumberDependentStatement : Statement {
-    fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
-}
-
 class PrintStatement(private val expressions: List<Any>) : Statement, Command {
-
     override val name: String = "PRINT"
-
     override fun listText(): String {
         if (expressions.isEmpty()) {
             return name
@@ -51,7 +51,7 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
             if (expression is NumericExpr) {
                 expression.visitAllValues { nc ->
                     if (nc.isOverflow) {
-                        machine.screen.print("")
+                        machine.screen.scroll()
                         machine.screen.print("* WARNING:")
                         machine.screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
                     }

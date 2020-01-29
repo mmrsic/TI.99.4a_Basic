@@ -37,18 +37,16 @@ class TiBasicModule : TiModule {
     }
 
     /** Cancel the effect of the BREAK command. */
-    fun cancelBreak() {
-        println("Not yet implemented: Cancel BREAK")
-    }
+    fun cancelBreak() = removeBreakpoints()
 
     /** Cancel the effect of the TRACE command. */
     fun cancelTrace() {
-        println("Not yet implemented: Cancel TRACE")
+        // TODO: Not yet implemented: Cancel TRACE
     }
 
     /** Close any currently open files. */
     fun closeOpenFiles() {
-        println("Not yet implemented: Close open files")
+        // TODO: Not yet implemented: Close open files
     }
 
     /** Release all space that had been allocated for special characters. */
@@ -58,7 +56,7 @@ class TiBasicModule : TiModule {
 
     /** Reset all color sets to the standard colors. */
     fun resetColors() {
-        println("Not yet implemented: Reset colors")
+        // TODO: Not yet implemented: Reset colors
     }
 
     /** Reset [getAllNumericVariableValues] and [getAllStringVariableValues] of this instance to an empty map. */
@@ -112,6 +110,9 @@ class TiBasicModule : TiModule {
 
     /** Store a given [ProgramLine] into this instance's [program]. */
     fun store(programLine: ProgramLine) {
+        checkLineNumber(programLine.lineNumber)
+        closeOpenFiles()
+        resetVariables()
         if (program == null) {
             program = TiBasicProgram()
         }
@@ -155,7 +156,8 @@ class TiBasicModule : TiModule {
         program!!.resequence(initialLine, increment)
     }
 
-    fun runProgram(startLine: Int?) {
+    /** Run the [program] of this module, optionally starting at a given line number. */
+    fun runProgram(startLine: Int? = null) {
         val programToRun = program
         if (startLine != null && programToRun != null && !programToRun.hasLineNumber(startLine)) {
             throw BadLineNumber()
@@ -166,12 +168,30 @@ class TiBasicModule : TiModule {
     }
 
     /**
-     * Set new breakpoints at given program lines of this program. Any previously present breakpoints will be
+     * Add new breakpoints at given program lines of this program. Any previously present breakpoints will be
      * preserved.
      */
-    fun setBreakpoints(lineNumbers: List<Int>) {
-        breakpoints.addAll(lineNumbers)
-        println("Set new breakpoints: $lineNumbers")
+    fun addBreakpoints(lineNumbers: List<Int>, programLineNumber: Int? = null) {
+        if (lineNumbers.any { !isCorrectLineNumber(it) }) throw BadLineNumber()
+        for (lineNumber in lineNumbers) {
+            try {
+                addBreakpoint(lineNumber)
+            } catch (e: TiBasicWarning) {
+                if (programLineNumber != null) {
+                    TiBasicProgramException(programLineNumber, e).displayOn(screen)
+                } else {
+                    e.displayOn(screen)
+                }
+            }
+        }
+    }
+
+    /** Add a single breakpoint at a given program line number to the [program] of this module. */
+    fun addBreakpoint(lineNumber: Int) {
+        checkLineNumber(lineNumber)
+        if (!program!!.hasLineNumber(lineNumber)) throw BadLineNumberWarning()
+        breakpoints.add(lineNumber)
+        println("Added new breakpoint at line $lineNumber")
     }
 
     /** Check whether a given line number is set in the breakpoints of this module. */
@@ -216,9 +236,9 @@ class TiBasicModule : TiModule {
         val interpreter = TiBasicProgramInterpreter(this)
         try {
             interpreter.interpretAll(startLine)
-            screen.print("")
+            screen.scroll()
             screen.print("** DONE **")
-            screen.print("")
+            screen.scroll()
         } catch (e: TiBasicException) {
             if (e is TiBasicProgramException && e.delegate is Breakpoint) {
                 breakpoints.remove(e.lineNumber)
@@ -226,7 +246,7 @@ class TiBasicModule : TiModule {
                 resetCharacters()
                 resetColors()
             }
-            interpreter.print(e, screen)
+            e.displayOn(screen)
         }
     }
 
@@ -247,4 +267,16 @@ class TiBasicModule : TiModule {
         }
     }
 
+}
+
+/** Check whether a given line number is in the allowed range. */
+fun isCorrectLineNumber(lineNumber: Int) = lineNumber in 1..32767
+
+/**
+ * Check whether a given line number is acceptable
+ * @param lineNumber the line number to check
+ * @throws BadLineNumber if the specified line number is not acceptable
+ */
+fun checkLineNumber(lineNumber: Int) {
+    if (!isCorrectLineNumber(lineNumber)) throw BadLineNumber()
 }

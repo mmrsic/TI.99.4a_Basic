@@ -4,23 +4,11 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.hw.TiBasicModule
-import com.github.mmrsic.ti99.hw.TiBasicScreen
 
 /**
  * A TI Basic interpreter for a given [TiBasicModule].
  */
-abstract class TiBasicInterpreter(machine: TiBasicModule) {
-
-    /** Print a given [TiBasicException] onto a given [TiBasicScreen]. */
-    fun print(e: TiBasicException, screen: TiBasicScreen) {
-        // TODO? Use PrintStatement
-        screen.print("")
-        if (e is TiBasicWarning) screen.print("* WARNING:")
-        screen.print("* ${e.message}")
-        if (e !is TiBasicProgramException || e.delegate !is Breakpoint) screen.print("")
-    }
-
-}
+abstract class TiBasicInterpreter(machine: TiBasicModule)
 
 class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter(machine) {
     private val parser = TiBasicParser(machine)
@@ -35,7 +23,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
             println("Parse error: ${e.errorResult}")
         }
         if (parseResult !is TiBasicExecutable) {
-            print(IncorrectStatement(), screen)
+            IncorrectStatement().displayOn(screen)
             screen.acceptAt(24, 2, ">")
             return
         }
@@ -43,25 +31,25 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         println("Executing $parseResult")
         try {
             parseResult.execute(machine)
-            if (parseResult.requiresEmptyLineAfterExecution()) screen.print("")
+            if (parseResult.requiresEmptyLineAfterExecution()) screen.scroll()
         } catch (e: BadLineNumber) {
             if (!setOf(RunCommand::class, ResequenceCommand::class).contains(parseResult::class)) {
-                screen.print("")
+                screen.scroll()
             }
             screen.print("* ${e.message}")
-            screen.print("")
+            screen.scroll()
         } catch (e: CantDoThat) {
-            screen.print("")
+            screen.scroll()
             screen.print("* ${e.message}")
-            screen.print("")
+            screen.scroll()
         } catch (e: BadName) {
             screen.print("* ${e.message}")
-            screen.print("")
+            screen.scroll()
         } catch (e: NumberTooBig) {
-            print(e, screen)
+            e.displayOn(screen)
         } catch (e: CantContinue) {
             screen.print("* ${e.message}")
-            screen.print("")
+            screen.scroll()
         }
         if (parseResult is NewCommand) {
             machine.initCommandScreen()
@@ -97,7 +85,7 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
             println("Executing $pc $stmt")
             try {
                 stmt.execute(machine, pc)
-            } catch (e: TiBasicError) {
+            } catch (e: TiBasicException) {
                 throw TiBasicProgramException(pc, e)
             }
             pc = program.nextLineNumber(pc)

@@ -196,4 +196,39 @@ class BreakCommandTest {
         TestHelperScreen.assertCursorAt(24, 3, machine.screen)
     }
 
+    @Test
+    fun testListWithBadLineNumberIsIgnored() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 B=29.7
+            120 H=15.8
+            130 PRINT B
+            140 PRINT H
+            150 END
+            BREAK 120,130140
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                7 to "  TI BASIC READY",
+                9 to " >100 B=29.7",
+                10 to " >120 H=15.8",
+                11 to " >130 PRINT B",
+                12 to " >140 PRINT H",
+                13 to " >150 END",
+                14 to " >BREAK 120,130140",
+                16 to "  * BAD LINE NUMBER",
+                18 to " >RUN",
+                19 to "   29.7",
+                20 to "   15.8",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

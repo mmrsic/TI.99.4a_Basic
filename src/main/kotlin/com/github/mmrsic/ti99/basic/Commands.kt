@@ -97,11 +97,6 @@ class StoreProgramLineCommand(private val programLine: ProgramLine) : Command {
     override val name = "-- IMPLICIT STORE --"
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (programLine.lineNumber < 1 || programLine.lineNumber > 32767) {
-            throw BadLineNumber()
-        }
-        machine.closeOpenFiles()
-        machine.resetVariables()
         machine.store(programLine)
     }
 
@@ -156,7 +151,7 @@ class BreakCommand(private val lineNumberList: List<Int>) : Command {
     override val name = "BREAK"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (programLineNumber != null) throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
-        machine.setBreakpoints(lineNumberList)
+        machine.addBreakpoints(lineNumberList)
     }
 }
 

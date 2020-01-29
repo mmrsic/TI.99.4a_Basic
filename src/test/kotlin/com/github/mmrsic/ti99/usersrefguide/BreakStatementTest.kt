@@ -83,4 +83,43 @@ class BreakStatementTest {
         )
     }
 
+    @Test
+    fun testListWithBadLineNumberIsExecutedPartiallyWithWarning() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 B=29.7
+            120 H=15.8
+            130 PRINT B
+            140 PRINT H
+            150 END
+            110 BREAK 125,140
+            RUN
+            CONTINUE
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                4 to "  TI BASIC READY",
+                6 to " >100 B=29.7",
+                7 to " >120 H=15.8",
+                8 to " >130 PRINT B",
+                9 to " >140 PRINT H",
+                10 to " >150 END",
+                11 to " >110 BREAK 125,140",
+                12 to " >RUN",
+                14 to "  * WARNING:",
+                15 to "    BAD LINE NUMBER IN 110",
+                16 to "   29.7",
+                18 to "  * BREAKPOINT AT 140",
+                19 to " >CONTINUE",
+                20 to "   15.8",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

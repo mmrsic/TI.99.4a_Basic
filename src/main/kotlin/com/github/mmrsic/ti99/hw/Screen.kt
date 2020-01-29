@@ -27,12 +27,17 @@ abstract class Screen(getCharPattern: (Int) -> String) {
      * to the top.
      */
     fun print(characters: String) {
-        var leftOver = hchar(24, 3, characters, 30)
+        display(characters)
+        scroll()
+    }
+
+    /** Add ASCII codes of a given characters string to the botton of the screen. */
+    fun display(characters: String, startRow: Int = 24, leftMarginCol: Int = 3, rightMarginCol: Int = 30) {
+        var leftOver = hchar(startRow, leftMarginCol, characters, rightMarginCol)
         while (leftOver.isNotEmpty()) {
             scroll()
-            leftOver = hchar(24, 3, leftOver, 30)
+            leftOver = hchar(startRow, leftMarginCol, leftOver, rightMarginCol)
         }
-        scroll()
     }
 
     /** Scroll the screen contents up one row. */
