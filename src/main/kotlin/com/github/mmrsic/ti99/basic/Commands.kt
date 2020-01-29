@@ -76,7 +76,7 @@ class ListCommand(val start: Int?, val end: Int?) : Command {
     override fun requiresEmptyLineAfterExecution() = false
 }
 
-data class RunCommand(val line: Int?) : Command {
+class RunCommand(val line: Int?) : Command {
     override val name: String = "RUN"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.runProgram(line)
     override fun requiresEmptyLineAfterExecution() = false
