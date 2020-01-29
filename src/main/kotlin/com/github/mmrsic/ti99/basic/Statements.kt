@@ -119,3 +119,15 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
     override fun listText(): String = "GO TO $lineNumber"
 
 }
+
+class UnbreakStatement(private val lineNumberList: List<Int>? = null) : Statement {
+    override fun listText() = if (lineNumberList != null) "UNBREAK $lineNumberList" else "UNBREAK"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        programLineNumber ?: throw IllegalArgumentException("Unbreak statement may not be used without program")
+        if (lineNumberList == null) {
+            machine.removeBreakpoints(programLineNumber = programLineNumber)
+        } else {
+            machine.removeBreakpoints(lineNumberList, programLineNumber)
+        }
+    }
+}

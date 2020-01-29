@@ -92,4 +92,86 @@ class UnbreakCommandTest {
         )
     }
 
+    @Test
+    fun testBadLineNumberError() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=26.7
+            110 C=19.3
+            120 PRINT A
+            130 PRINT C
+            140 END
+            BREAK 130
+            125 UNBREAK 130
+            125
+            BREAK 130
+            UNBREAK 130,110150
+            RUN
+            CONTINUE
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to " >110 C=19.3",
+                2 to " >120 PRINT A",
+                3 to " >130 PRINT C",
+                4 to " >140 END",
+                5 to " >BREAK 130",
+                7 to " >125 UNBREAK 130",
+                8 to " >125",
+                9 to " >BREAK 130",
+                11 to " >UNBREAK 130,110150",
+                13 to "  * BAD LINE NUMBER",
+                15 to " >RUN",
+                16 to "   26.7",
+                18 to "  * BREAKPOINT AT 130",
+                19 to " >CONTINUE",
+                20 to "   19.3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testBadLineNumberWarning() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=26.7
+            110 C=19.3
+            120 PRINT A
+            130 PRINT C
+            140 END
+            BREAK 130
+            UNBREAK 130,105
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                4 to "  TI BASIC READY",
+                6 to " >100 A=26.7",
+                7 to " >110 C=19.3",
+                8 to " >120 PRINT A",
+                9 to " >130 PRINT C",
+                10 to " >140 END",
+                11 to " >BREAK 130",
+                13 to " >UNBREAK 130,105",
+                15 to "  * WARNING:",
+                16 to "    BAD LINE NUMBER",
+                18 to " >RUN",
+                19 to "   26.7",
+                20 to "   19.3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

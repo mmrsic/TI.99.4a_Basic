@@ -201,8 +201,33 @@ class TiBasicModule : TiModule {
      * @param lineNumbers if empty, all breakpoints are removed, otherwise only breakpoints at the specidied line
      * numbers are removed
      */
-    fun removeBreakpoints(lineNumbers: List<Int> = listOf()) {
-        if (lineNumbers.isEmpty()) breakpoints.clear() else breakpoints.removeAll(lineNumbers)
+    fun removeBreakpoints(lineNumbers: List<Int> = listOf(), programLineNumber: Int? = null) {
+        if (lineNumbers.any { !isCorrectLineNumber(it) }) throw BadLineNumber()
+        if (lineNumbers.isEmpty()) {
+            breakpoints.clear()
+            println("Removed all breakpoints")
+        } else {
+            for (lineNumber in lineNumbers) {
+                try {
+                    removeBreakpoint(lineNumber)
+                } catch (e: TiBasicWarning) {
+                    if (programLineNumber != null) {
+                        TiBasicProgramException(programLineNumber, e).displayOn(screen)
+                    } else {
+                        e.displayOn(screen)
+                    }
+                }
+            }
+            println("Removed breakpoints: $lineNumbers")
+        }
+    }
+
+    /** Remove a single breakpoint at a given program line number from the [program] of this module. */
+    fun removeBreakpoint(lineNumber: Int) {
+        checkLineNumber(lineNumber)
+        if (!program!!.hasLineNumber(lineNumber)) throw BadLineNumberWarning()
+        breakpoints.remove(lineNumber)
+        println("Removed breakpoint at line $lineNumber")
     }
 
     /** Continue the program of this module after a breakpoint was hit. */
