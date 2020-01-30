@@ -29,7 +29,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val call by token("CALL")
     private val char by token("CHAR")
     private val clear by token("CLEAR")
-    private val continueToken by token("CONTINUE")
+    private val continueToken by token("""CON(TINUE)?""")
     private val end by token("\\bEND\\b")
     private val goto by token("""GO\s?TO""")
     private val hchar by token("HCHAR")
