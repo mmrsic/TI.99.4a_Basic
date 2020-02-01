@@ -31,15 +31,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val clear by token("CLEAR")
     private val continueToken by token("""CON(TINUE)?""")
     private val end by token("\\bEND\\b")
+    private val forToken by token("FOR")
     private val goto by token("""GO\s?TO""")
     private val hchar by token("HCHAR")
     private val list by token("\\bLIST\\b")
     private val new by token("\\bNEW\\b")
+    private val next by token("NEXT")
     private val number by token("""NUM(BER)?""")
     private val print by token("\\bPRINT\\b")
     private val remark by token("""REM(ARK)?.*""")
     private val resequence by token("""RES(EQUENCE)?""")
     private val run by token("\\bRUN\\b")
+    private val to by token("TO")
     private val unbreak by token("UNBREAK")
 
     private val minus by token("-")
@@ -190,6 +193,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         LetStringStatement(t1.name, t2)
     }
     private val endStmt by end asJust EndStatement()
+    private val forToStepStmt by skip(forToken) and assignNumberStmt and skip(to) and numericExpr use {
+        ForToStepStatement(t1, t2)
+    }
+    private val nextStmt by skip(next) and numericVarRef use { NextStatement(name) }
     private val remarkStmt by remark use {
         when {
             text.startsWith("REMARK") -> RemarkStatement(text.substringAfter("REMARK"))
@@ -224,7 +231,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             breakCmd or continueCmd or unbreakCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
-            callParser or breakStmt or unbreakStmt
+            callParser or breakStmt or unbreakStmt or forToStepStmt or nextStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))

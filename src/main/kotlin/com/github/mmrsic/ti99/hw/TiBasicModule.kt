@@ -7,8 +7,14 @@ import kotlin.math.max
 import kotlin.math.min
 
 class TiBasicModule : TiModule {
+
+    /** The optional program currently held in this TI Basic Module's memory. */
     var program: TiBasicProgram? = null
         private set
+    /** The optional [program] interpreter currently executing in this TI Basic Module's memory. */
+    var programInterpreter: TiBasicProgramInterpreter? = null
+        private set
+
     /** Current breakpoints of this program. */
     private val breakpoints = HashSet<Int>()
     /** Last hit breakpoint. */
@@ -68,16 +74,17 @@ class TiBasicModule : TiModule {
     /** The current value of a string value given by its name. */
     fun getStringVariableValue(name: String): StringConstant {
         if (name.last() != '$') throw IllegalArgumentException("Illegal string variable name: $name")
-
         if (name.length > 15) throw BadName()
         if (!stringVariables.containsKey(name)) stringVariables[name] = StringConstant((""))
         return stringVariables[name]!!
     }
 
     /** Change the value of a numeric variable of this instance.*/
-    fun setStringVariable(name: String, expr: StringExpr) {
+    fun setStringVariable(name: String, expr: StringExpr): StringConstant {
         if (name.length > 15) throw BadName()
-        stringVariables[name] = StringConstant(expr.displayValue())
+        val result = StringConstant(expr.displayValue())
+        stringVariables[name] = result
+        return result
     }
 
     /** All the string variable names and their string constant values currently known by this instance. */
@@ -94,11 +101,11 @@ class TiBasicModule : TiModule {
     fun getAllNumericVariableValues(): Map<String, NumericConstant> = numericVariables
 
     /** Change the value of a numeric variable of this instance. */
-    fun setNumericVariable(name: String, expr: NumericExpr) {
-        if (name.length > 15) {
-            throw BadName()
-        }
-        numericVariables[name] = expr.value()
+    fun setNumericVariable(name: String, expr: NumericExpr): NumericConstant {
+        if (name.length > 15) throw BadName()
+        val result = expr.value()
+        numericVariables[name] = result
+        return result
     }
 
     /** Initialize the [screen] of this module to the command interpreter mode after entering the */
@@ -165,6 +172,10 @@ class TiBasicModule : TiModule {
         resetCharacters()
         resetVariables()
         interpretProgram(startLine)
+    }
+
+    fun endProgramRun() {
+        programInterpreter = null
     }
 
     /**
@@ -258,7 +269,8 @@ class TiBasicModule : TiModule {
     // HELPERS //
 
     private fun interpretProgram(startLine: Int?) {
-        val interpreter = TiBasicProgramInterpreter(this)
+        val interpreter = programInterpreter ?: TiBasicProgramInterpreter(this)
+        programInterpreter = interpreter
         try {
             interpreter.interpretAll(startLine)
             screen.scroll()

@@ -3,7 +3,11 @@ package com.github.mmrsic.ti99.basic
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
+import com.github.mmrsic.ti99.basic.expr.Addition
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
+import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import java.util.*
 
 /**
  * A TI Basic interpreter for a given [TiBasicModule].
@@ -74,6 +78,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 
 class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInterpreter(machine) {
 
+    /** Interpret the current program of this interpreter's [machine], optionally starting at a given start line number. */
     fun interpretAll(startLineNum: Int? = null) {
         val program = machine.program ?: throw CantDoThat()
         println("Executing $program")
@@ -88,9 +93,48 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
             } catch (e: TiBasicException) {
                 throw TiBasicProgramException(pc, e)
             }
-            pc = program.nextLineNumber(pc)
+            pc = jumpToLineNumber() ?: program.nextLineNumber(pc)
             stopRun = stmt is EndStatement
         }
+    }
+
+    /** Begin a new for-loop. */
+    fun beginForLoop(lineNumber: Int, stmt: LetNumberStatement, limit: NumericExpr, increment: Int = 1) {
+        val program = machine.program ?: throw IllegalArgumentException("Can't begin for-loop without program")
+        val jumpLineNumber = program.nextLineNumber(lineNumber)
+            ?: throw IllegalArgumentException("Line number has no successor: $lineNumber")
+        stmt.execute(machine)
+        val varName = stmt.varName
+        val currValue = machine.getNumericVariableValue(varName)
+        val loop = ForLoop(jumpLineNumber, varName, currValue.toNative()..limit.value().toNative(), increment)
+        forLoopStack.push(loop)
+        println("Started: $loop")
+    }
+
+    /** Start the next for-loop step, or end the loop. */
+    fun nextForLoopStep(varName: String) {
+        // TODO: Check variable name
+        val loop = forLoopStack.peek()
+        val currValue: NumericConstant = machine.getNumericVariableValue(loop.varName)
+        val newValue: NumericConstant = Addition(currValue, loop.increment).value()
+        machine.setNumericVariable(loop.varName, newValue)
+        if (newValue.toNative() in loop.continueRange) return
+        forLoopStack.pop()
+        println("Ended: $loop")
+    }
+
+    // HELPERS //
+
+    private val forLoopStack: Stack<ForLoop> = Stack()
+    private fun jumpToLineNumber(): Int? = if (forLoopStack.isNotEmpty()) forLoopStack.peek().startLineNumber else null
+
+    private class ForLoop(
+        val startLineNumber: Int,
+        val varName: String,
+        val continueRange: ClosedRange<Double>,
+        increment: Number
+    ) {
+        val increment = NumericConstant(increment)
     }
 
 }

@@ -78,36 +78,34 @@ class PrintStatement(private val expressions: List<Any>) : Statement, Command {
 
 class LetNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
     override fun listText(): String = "$varName=${expr.listText().trim()}" // TODO: Add optional LET
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setNumericVariable(varName, expr)
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.setNumericVariable(varName, expr)
+    }
 }
 
 class LetStringStatement(val varName: String, val expr: StringExpr) : Statement {
     override fun listText(): String = "$varName=${expr.listText()}" // TODO: Add optional LET
-
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.setStringVariable(varName, expr)
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.setStringVariable(varName, expr)
+    }
 }
 
 class EndStatement : Statement {
+    override fun listText() = "END"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        // TODO: End current program run
-    }
-
-    override fun listText(): String {
-        return "END"
+        machine.endProgramRun()
     }
 }
 
 class RemarkStatement(val text: String) : Statement {
-
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = println("Remark: $text")
     override fun listText(): String = "REM $text"
-
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = println("Remark: $text")
 }
 
 class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
-
     private var lineNumber: Int = originalLineNum
 
+    override fun listText(): String = "GO TO $lineNumber"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         TODO("not implemented")
     }
@@ -115,9 +113,6 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
     override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
         lineNumber = lineNumbersMapping[lineNumber]!!
     }
-
-    override fun listText(): String = "GO TO $lineNumber"
-
 }
 
 class UnbreakStatement(private val lineNumberList: List<Int>? = null) : Statement {
@@ -130,4 +125,32 @@ class UnbreakStatement(private val lineNumberList: List<Int>? = null) : Statemen
             machine.removeBreakpoints(lineNumberList, programLineNumber)
         }
     }
+}
+
+class ForToStepStatement(val initializer: LetNumberStatement, val limit: NumericExpr) : Statement {
+    override fun listText(): String {
+        return "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val pln = programLineNumber ?: throw IllegalArgumentException("$this can be used as a statement only")
+        val interpreter = machine.programInterpreter ?: throw IllegalArgumentException(
+            "Machine program interpreter must be present for $this"
+        )
+        interpreter.beginForLoop(pln, initializer, limit)
+    }
+
+    override fun requiresEmptyLineAfterExecution() = false
+}
+
+class NextStatement(val varName: String) : Statement {
+    override fun listText() = "NEXT $varName"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val interpreter = machine.programInterpreter ?: throw IllegalArgumentException(
+            "Machine program interpreter must be present for $this"
+        )
+        interpreter.nextForLoopStep(varName)
+    }
+
+    override fun requiresEmptyLineAfterExecution() = false
 }
