@@ -84,10 +84,9 @@ class Ti994aBasicScreenView : View("TI 99/4a: Screen") {
         return result
     }
 
-    private fun toPixelPattern(charPattern: String): String {
-        val resultBuilder = StringBuilder()
+    private fun toPixelPattern(charPattern: String) = buildString {
         for (c in charPattern) {
-            resultBuilder.append(
+            append(
                 when (c) {
                     '0' -> "0000"
                     '1' -> "0001"
@@ -109,7 +108,6 @@ class Ti994aBasicScreenView : View("TI 99/4a: Screen") {
                 }
             )
         }
-        return resultBuilder.toString()
     }
 
 

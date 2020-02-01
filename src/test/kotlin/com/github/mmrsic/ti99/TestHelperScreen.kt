@@ -18,12 +18,8 @@ class TestHelperScreen {
             assertEquals(expText, actualText, "Print contents")
         }
 
-        private fun toWrappedText(lines: Map<Int, String>): String {
-            val builder = StringBuilder()
-            for (line in lines) {
-                builder.append(line).append("\n")
-            }
-            return builder.toString()
+        private fun toWrappedText(lines: Map<Int, String>) = buildString {
+            for (line in lines) append(line).append("\n")
         }
 
     }

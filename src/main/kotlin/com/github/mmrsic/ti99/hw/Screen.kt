@@ -146,12 +146,11 @@ class CodeScreen {
 
 class StringScreen(private val codes: CodeScreen) {
 
-    fun withoutTrailingBlanks(row: Int, column: Int): String {
-        val rowCandidateBuilder = StringBuilder()
+    fun withoutTrailingBlanks(row: Int, column: Int) = buildString {
         for (col in column..TiBasicScreen.MAX_COLUMNS) {
-            rowCandidateBuilder.append(toChar(codes.codeAt(row, col)))
+            append(toChar(codes.codeAt(row, col)))
         }
-        return rowCandidateBuilder.trimEnd().toString()
+        trimEnd()
     }
 
     /**
