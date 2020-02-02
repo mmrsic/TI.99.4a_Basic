@@ -233,7 +233,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             breakCmd or continueCmd or unbreakCmd or traceCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
-            callParser or breakStmt or unbreakStmt or forToStepStmt or nextStmt
+            callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))

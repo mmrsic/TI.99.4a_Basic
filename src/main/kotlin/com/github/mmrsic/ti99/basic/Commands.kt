@@ -181,8 +181,9 @@ class UnbreakCommand(private val lineList: List<Int> = listOf()) : Command, Stat
  * After the TRACE command is entered, the line number of each program line is displayed before the statement is
  * performed.
  */
-class TraceCommand : Command {
+class TraceCommand : Command, Statement {
     override val name = "TRACE"
+    override fun listText() = name
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.traceProgramExecution = true
     }
