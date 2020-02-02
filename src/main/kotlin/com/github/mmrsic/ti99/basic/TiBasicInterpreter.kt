@@ -3,9 +3,7 @@ package com.github.mmrsic.ti99.basic
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
-import com.github.mmrsic.ti99.basic.expr.Addition
-import com.github.mmrsic.ti99.basic.expr.NumericConstant
-import com.github.mmrsic.ti99.basic.expr.NumericExpr
+import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import java.util.*
 
@@ -85,6 +83,9 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
         var pc: Int? = startLineNum ?: program.firstLineNumber()
         var stopRun = false
         while (pc != null && !stopRun) {
+            if (machine.traceProgramExecution) {
+                PrintStatement(listOf(StringConstant("<$pc>"), PrintToken.Adjacent)).execute(machine, pc)
+            }
             if (machine.hasBreakpoint(pc)) throw TiBasicProgramException(pc, Breakpoint())
             val stmt = program.getStatements(pc)[0]
             println("Executing $pc $stmt")

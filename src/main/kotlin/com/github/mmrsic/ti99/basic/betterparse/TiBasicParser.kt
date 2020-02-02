@@ -43,6 +43,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val resequence by token("""RES(EQUENCE)?""")
     private val run by token("\\bRUN\\b")
     private val to by token("TO")
+    private val trace by token("TRACE")
     private val unbreak by token("UNBREAK")
 
     private val minus by token("-")
@@ -165,24 +166,25 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val unbreakCmd by skip(unbreak) and optional(separatedTerms(positiveInt, comma)) use {
         if (this == null) UnbreakCommand() else UnbreakCommand(this.map { Integer.parseInt(it.text) })
     }
+    private val traceCmd by trace asJust TraceCommand()
 
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
             optional(expr) and
             zeroOrMore(oneOrMore(printSeparator) and expr) and
             zeroOrMore(printSeparator) use {
-        val printArgs = mutableListOf<Any>()
+        val printArgs = mutableListOf<Expression>()
         // Add all leading separators
-        printArgs.addAll(t1)
+        printArgs.addAll(t1.map { PrintToken.fromString(it)!! })
         // Add first expression if present
         if (t2 != null) printArgs.add(t2!!)
         // Add second expression with leading separators if present
         for (separatorsBeforeExpr in t3) {
-            printArgs.addAll(separatorsBeforeExpr.t1)
+            printArgs.addAll(separatorsBeforeExpr.t1.map { PrintToken.fromString(it)!! })
             printArgs.add(separatorsBeforeExpr.t2)
         }
-        // Add all trailing sepearators
-        printArgs.addAll(t4)
+        // Add all trailing seperators
+        printArgs.addAll(t4.map { PrintToken.fromString(it)!! })
         PrintStatement(printArgs)
     }
 
@@ -228,7 +230,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val callParser: Parser<Statement> by callChar or callClear or callHchar
 
     private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
-            breakCmd or continueCmd or unbreakCmd or
+            breakCmd or continueCmd or unbreakCmd or traceCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
             callParser or breakStmt or unbreakStmt or forToStepStmt or nextStmt

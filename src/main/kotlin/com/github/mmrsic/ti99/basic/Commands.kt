@@ -175,3 +175,15 @@ class UnbreakCommand(private val lineList: List<Int> = listOf()) : Command, Stat
 
     override fun listText() = "$name $lineList"
 }
+
+/**
+ * The TRACE command allows you to see the order in which the computer performs statements as it runs a program.
+ * After the TRACE command is entered, the line number of each program line is displayed before the statement is
+ * performed.
+ */
+class TraceCommand : Command {
+    override val name = "TRACE"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.traceProgramExecution = true
+    }
+}

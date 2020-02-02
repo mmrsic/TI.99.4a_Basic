@@ -14,11 +14,15 @@ class TiBasicModule : TiModule {
     /** The optional [program] interpreter currently executing in this TI Basic Module's memory. */
     var programInterpreter: TiBasicProgramInterpreter? = null
         private set
+    /** Whether or not tracing is active when the [programInterpreter] interprets a [program]. */
+    var traceProgramExecution: Boolean = false
 
     /** Current breakpoints of this program. */
     private val breakpoints = HashSet<Int>()
     /** Last hit breakpoint. */
     private var continueLine: Int? = null
+
+    private var currentPrintColumn: Int? = null
 
     private val stringVariables: MutableMap<String, StringConstant> = TreeMap()
     private val numericVariables: MutableMap<String, NumericConstant> = TreeMap()
@@ -264,6 +268,51 @@ class TiBasicModule : TiModule {
             return characterPatterns[characterCode]!!
         }
         return defaultCharacterPattern(characterCode)
+    }
+
+    fun printTokens(expressions: List<Any>, programLineNumber: Int? = null) {
+        var suppressScroll = false
+        val maxCol = TiBasicScreen.MAX_COLUMNS - 2
+        val currRow = 24
+        var currCol = if (currentPrintColumn != null) currentPrintColumn!! else 3
+        currentPrintColumn = null
+        for (expression in expressions) {
+            if (expression is NumericExpr) {
+                expression.visitAllValues { nc ->
+                    if (nc.isOverflow) {
+                        screen.scroll()
+                        screen.print("* WARNING:")
+                        screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
+                    }
+                }
+            }
+            suppressScroll = expression == PrintToken.Adjacent
+            if (expression in PrintToken.values()) {
+                when (expression) {
+                    PrintToken.NextRecord -> {
+                        screen.scroll(); currCol = 3
+                    }
+                }
+            } else if (expression is Expression || expression is String) {
+                val characters = if (expression is Expression) expression.displayValue() else expression.toString()
+                var lefOver = screen.hchar(currRow, currCol, characters, maxCol)
+                currCol += characters.length - lefOver.length
+                while (lefOver.isNotEmpty()) {
+                    screen.scroll()
+                    currCol = 3
+                    val last = lefOver
+                    lefOver = screen.hchar(currRow, currCol, last, maxCol)
+                    currCol += lefOver.length - last.length
+                }
+            } else {
+                println("Ignored in print statement: $expression")
+            }
+        }
+        if (suppressScroll) {
+            currentPrintColumn = currCol
+        } else {
+            screen.scroll()
+        }
     }
 
     // HELPERS //
