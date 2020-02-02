@@ -45,6 +45,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val to by token("TO")
     private val trace by token("TRACE")
     private val unbreak by token("UNBREAK")
+    private val untrace by token("UNTRACE")
 
     private val minus by token("-")
     private val plus by token("\\+")
@@ -167,6 +168,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         if (this == null) UnbreakCommand() else UnbreakCommand(this.map { Integer.parseInt(it.text) })
     }
     private val traceCmd by trace asJust TraceCommand()
+    private val untraceCmd by untrace asJust UntraceCommand()
 
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
@@ -230,7 +232,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val callParser: Parser<Statement> by callChar or callClear or callHchar
 
     private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
-            breakCmd or continueCmd or unbreakCmd or traceCmd or
+            breakCmd or continueCmd or unbreakCmd or traceCmd or untraceCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
             callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt

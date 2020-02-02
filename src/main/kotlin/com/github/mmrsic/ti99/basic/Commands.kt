@@ -188,3 +188,15 @@ class TraceCommand : Command, Statement {
         machine.traceProgramExecution = true
     }
 }
+
+/**
+ * The UNTRACE command cancels the effect of the [TraceCommand]. The UNTRACE command may be placed as a statement
+ * in a program.
+ */
+class UntraceCommand : Command, Statement {
+    override val name = "UNTRACE"
+    override fun listText() = name
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.traceProgramExecution = false
+    }
+}
