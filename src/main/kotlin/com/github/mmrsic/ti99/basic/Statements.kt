@@ -45,15 +45,31 @@ class PrintStatement(private val expressions: List<Expression>) : Statement, Com
     }
 }
 
-class LetNumberStatement(val varName: String, val expr: NumericExpr) : Statement {
+/**
+ * The LET statement allows you to assign values to variables in your program. The computer evaluates the expression
+ * to the right of the equals sign and puts its value into the variable specified to the left of the equals sign.
+ */
+abstract class LetStatement(val varName: String) : Statement {
+    abstract val expr: Expression
     override fun listText(): String = "$varName=${expr.listText().trim()}" // TODO: Add optional LET
+}
+
+/**
+ * [LetStatement] where a [NumericExpr] is assigned to a numeric variable.
+ * The rules governing underflow and overflow for the evaluation of numeric expressions are used in the LET statement.
+ */
+class LetNumberStatement(varName: String, override val expr: NumericExpr) : LetStatement(varName) {
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.setNumericVariable(varName, expr)
     }
 }
 
-class LetStringStatement(val varName: String, val expr: StringExpr) : Statement {
-    override fun listText(): String = "$varName=${expr.listText()}" // TODO: Add optional LET
+/**
+ * [LetStatement] where a [StringExpr] is assigned to a string variable.
+ * If the length of a evaluated string expression exceeds 255 characters, the string is truncated on the right and the
+ * program continues. No warning is given.
+ */
+class LetStringStatement(varName: String, override val expr: StringExpr) : LetStatement(varName) {
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.setStringVariable(varName, expr)
     }

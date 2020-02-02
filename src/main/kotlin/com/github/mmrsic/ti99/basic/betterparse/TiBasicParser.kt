@@ -34,6 +34,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val forToken by token("FOR")
     private val goto by token("""GO\s?TO""")
     private val hchar by token("HCHAR")
+    private val let by token("LET")
     private val list by token("\\bLIST\\b")
     private val new by token("\\bNEW\\b")
     private val next by token("NEXT")
@@ -190,10 +191,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         PrintStatement(printArgs)
     }
 
-    private val assignNumberStmt by numericVarRef and skip(assign) and (numericExpr) use {
+    private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and (numericExpr) use {
         LetNumberStatement(t1.name, t2)
     }
-    private val assignStringStmt by stringVarRef and skip(assign) and stringExpr use {
+    private val assignStringStmt by skip(optional(let)) and stringVarRef and skip(assign) and stringExpr use {
         LetStringStatement(t1.name, t2)
     }
     private val endStmt by end asJust EndStatement()
