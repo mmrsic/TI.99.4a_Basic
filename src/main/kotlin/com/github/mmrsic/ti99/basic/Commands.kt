@@ -179,7 +179,7 @@ class UnbreakCommand(private val lineList: List<Int> = listOf()) : Command, Stat
 /**
  * The TRACE command allows you to see the order in which the computer performs statements as it runs a program.
  * After the TRACE command is entered, the line number of each program line is displayed before the statement is
- * performed.
+ * performed. The TRACE command may be placed as a statement in a program.
  */
 class TraceCommand : Command, Statement {
     override val name = "TRACE"
