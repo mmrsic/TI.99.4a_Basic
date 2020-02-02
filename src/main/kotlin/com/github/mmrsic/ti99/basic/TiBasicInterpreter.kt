@@ -94,7 +94,8 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
             } catch (e: TiBasicException) {
                 throw TiBasicProgramException(pc, e)
             }
-            pc = jumpToLineNumber() ?: program.nextLineNumber(pc)
+            pc = jumpToLineNumber ?: program.nextLineNumber(pc)
+            jumpToLineNumber = null
             stopRun = stmt is EndStatement
         }
     }
@@ -119,7 +120,10 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
         val currValue: NumericConstant = machine.getNumericVariableValue(loop.varName)
         val newValue: NumericConstant = Addition(currValue, loop.increment).value()
         machine.setNumericVariable(loop.varName, newValue)
-        if (newValue.toNative() in loop.continueRange) return
+        if (newValue.toNative() in loop.continueRange) {
+            jumpToLineNumber = loop.startLineNumber
+            return
+        }
         forLoopStack.pop()
         println("Ended: $loop")
     }
@@ -127,7 +131,7 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
     // HELPERS //
 
     private val forLoopStack: Stack<ForLoop> = Stack()
-    private fun jumpToLineNumber(): Int? = if (forLoopStack.isNotEmpty()) forLoopStack.peek().startLineNumber else null
+    private var jumpToLineNumber: Int? = null
 
     private class ForLoop(
         val startLineNumber: Int,

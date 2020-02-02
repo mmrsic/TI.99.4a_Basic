@@ -318,6 +318,7 @@ class TiBasicModule : TiModule {
     // HELPERS //
 
     private fun interpretProgram(startLine: Int?) {
+        currentPrintColumn = null
         val interpreter = programInterpreter ?: TiBasicProgramInterpreter(this)
         programInterpreter = interpreter
         try {
