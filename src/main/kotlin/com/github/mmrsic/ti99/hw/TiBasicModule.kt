@@ -293,8 +293,11 @@ class TiBasicModule : TiModule {
                         screen.scroll(); currCol = 3
                     }
                 }
-            } else if (expression is Expression || expression is String) {
-                val characters = if (expression is Expression) expression.displayValue() else expression.toString()
+            } else if (expression is Expression) {
+                val characters = expression.displayValue()
+                if (expression is NumericExpr && (currCol + characters.length) > maxCol) {
+                    screen.scroll(); currCol = 3
+                }
                 var lefOver = screen.hchar(currRow, currCol, characters, maxCol)
                 currCol += characters.length - lefOver.length
                 while (lefOver.isNotEmpty()) {

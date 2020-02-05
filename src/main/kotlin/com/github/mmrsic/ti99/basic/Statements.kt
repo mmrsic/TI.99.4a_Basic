@@ -82,6 +82,11 @@ class EndStatement : Statement {
     }
 }
 
+/**
+ * The REMark statement allows you to explain and document your program by inserting comments in the program
+ * itself. When the computer encounters a remark statement while running your program, it takes no action but
+ * proceeds to the next statement.
+ */
 class RemarkStatement(val text: String) : Statement {
     override fun listText(): String = "REM $text"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) = println("Remark: $text")
