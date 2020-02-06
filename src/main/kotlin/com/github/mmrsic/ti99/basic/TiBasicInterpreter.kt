@@ -81,8 +81,7 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
         val program = machine.program ?: throw CantDoThat()
         println("Executing $program")
         var pc: Int? = startLineNum ?: program.firstLineNumber()
-        var stopRun = false
-        while (pc != null && !stopRun) {
+        while (pc != null && machine.programInterpreter != null) {
             if (machine.traceProgramExecution) {
                 PrintStatement(listOf(StringConstant("<$pc>"), PrintToken.Adjacent)).execute(machine, pc)
             }
@@ -96,7 +95,6 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
             }
             pc = jumpToLineNumber ?: program.nextLineNumber(pc)
             jumpToLineNumber = null
-            stopRun = stmt is EndStatement
         }
     }
 

@@ -117,9 +117,12 @@ class CodeScreen {
      * Place a list of character codes horizontally at a given row at a given start index extending the codes to the
      * right.
      */
-    fun hchar(row: Int, startCol: Int, codes: List<Int>) {
+    fun hchar(startRow: Int, startCol: Int, codes: List<Int>) {
+        val numColumns = TiBasicScreen.MAX_COLUMNS
         for ((index, code) in codes.withIndex()) {
-            codeTable[Pair(row, startCol + index)] = code
+            val row = startRow + index / numColumns
+            val col = startCol + index % numColumns
+            codeTable[Pair(row, col)] = code
         }
     }
 
