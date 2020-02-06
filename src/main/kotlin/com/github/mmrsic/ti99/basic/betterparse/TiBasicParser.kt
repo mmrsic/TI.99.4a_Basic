@@ -43,6 +43,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val remark by token("""REM(ARK)?.*""")
     private val resequence by token("""RES(EQUENCE)?""")
     private val run by token("\\bRUN\\b")
+    private val stop by token("STOP")
     private val to by token("TO")
     private val trace by token("TRACE")
     private val unbreak by token("UNBREAK")
@@ -186,7 +187,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             printArgs.addAll(separatorsBeforeExpr.t1.map { PrintToken.fromString(it)!! })
             printArgs.add(separatorsBeforeExpr.t2)
         }
-        // Add all trailing seperators
+        // Add all trailing separators
         printArgs.addAll(t4.map { PrintToken.fromString(it)!! })
         PrintStatement(printArgs)
     }
@@ -198,6 +199,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         LetStringStatement(t1.name, t2)
     }
     private val endStmt by end asJust EndStatement()
+    private val stopStmt by stop asJust StopStatement()
     private val forToStepStmt by skip(forToken) and assignNumberStmt and skip(to) and numericExpr use {
         ForToStepStatement(t1, t2)
     }
@@ -236,7 +238,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             breakCmd or continueCmd or unbreakCmd or traceCmd or untraceCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
-            callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt
+            callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))

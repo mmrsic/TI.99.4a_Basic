@@ -89,6 +89,18 @@ class EndStatement : Statement {
 }
 
 /**
+ * The STOP statement terminates your program when it is being run and can be used interchangeably with the
+ * [EndStatement] in TI BASIC. You can place STOP statements anywhere in your program and use several STOP statements
+ * in the same program. Many BASIC programmers use the END statement if there is only one ending point in the program.
+ */
+class StopStatement : Statement {
+    override fun listText() = "STOP"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.endProgramRun()
+    }
+}
+
+/**
  * The REMark statement allows you to explain and document your program by inserting comments in the program
  * itself. When the computer encounters a remark statement while running your program, it takes no action but
  * proceeds to the next statement.
