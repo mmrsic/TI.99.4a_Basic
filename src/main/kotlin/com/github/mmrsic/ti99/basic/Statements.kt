@@ -75,6 +75,12 @@ class LetStringStatement(varName: String, override val expr: StringExpr) : LetSt
     }
 }
 
+/**
+ * The END statement ends your program and may be used interchangeably with the [StopStatement]. Although the END
+ * statement may appear anywhere, it is normally placed as the last line in a program and thus ends the program
+ * both physically and logically. The STOP statement is usually used if you want to have other termination points
+ * in your program. In TI BASIC you are not required to place an end statement in your program.
+ */
 class EndStatement : Statement {
     override fun listText() = "END"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
