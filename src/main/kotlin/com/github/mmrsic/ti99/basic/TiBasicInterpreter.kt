@@ -5,6 +5,7 @@ import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.checkLineNumber
 import java.util.*
 
 /**
@@ -128,9 +129,7 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
 
     /** Unconditional jump, that is, GO TO a given program line number. */
     fun jumpTo(existingProgramLineNumber: Int) {
-        if (!machine.program!!.hasLineNumber(existingProgramLineNumber)) {
-            throw IllegalArgumentException("Not an existing program line number: $existingProgramLineNumber")
-        }
+        checkLineNumber(existingProgramLineNumber)
         jumpToLineNumber = existingProgramLineNumber
         println("Set jump to program line number: $jumpToLineNumber")
     }

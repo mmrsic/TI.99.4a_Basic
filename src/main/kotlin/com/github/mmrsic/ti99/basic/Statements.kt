@@ -110,6 +110,14 @@ class RemarkStatement(val text: String) : Statement {
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) = println("Remark: $text")
 }
 
+/**
+ * The GOTO statement allows you to transfer control backward or forward within a program. Whenever the computer
+ * reaches a GOTO statement, it will always jump to the statement with the specified line-number. This is called an
+ * unconditional branch.
+ * If you should tell the computer to skip to a line-number that does not exist in your program, the program will stop
+ * running and print the message "BAD LINE NUMBER".
+ * Note that the space between the words GO and TO is optional.
+ */
 class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
     private var lineNumber: Int = originalLineNum
 
