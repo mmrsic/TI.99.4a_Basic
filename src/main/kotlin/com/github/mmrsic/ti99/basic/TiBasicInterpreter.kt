@@ -119,11 +119,20 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
         val newValue: NumericConstant = Addition(currValue, loop.increment).value()
         machine.setNumericVariable(loop.varName, newValue)
         if (newValue.toNative() in loop.continueRange) {
-            jumpToLineNumber = loop.startLineNumber
+            jumpTo(loop.startLineNumber)
             return
         }
         forLoopStack.pop()
         println("Ended: $loop")
+    }
+
+    /** Unconditional jump, that is, GO TO a given program line number. */
+    fun jumpTo(existingProgramLineNumber: Int) {
+        if (!machine.program!!.hasLineNumber(existingProgramLineNumber)) {
+            throw IllegalArgumentException("Not an existing program line number: $existingProgramLineNumber")
+        }
+        jumpToLineNumber = existingProgramLineNumber
+        println("Set jump to program line number: $jumpToLineNumber")
     }
 
     // HELPERS //

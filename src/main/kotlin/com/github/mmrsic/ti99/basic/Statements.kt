@@ -113,9 +113,11 @@ class RemarkStatement(val text: String) : Statement {
 class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
     private var lineNumber: Int = originalLineNum
 
-    override fun listText(): String = "GO TO $lineNumber"
+    override fun listText(): String = "GO TO $lineNumber" // TODO: Implement GOTO variant
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        TODO("not implemented")
+        val interpreter =
+            machine.programInterpreter ?: throw IllegalArgumentException("GO TO must not be used without program")
+        interpreter.jumpTo(lineNumber)
     }
 
     override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
@@ -161,4 +163,14 @@ class NextStatement(val varName: String) : Statement {
     }
 
     override fun requiresEmptyLineAfterExecution() = false
+}
+
+class IfStatement(private val numericExpr: NumericExpr, val lineNumber1: Int) : Statement {
+    override fun listText(): String = "IF ${numericExpr.listText()} THEN $lineNumber1"
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val currVal = numericExpr.value()
+        val isTrue = currVal.toNative() != 0.0
+        if (isTrue) machine.programInterpreter!!.jumpTo(lineNumber1)
+    }
 }
