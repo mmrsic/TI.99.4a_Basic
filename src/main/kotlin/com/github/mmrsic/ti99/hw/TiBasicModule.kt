@@ -295,7 +295,7 @@ class TiBasicModule : TiModule {
                 }
             } else if (expression is Expression) {
                 val characters = expression.displayValue()
-                if (expression is NumericExpr && (currCol + characters.length) > maxCol) {
+                if (expression is NumericExpr && (currCol + characters.length) > maxCol + 1) {
                     screen.scroll(); currCol = 3
                 }
                 var lefOver = screen.hchar(currRow, currCol, characters, maxCol)
