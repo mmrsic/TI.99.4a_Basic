@@ -94,6 +94,10 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
             } catch (e: TiBasicException) {
                 throw TiBasicProgramException(pc, e)
             }
+            if (jumpToLineNumber != null) {
+                checkLineNumber(jumpToLineNumber!!)
+                if (!program.hasLineNumber(jumpToLineNumber!!)) throw BadLineNumber()
+            }
             pc = jumpToLineNumber ?: program.nextLineNumber(pc)
             jumpToLineNumber = null
         }
