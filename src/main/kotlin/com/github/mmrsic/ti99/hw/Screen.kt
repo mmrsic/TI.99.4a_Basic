@@ -31,7 +31,7 @@ abstract class Screen(getCharPattern: (Int) -> String) {
         scroll()
     }
 
-    /** Add ASCII codes of a given characters string to the botton of the screen. */
+    /** Add ASCII codes of a given characters string to the bottom, scrolling the contents only if it doesn't fit. */
     fun display(characters: String, startRow: Int = 24, leftMarginCol: Int = 3, rightMarginCol: Int = 30) {
         var leftOver = hchar(startRow, leftMarginCol, characters, rightMarginCol)
         while (leftOver.isNotEmpty()) {
