@@ -4,6 +4,7 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.basic.expr.*
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.checkLineNumber
 import java.util.*
@@ -75,7 +76,11 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 
 }
 
-class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInterpreter(machine) {
+/** Interpreter for TI Basic programs. */
+class TiBasicProgramInterpreter(
+    private val machine: TiBasicModule,
+    private val keyboardInputProvider: KeyboardInputProvider
+) : TiBasicInterpreter(machine) {
 
     /** Interpret the current program of this interpreter's [machine], optionally starting at a given start line number. */
     fun interpretAll(startLineNum: Int? = null) {
@@ -137,6 +142,31 @@ class TiBasicProgramInterpreter(private val machine: TiBasicModule) : TiBasicInt
         jumpToLineNumber = existingProgramLineNumber
         println("Set jump to program line number: $jumpToLineNumber")
     }
+
+
+    private object KeyboardInputCtx : KeyboardInputProvider.Context {
+        override var overallCalls: Int = 0
+        override val programLine: Int = 0
+        override val programLineCalls: Int = 1
+        override val unacceptedInputs: Int = 0
+    }
+
+    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String = ""): String {
+        val inputEndingChars = "\n" // TODO: Add character codes for navigation keys
+        KeyboardInputCtx.overallCalls++
+        val input = StringBuilder().apply {
+            do {
+                val inputPart = keyboardInputProvider.provideInput(KeyboardInputCtx)
+                for (char in inputPart.takeWhile { it != '\n' }) {
+                    append(char)
+                }
+            } while (inputPart.none { it in inputEndingChars })
+        }.toString()
+        machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))
+        machine.setVariable(variableName, input)
+        return input
+    }
+
 
     // HELPERS //
 

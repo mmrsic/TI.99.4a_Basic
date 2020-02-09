@@ -75,6 +75,15 @@ class TiBasicModule : TiModule {
         stringVariables.clear()
     }
 
+    /** Either [setStringVariable] or [setNumericVariable] depending on the variable name. */
+    fun setVariable(variableName: String, value: String) {
+        if (variableName.last() == '$') {
+            setStringVariable(variableName, StringConstant(value))
+        } else {
+            setNumericVariable(variableName, NumericConstant(value.toDouble()))
+        }
+    }
+
     /** The current value of a string value given by its name. */
     fun getStringVariableValue(name: String): StringConstant {
         if (name.last() != '$') throw IllegalArgumentException("Illegal string variable name: $name")
@@ -88,6 +97,7 @@ class TiBasicModule : TiModule {
         if (name.length > 15) throw BadName()
         val result = StringConstant(expr.displayValue())
         stringVariables[name] = result
+        println("$name=$result")
         return result
     }
 
@@ -109,6 +119,7 @@ class TiBasicModule : TiModule {
         if (name.length > 15) throw BadName()
         val result = expr.value()
         numericVariables[name] = result
+        println("$name=$result")
         return result
     }
 
@@ -178,6 +189,7 @@ class TiBasicModule : TiModule {
         interpretProgram(startLine)
     }
 
+    /** Unconditionally stop the current program run. Has no effect, if no program is running. */
     fun endProgramRun() {
         programInterpreter = null
     }
@@ -270,6 +282,7 @@ class TiBasicModule : TiModule {
         return defaultCharacterPattern(characterCode)
     }
 
+    /** Print a given list of tokens onto the screen. */
     fun printTokens(expressions: List<Any>, programLineNumber: Int? = null) {
         var suppressScroll = false
         val maxCol = TiBasicScreen.MAX_COLUMNS - 2
@@ -318,12 +331,41 @@ class TiBasicModule : TiModule {
         }
     }
 
+    /** Current [KeyboardInputProvider] used by this module. */
+    private var keyboardInputProvider: KeyboardInputProvider = object : KeyboardInputProvider {
+    }
+
+    /** Set the provider for keyboard input to a given instance. */
+    fun setKeyboardInputProvider(newProvider: KeyboardInputProvider) {
+        keyboardInputProvider = newProvider
+    }
+
+    /**
+     * Accept user input via keyboard storing it in a variable given by its name.
+     * @param variableName name of the variable where to store the user's input - must end with $ for string input
+     * @param programLineNumber program line number used for programmatically provided user input
+     * @param prompt screen text presented to the user when asking for input
+     */
+    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String = "") {
+        val interpreter = programInterpreter
+            ?: throw IllegalArgumentException("User input is possible only while a program is running")
+        printTokens(listOf(StringConstant("? "), PrintToken.Adjacent))
+        interpreter.acceptUserInput(variableName, programLineNumber, prompt)
+        screen.scroll()
+        currentPrintColumn = null
+    }
+
     // HELPERS //
 
     private fun interpretProgram(startLine: Int?) {
-        currentPrintColumn = null
-        val interpreter = programInterpreter ?: TiBasicProgramInterpreter(this)
+        currentPrintColumn = null // TODO: Move to program interpreter?
+        val interpreter = TiBasicProgramInterpreter(this, keyboardInputProvider)
         programInterpreter = interpreter
+        interpretProgram(interpreter, startLine)
+        programInterpreter = null
+    }
+
+    private fun interpretProgram(interpreter: TiBasicProgramInterpreter, startLine: Int?) {
         try {
             interpreter.interpretAll(startLine)
             screen.scroll()
