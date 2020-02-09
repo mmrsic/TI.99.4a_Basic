@@ -19,6 +19,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     /** Suffix distinguishing a string variable from a numeric variable in TI Basic. */
     private val stringVarSuffix = "\\$"
 
+    // TOKENS //
+
     private val quoted by token("\".*\"")
 
     private val seg by token("SEG\\$")
@@ -35,11 +37,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val goto by token("""GO\s?TO""")
     private val hchar by token("HCHAR")
     private val ifToken by token("IF")
+    private val input by token("INPUT")
     private val let by token("LET")
     private val list by token("\\bLIST\\b")
     private val new by token("\\bNEW\\b")
     private val next by token("NEXT")
     private val number by token("""NUM(BER)?""")
+    private val on by token("ON")
     private val print by token("\\bPRINT\\b")
     private val remark by token("""REM(ARK)?.*""")
     private val resequence by token("""RES(EQUENCE)?""")
@@ -90,6 +94,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val name by token("[$nameStartChars][$nameChars]*")
 
+    // PARSERS //
+
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
     private val segFun by skip(seg) and skip(openParenthesis) and
             parser(this::stringExpr) and skip(comma) and parser(this::numericExpr) and skip(comma) and parser(this::numericExpr) and
@@ -130,6 +136,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     })
 
     private val expr by numericExpr or stringExpr
+
+    // COMMAND PARSERS
 
     private val newCmd = new and optional(ws and optional(numericExpr or name)) asJust NewCommand()
     private val runCmd by skip(run) and optional(positiveInt) map { RunCommand(it?.text?.toInt()) }
@@ -174,6 +182,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val traceCmd by trace asJust TraceCommand()
     private val untraceCmd by untrace asJust UntraceCommand()
 
+    // STATEMENT PARSERS
+
     private val printStmt by skip(print) and
             zeroOrMore(printSeparator) and
             optional(expr) and
@@ -216,6 +226,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val gotoStmt by skip(goto) and (positiveInt use { Integer.parseInt(text) }) map { lineNum: Int ->
         GoToStatement(lineNum)
     }
+    private val onGotoStmt by skip(on) and numericExpr and skip(goto) and separatedTerms(positiveInt, comma) use {
+        OnGotoStatement(t1, t2.map { match -> Integer.parseInt(match.text) })
+    }
     private val breakStmt by skip(breakToken) and
             separated(positiveInt use { Integer.parseInt(text) }, comma, acceptZero = true) use {
         BreakStatement(terms)
@@ -227,6 +240,15 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val ifStmt by skip(ifToken) and numericExpr and skip(then) and positiveInt use {
         IfStatement(t1, Integer.parseInt(t2.text))
     }
+    private val inputStmt by skip(input) and (numericVarRef or stringVarRef) use {
+        when (this) {
+            is NumericVariable -> InputStatement.Number(this)
+            is StringVariable -> InputStatement.String(this)
+            else -> throw IllegalArgumentException("Expecting variable, got $this")
+        }
+    }
+
+    // CALL SUBPROGRAM PARSERS
 
     private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and
             numericExpr and skip(comma) and stringConst and skip(closeParenthesis) use { CharSubprogram(t1, t2) }
@@ -239,11 +261,14 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val callParser: Parser<Statement> by callChar or callClear or callHchar
 
+    // PARSER HIERARCHY
+
     private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
             breakCmd or continueCmd or unbreakCmd or traceCmd or untraceCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
-    private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or gotoStmt or
-            callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt
+    private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
+            callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
+            inputStmt or gotoStmt or onGotoStmt
 
     private val programLineParser by positiveInt and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))
