@@ -1,9 +1,8 @@
 package com.github.mmrsic.ti99.basic
 
-import com.github.mmrsic.ti99.basic.expr.Expression
-import com.github.mmrsic.ti99.basic.expr.NumericExpr
-import com.github.mmrsic.ti99.basic.expr.StringExpr
+import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import kotlin.math.roundToInt
 
 /**
  * A [TiBasicExecutable] that may be used within a [TiBasicProgram].
@@ -133,7 +132,26 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
     }
 }
 
-class UnbreakStatement(private val lineNumberList: List<Int>? = null) : Statement {
+class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int>) : LineNumberDependentStatement {
+
+    override fun listText(): String {
+        return "ON ${numericExpr.listText()} GOTO $lineNumberList"
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val interpreter =
+            machine.programInterpreter ?: throw IllegalArgumentException("ON GOTO must not be used without program")
+        val lineNumberIdx = numericExpr.value().toNative().roundToInt()
+        if (lineNumberIdx !in 1..lineNumberList.size) throw BadValue()
+        interpreter.jumpTo(lineNumberList[lineNumberIdx - 1])
+    }
+
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+        TODO("not implemented")
+    }
+}
+
+class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumberDependentStatement {
     override fun listText() = if (lineNumberList != null) "UNBREAK $lineNumberList" else "UNBREAK"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         programLineNumber ?: throw IllegalArgumentException("Unbreak statement may not be used without program")
@@ -142,6 +160,10 @@ class UnbreakStatement(private val lineNumberList: List<Int>? = null) : Statemen
         } else {
             machine.removeBreakpoints(lineNumberList, programLineNumber)
         }
+    }
+
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+        TODO("not yet implemented")
     }
 }
 
@@ -180,5 +202,22 @@ class IfStatement(private val numericExpr: NumericExpr, val lineNumber1: Int) : 
         val currVal = numericExpr.value()
         val isTrue = currVal.toNative() != 0.0
         if (isTrue) machine.programInterpreter!!.jumpTo(lineNumber1)
+    }
+}
+
+sealed class InputStatement : Statement {
+    abstract val variableName: kotlin.String
+    override fun listText() = "INPUT $variableName"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
+        machine.acceptUserInput(variableName, programLineNumber)
+    }
+
+    class Number(numericVariable: NumericVariable) : InputStatement() {
+        override val variableName = numericVariable.name
+    }
+
+    class String(stringVariable: StringVariable) : InputStatement() {
+        override val variableName = stringVariable.name
     }
 }
