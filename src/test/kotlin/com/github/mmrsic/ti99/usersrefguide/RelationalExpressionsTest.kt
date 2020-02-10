@@ -79,10 +79,10 @@ class RelationalExpressionsTest {
 
         TestHelperScreen.assertPrintContents(
             mapOf(
-                14 to "  TI BASIC READY",
-                16 to " >100 A$=\"HI\"",
-                17 to " >110 B$=\" THERE\"",
-                18 to " >120 PRINT \"HI THERE\"=(A$&B$)",
+                13 to "  TI BASIC READY",
+                15 to " >100 A$=\"HI\"",
+                16 to " >110 B$=\" THERE\"",
+                17 to " >120 PRINT \"HI THERE\"=(A$&B$)",
                 19 to " >RUN",
                 20 to "  -1",
                 22 to "  ** DONE **",

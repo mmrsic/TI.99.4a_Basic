@@ -32,6 +32,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val char by token("CHAR")
     private val clear by token("CLEAR")
     private val continueToken by token("""CON(TINUE)?""")
+    private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
     private val forToken by token("FOR")
     private val goto by token("""GO\s?TO""")
@@ -96,6 +97,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     // PARSERS //
 
+    private val positiveIntConst by positiveInt use { text.toInt() }
+
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
     private val segFun by skip(seg) and skip(openParenthesis) and
             parser(this::stringExpr) and skip(comma) and parser(this::numericExpr) and skip(comma) and parser(this::numericExpr) and
@@ -140,18 +143,16 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     // COMMAND PARSERS
 
     private val newCmd = new and optional(ws and optional(numericExpr or name)) asJust NewCommand()
-    private val runCmd by skip(run) and optional(positiveInt) map { RunCommand(it?.text?.toInt()) }
+    private val runCmd by skip(run) and optional(positiveIntConst) map { RunCommand(it) }
     private val byeCmd by bye asJust ByeCommand()
-    private val listRangeCmd by skip(list) and positiveInt and skip(minus) and positiveInt use {
-        ListCommand(t1.text.toInt(), t2.text.toInt())
+    private val listRangeCmd by skip(list) and positiveIntConst and skip(minus) and positiveIntConst use {
+        ListCommand(t1, t2)
     }
-    private val listFromCmd by skip(list) and positiveInt and skip(minus) use { ListCommand(text.toInt(), null) }
-    private val listToCmd by skip(list) and skip(minus) and positiveInt use { ListCommand(null, text.toInt()) }
-    private val listLineCmd by skip(list) and positiveInt use { ListCommand(text.toInt()) }
+    private val listFromCmd by skip(list) and positiveIntConst and skip(minus) use { ListCommand(this, null) }
+    private val listToCmd by skip(list) and skip(minus) and positiveIntConst use { ListCommand(null, this) }
+    private val listLineCmd by skip(list) and positiveIntConst use { ListCommand(this) }
     private val listCmd by list asJust ListCommand(null)
-    private val numberCmd by skip(number) and
-            optional(positiveInt use { Integer.parseInt(text) }) and
-            optional(skip(comma) and positiveInt use { Integer.parseInt(text) }) use {
+    private val numberCmd by skip(number) and optional(positiveIntConst) and optional(skip(comma) and positiveIntConst) use {
         when {
             t1 == null && t2 == null -> NumberCommand()
             t1 != null && t2 == null -> NumberCommand(initialLine = t1!!)
@@ -160,9 +161,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
         }
     }
-    private val resequenceCmd by skip(resequence) and
-            optional(positiveInt use { Integer.parseInt(text) }) and
-            optional(skip(comma) and positiveInt use { Integer.parseInt(text) }) use {
+    private val resequenceCmd by skip(resequence) and optional(positiveIntConst) and optional(skip(comma) and positiveIntConst) use {
         when {
             t1 == null && t2 == null -> ResequenceCommand()
             t1 != null && t2 == null -> ResequenceCommand(initialLine = t1!!)
@@ -171,13 +170,12 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
         }
     }
-    private val breakCmd by skip(breakToken) and
-            separated(positiveInt use { Integer.parseInt(text) }, comma, acceptZero = false) use {
-        BreakCommand(terms)
+    private val breakCmd by skip(breakToken) and separatedTerms(positiveIntConst, comma, acceptZero = false) use {
+        BreakCommand(this)
     }
     private val continueCmd by continueToken asJust ContinueCommand()
-    private val unbreakCmd by skip(unbreak) and optional(separatedTerms(positiveInt, comma)) use {
-        if (this == null) UnbreakCommand() else UnbreakCommand(this.map { Integer.parseInt(it.text) })
+    private val unbreakCmd by skip(unbreak) and optional(separatedTerms(positiveIntConst, comma)) use {
+        if (this == null) UnbreakCommand() else UnbreakCommand(this)
     }
     private val traceCmd by trace asJust TraceCommand()
     private val untraceCmd by untrace asJust UntraceCommand()
@@ -223,28 +221,27 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             else -> throw IllegalArgumentException("Illegal REMARK: $text")
         }
     }
-    private val gotoStmt by skip(goto) and (positiveInt use { Integer.parseInt(text) }) map { lineNum: Int ->
-        GoToStatement(lineNum)
+    private val gotoStmt by skip(goto) and (positiveIntConst) map { lineNum -> GoToStatement(lineNum) }
+    private val onGotoStmt by skip(on) and numericExpr and skip(goto) and separatedTerms(positiveIntConst, comma) use {
+        OnGotoStatement(t1, t2)
     }
-    private val onGotoStmt by skip(on) and numericExpr and skip(goto) and separatedTerms(positiveInt, comma) use {
-        OnGotoStatement(t1, t2.map { match -> Integer.parseInt(match.text) })
-    }
-    private val breakStmt by skip(breakToken) and
-            separated(positiveInt use { Integer.parseInt(text) }, comma, acceptZero = true) use {
+    private val breakStmt by skip(breakToken) and separated(positiveIntConst, comma, acceptZero = true) use {
         BreakStatement(terms)
     }
-    private val unbreakStmt by skip(unbreak) and
-            separated(positiveInt use { Integer.parseInt(text) }, comma, acceptZero = true) use {
+    private val unbreakStmt by skip(unbreak) and separated(positiveIntConst, comma, acceptZero = true) use {
         UnbreakStatement(terms)
     }
-    private val ifStmt by skip(ifToken) and numericExpr and skip(then) and positiveInt use {
-        IfStatement(t1, Integer.parseInt(t2.text))
+    private val ifStmt by skip(ifToken) and numericExpr and skip(then) and positiveIntConst and
+            optional(skip(elseToken) and positiveIntConst) use {
+        IfStatement(t1, t2, t3)
     }
-    private val inputStmt by skip(input) and (numericVarRef or stringVarRef) use {
-        when (this) {
-            is NumericVariable -> InputStatement.Number(this)
-            is StringVariable -> InputStatement.String(this)
-            else -> throw IllegalArgumentException("Expecting variable, got $this")
+
+    private val inputStmt by skip(input) and optional(quoted and skip(colon)) and (numericVarRef or stringVarRef) use {
+        val prompt: String? = t1?.text
+        when (val varRef = t2) {
+            is NumericVariable -> InputStatement.NumberConst(varRef, unquote(prompt))
+            is StringVariable -> InputStatement.StringConst(varRef, unquote(prompt))
+            else -> throw IllegalArgumentException("Expecting variable, got $t2")
         }
     }
 
@@ -270,8 +267,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
             inputStmt or gotoStmt or onGotoStmt
 
-    private val programLineParser by positiveInt and stmtParser use {
-        StoreProgramLineCommand(ProgramLine(t1.text.toInt(), listOf(t2)))
+    private val programLineParser by positiveIntConst and stmtParser use {
+        StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))
     }
     private val removeProgramLineParser by positiveInt use { RemoveProgramLineCommand(Integer.parseInt(text)) }
 

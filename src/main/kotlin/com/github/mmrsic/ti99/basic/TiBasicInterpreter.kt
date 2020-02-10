@@ -20,6 +20,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
     fun interpret(inputLine: String, machine: TiBasicModule) {
         val screen = machine.screen
         screen.print(inputLine)
+        if (inputLine.length == 28) machine.screen.scroll()
         println("Parsing command line input: $inputLine")
         val parseResult = try {
             parser.parseToEnd(inputLine)
