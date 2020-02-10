@@ -4,15 +4,16 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.basic.expr.*
-import com.github.mmrsic.ti99.hw.KeyboardInputProvider
+import com.github.mmrsic.ti99.hw.CodeSequenceProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiFctnCode
 import com.github.mmrsic.ti99.hw.checkLineNumber
 import java.util.*
 
 /**
  * A TI Basic interpreter for a given [TiBasicModule].
  */
-abstract class TiBasicInterpreter(machine: TiBasicModule)
+abstract class TiBasicInterpreter(val machine: TiBasicModule)
 
 class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter(machine) {
     private val parser = TiBasicParser(machine)
@@ -78,10 +79,8 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 }
 
 /** Interpreter for TI Basic programs. */
-class TiBasicProgramInterpreter(
-    private val machine: TiBasicModule,
-    private val keyboardInputProvider: KeyboardInputProvider
-) : TiBasicInterpreter(machine) {
+class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequenceProvider: CodeSequenceProvider) :
+    TiBasicInterpreter(machine) {
 
     /** Interpret the current program of this interpreter's [machine], optionally starting at a given start line number. */
     fun interpretAll(startLineNum: Int? = null) {
@@ -144,32 +143,18 @@ class TiBasicProgramInterpreter(
         println("Set jump to program line number: $jumpToLineNumber")
     }
 
-
-    private object KeyboardInputCtx : KeyboardInputProvider.Context {
-        private val allCalls = mutableMapOf<Int, Int>()
-        override val overallCalls: Int
-            get() = if (allCalls.isEmpty()) 0 else allCalls.values.reduce(Int::plus)
-        override var programLine: Int = 0
-        override val programLineCalls: Int
-            get() = allCalls[programLine] ?: 0
-        override var unacceptedInputs: Int = 0
-
-        fun addCall(lineNumber: Int) {
-            programLine = lineNumber
-            val oldValue = allCalls[lineNumber] ?: 0
-            allCalls[lineNumber] = oldValue + 1
-            unacceptedInputs = 0
-        }
-    }
-
-    /** Accept user input from [keyboardInputProvider] into a given variable. */
+    /** Accept user input from [codeSequenceProvider] into a given variable. */
     fun acceptUserInput(variableName: String, programLineNumber: Int): String {
-        val inputEndingChars = "\n" // TODO: Add character codes for navigation keys
-        KeyboardInputCtx.addCall(programLineNumber)
+        val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
+        acceptUserInputCtx.addCall(programLineNumber)
         val input = StringBuilder().apply {
             do {
-                val inputPart = keyboardInputProvider.provideInput(KeyboardInputCtx)
-                for (char in inputPart.takeWhile { it != '\n' }) append(char)
+                val inputPart = codeSequenceProvider.provideInput(acceptUserInputCtx)
+                if (inputPart.contains(TiFctnCode.Clear.toChar())) throw Breakpoint()
+                for (char in inputPart.takeWhile { it !in inputEndingChars }) append(char)
+                if (length > 10000) {
+                    throw IllegalArgumentException("Endless loop detected")
+                }
             } while (inputPart.none { it in inputEndingChars })
         }.toString()
         machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))
@@ -190,6 +175,23 @@ class TiBasicProgramInterpreter(
         increment: Number
     ) {
         val increment = NumericConstant(increment)
+    }
+
+    private val acceptUserInputCtx = object : CodeSequenceProvider.Context {
+        private val allCalls = mutableMapOf<Int, Int>()
+        override val overallCalls: Int
+            get() = if (allCalls.isEmpty()) 0 else allCalls.values.reduce(Int::plus)
+        override var programLine: Int = 0
+        override val programLineCalls: Int
+            get() = allCalls[programLine] ?: 0
+        override var unacceptedInputs: Int = 0
+
+        fun addCall(lineNumber: Int) {
+            programLine = lineNumber
+            val oldValue = allCalls[lineNumber] ?: 0
+            allCalls[lineNumber] = oldValue + 1
+            unacceptedInputs = 0
+        }
     }
 
 }

@@ -2,7 +2,7 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
-import com.github.mmrsic.ti99.hw.KeyboardInputProvider
+import com.github.mmrsic.ti99.hw.CodeSequenceProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
@@ -14,15 +14,15 @@ class OnGotoStatementTest {
     @Test
     fun testHowDoesOnGotoWork() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : KeyboardInputProvider {
-                override fun provideInput(context: KeyboardInputProvider.Context): Sequence<Char> {
-                    println("Providing input for overall call #${context.overallCalls}")
-                    return when (context.overallCalls) {
-                        1 -> "2\n".asSequence()
-                        2 -> "1.2\n".asSequence()
-                        3 -> "3.7\n".asSequence()
-                        4 -> "6\n".asSequence()
-                        else -> super.provideInput(context)
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+                    println("Providing input for overall call #${ctx.overallCalls}")
+                    return when (ctx.overallCalls) {
+                        1 -> "2\r".asSequence()
+                        2 -> "1.2\r".asSequence()
+                        3 -> "3.7\r".asSequence()
+                        4 -> "6\r".asSequence()
+                        else -> super.provideInput(ctx)
                     }
                 }
             })

@@ -2,24 +2,27 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
-import com.github.mmrsic.ti99.hw.KeyboardInputProvider
+import com.github.mmrsic.ti99.hw.CodeSequenceProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
+/**
+ * Test cases for examples found in User's Reference Guide on pages II-51 and II-52.
+ */
 class IfStatementTest {
 
     @Test
     fun testFindTheLargestInputValue() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : KeyboardInputProvider {
-                override fun provideInput(ctx: KeyboardInputProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
                     println("Providing keyboard input for line=${ctx.programLine}, call=${ctx.programLineCalls}")
                     return when (ctx.programLine) {
-                        110 -> "3\n"
-                        120 -> "456\n"
+                        110 -> "3\r"
+                        120 -> "456\r"
                         160 -> when (ctx.programLineCalls) {
-                            1 -> "321\n"
-                            2 -> "292\n"
+                            1 -> "321\r"
+                            2 -> "292\r"
                             else -> throw IllegalArgumentException("Unexpected program line call #${ctx.programLineCalls}")
                         }
                         else -> throw IllegalArgumentException("Unexpected program line: ${ctx.programLine}")
@@ -74,13 +77,13 @@ class IfStatementTest {
     @Test
     fun testStringComparison() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : KeyboardInputProvider {
-                override fun provideInput(context: KeyboardInputProvider.Context): Sequence<Char> {
-                    println("Providing input for overall call #${context.programLine}")
-                    return when (context.programLine) {
-                        100 -> "TEXAS\n".asSequence()
-                        110 -> "TEX\n".asSequence()
-                        else -> super.provideInput(context)
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+                    println("Providing input for program line #${ctx.programLine}")
+                    return when (ctx.programLine) {
+                        100 -> "TEXAS\r".asSequence()
+                        110 -> "TEX\r".asSequence()
+                        else -> super.provideInput(ctx)
                     }
                 }
             })
@@ -102,13 +105,13 @@ class IfStatementTest {
             """.trimIndent(), machine
         )
 
-        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
-            override fun provideInput(context: KeyboardInputProvider.Context): Sequence<Char> {
-                println("Providing input for program line #${context.programLine}")
-                return when (context.programLine) {
-                    100 -> "TAXES\n".asSequence()
-                    110 -> "TEX\n".asSequence()
-                    else -> super.provideInput(context)
+        machine.setKeyboardInputProvider(object : CodeSequenceProvider {
+            override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+                println("Providing input for program line #${ctx.programLine}")
+                return when (ctx.programLine) {
+                    100 -> "TAXES\r".asSequence()
+                    110 -> "TEX\r".asSequence()
+                    else -> super.provideInput(ctx)
                 }
             }
         })
@@ -135,6 +138,66 @@ class IfStatementTest {
                 19 to "  B$ IS TEX",
                 20 to "  B$ IS GREATER",
                 22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testAlternativeFormat() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+                    return when (ctx.programLine) {
+                        100 -> when (ctx.programLineCalls) {
+                            1, 2 -> "2\r"
+                            else -> String(charArrayOf(2.toChar(), '\r'))
+                        }
+                        else -> when (ctx.programLineCalls) {
+                            1 -> "3\r"
+                            else -> "-2\r"
+                        }
+                    }.asSequence()
+                }
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 INPUT "A IS ":A
+            110 INPUT "B IS ":B
+            120 IF A+B THEN 150
+            130 PRINT "RESULT IS ZERO,EXPRESSION FALSE"
+            140 GOTO 100
+            150 PRINT "RESULT IS NON-ZERO,EXPRESSION TRUE"
+            160 GO TO 100
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                2 to "  TI BASIC READY",
+                4 to " >100 INPUT \"A IS \":A",
+                5 to " >110 INPUT \"B IS \":B",
+                6 to " >120 IF A+B THEN 150",
+                7 to " >130 PRINT \"RESULT IS ZERO,EX",
+                8 to "  PRESSION FALSE\"",
+                9 to " >140 GOTO 100",
+                10 to " >150 PRINT \"RESULT IS NON-ZER",
+                11 to "  O,EXPRESSION TRUE\"",
+                12 to " >160 GO TO 100",
+                13 to " >RUN",
+                14 to "  A IS 2",
+                15 to "  B IS 3",
+                16 to "  RESULT IS NON-ZERO,EXPRESSIO",
+                17 to "  N TRUE",
+                18 to "  A IS 2",
+                19 to "  B IS -2",
+                20 to "  RESULT IS ZERO,EXPRESSION FA",
+                21 to "  LSE",
+                22 to "  A IS",
+                23 to "  * BREAKPOINT AT 100",
                 24 to " >"
             ), machine.screen
         )

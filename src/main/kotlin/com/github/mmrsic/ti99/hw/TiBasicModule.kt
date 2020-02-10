@@ -331,13 +331,13 @@ class TiBasicModule : TiModule {
         }
     }
 
-    /** Current [KeyboardInputProvider] used by this module. */
-    private var keyboardInputProvider: KeyboardInputProvider = object : KeyboardInputProvider {
+    /** Current [CodeSequenceProvider] used by this module. */
+    private var codeSequenceProvider: CodeSequenceProvider = object : CodeSequenceProvider {
     }
 
     /** Set the provider for keyboard input to a given instance. */
-    fun setKeyboardInputProvider(newProvider: KeyboardInputProvider) {
-        keyboardInputProvider = newProvider
+    fun setKeyboardInputProvider(newProvider: CodeSequenceProvider) {
+        codeSequenceProvider = newProvider
     }
 
     /**
@@ -359,7 +359,7 @@ class TiBasicModule : TiModule {
 
     private fun interpretProgram(startLine: Int?) {
         currentPrintColumn = null // TODO: Move to program interpreter?
-        val interpreter = TiBasicProgramInterpreter(this, keyboardInputProvider)
+        val interpreter = TiBasicProgramInterpreter(this, codeSequenceProvider)
         programInterpreter = interpreter
         interpretProgram(interpreter, startLine)
         programInterpreter = null
