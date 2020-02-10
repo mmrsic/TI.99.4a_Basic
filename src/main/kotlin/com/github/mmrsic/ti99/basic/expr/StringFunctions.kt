@@ -48,6 +48,12 @@ data class StrFunction(private val numericExpr: NumericExpr) : StringFunction("S
 }
 
 
+/** Convert a given ASCII code into a string containing the character asssociated with the code. */
 fun toChar(asciiCode: Int): String {
     return asciiCode.toChar().toString()
+}
+
+/** Remove all surrounding quotes of a given string. */
+fun unquote(text: String?): String? {
+    return text?.removePrefix("\"")?.removeSuffix("\"")
 }

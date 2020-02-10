@@ -146,21 +146,30 @@ class TiBasicProgramInterpreter(
 
 
     private object KeyboardInputCtx : KeyboardInputProvider.Context {
-        override var overallCalls: Int = 0
-        override val programLine: Int = 0
-        override val programLineCalls: Int = 1
-        override val unacceptedInputs: Int = 0
+        private val allCalls = mutableMapOf<Int, Int>()
+        override val overallCalls: Int
+            get() = if (allCalls.isEmpty()) 0 else allCalls.values.reduce(Int::plus)
+        override var programLine: Int = 0
+        override val programLineCalls: Int
+            get() = allCalls[programLine] ?: 0
+        override var unacceptedInputs: Int = 0
+
+        fun addCall(lineNumber: Int) {
+            programLine = lineNumber
+            val oldValue = allCalls[lineNumber] ?: 0
+            allCalls[lineNumber] = oldValue + 1
+            unacceptedInputs = 0
+        }
     }
 
-    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String = ""): String {
+    /** Accept user input from [keyboardInputProvider] into a given variable. */
+    fun acceptUserInput(variableName: String, programLineNumber: Int): String {
         val inputEndingChars = "\n" // TODO: Add character codes for navigation keys
-        KeyboardInputCtx.overallCalls++
+        KeyboardInputCtx.addCall(programLineNumber)
         val input = StringBuilder().apply {
             do {
                 val inputPart = keyboardInputProvider.provideInput(KeyboardInputCtx)
-                for (char in inputPart.takeWhile { it != '\n' }) {
-                    append(char)
-                }
+                for (char in inputPart.takeWhile { it != '\n' }) append(char)
             } while (inputPart.none { it in inputEndingChars })
         }.toString()
         machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))

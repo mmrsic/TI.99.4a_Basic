@@ -13,19 +13,20 @@ class OnGotoStatementTest {
 
     @Test
     fun testHowDoesOnGotoWork() {
-        val machine = TiBasicModule()
-        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
-            override fun provideInput(context: KeyboardInputProvider.Context): Sequence<Char> {
-                println("Providing input for overall call #${context.overallCalls}")
-                return when (context.overallCalls) {
-                    1 -> "2\n".asSequence()
-                    2 -> "1.2\n".asSequence()
-                    3 -> "3.7\n".asSequence()
-                    4 -> "6\n".asSequence()
-                    else -> super.provideInput(context)
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(context: KeyboardInputProvider.Context): Sequence<Char> {
+                    println("Providing input for overall call #${context.overallCalls}")
+                    return when (context.overallCalls) {
+                        1 -> "2\n".asSequence()
+                        2 -> "1.2\n".asSequence()
+                        3 -> "3.7\n".asSequence()
+                        4 -> "6\n".asSequence()
+                        else -> super.provideInput(context)
+                    }
                 }
-            }
-        })
+            })
+        }
         val interpreter = TiBasicCommandLineInterpreter(machine)
         interpreter.interpretAll(
             """

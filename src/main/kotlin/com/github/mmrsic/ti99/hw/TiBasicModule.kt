@@ -346,11 +346,11 @@ class TiBasicModule : TiModule {
      * @param programLineNumber program line number used for programmatically provided user input
      * @param prompt screen text presented to the user when asking for input
      */
-    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String = "") {
+    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String = "? ") {
         val interpreter = programInterpreter
             ?: throw IllegalArgumentException("User input is possible only while a program is running")
-        printTokens(listOf(StringConstant("? "), PrintToken.Adjacent))
-        interpreter.acceptUserInput(variableName, programLineNumber, prompt)
+        printTokens(listOf(StringConstant(prompt), PrintToken.Adjacent))
+        interpreter.acceptUserInput(variableName, programLineNumber)
         screen.scroll()
         currentPrintColumn = null
     }

@@ -132,6 +132,10 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
     }
 }
 
+/**
+ * The ON-GOTO statement tells the computer to jump to one of several program lines, depending on the value of the
+ * numeric expression.
+ */
 class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int>) : LineNumberDependentStatement {
 
     override fun listText(): String {
@@ -195,29 +199,55 @@ class NextStatement(val varName: String) : Statement {
     override fun requiresEmptyLineAfterExecution() = false
 }
 
-class IfStatement(private val numericExpr: NumericExpr, val lineNumber1: Int) : Statement {
-    override fun listText(): String = "IF ${numericExpr.listText()} THEN $lineNumber1"
+/**
+ * The IF-THEN-ELSE statement allows you to change the normal sequence of your program execution by using a conditional
+ * branch. A value of 0 is treated as false, and any other value is treated as true. Thus, you can use multiplication
+ * as a logical-AND and addition as logical-OR. If the expression is true, the computer will jump to [line1], which
+ * follows the word THEN. If the condition is false, the computer will jump to [line2] following the word ELSE. If ELSE
+ * is omitted, the computer continues with the next program line.
+ */
+class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line2: Int? = null) :
+    LineNumberDependentStatement {
+
+    override fun listText(): String = when {
+        line2 != null -> "IF ${numericExpr.listText()} THEN $line1 ELSE $line2"
+        else -> "IF ${numericExpr.listText()} THEN $line1"
+    }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val interpreter = machine.programInterpreter
+        if (programLineNumber == null || interpreter == null) {
+            throw IllegalArgumentException("Cannot use IF-THEN-ELSE without program")
+        }
         val currVal = numericExpr.value()
         val isTrue = currVal.toNative() != 0.0
-        if (isTrue) machine.programInterpreter!!.jumpTo(lineNumber1)
+        if (isTrue) interpreter.jumpTo(line1)
+        else if (line2 != null) interpreter.jumpTo(line2)
+    }
+
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+        TODO("not implemented")
     }
 }
 
-sealed class InputStatement : Statement {
-    abstract val variableName: kotlin.String
-    override fun listText() = "INPUT $variableName"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
-        machine.acceptUserInput(variableName, programLineNumber)
+sealed class InputStatement(val prompt: String?) : Statement {
+    abstract val variableName: String
+
+    override fun listText() = when (prompt) {
+        null -> "INPUT $variableName"
+        else -> "INPUT $prompt:$variableName"
     }
 
-    class Number(numericVariable: NumericVariable) : InputStatement() {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
+        machine.acceptUserInput(variableName, programLineNumber, prompt ?: "? ")
+    }
+
+    class NumberConst(numericVariable: NumericVariable, prompt: String? = null) : InputStatement(prompt) {
         override val variableName = numericVariable.name
     }
 
-    class String(stringVariable: StringVariable) : InputStatement() {
+    class StringConst(stringVariable: StringVariable, prompt: String? = null) : InputStatement(prompt) {
         override val variableName = stringVariable.name
     }
 }

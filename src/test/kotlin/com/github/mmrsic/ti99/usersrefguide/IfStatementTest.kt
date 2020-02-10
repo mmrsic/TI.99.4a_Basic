@@ -70,4 +70,74 @@ class IfStatementTest {
         )
     }
 
+
+    @Test
+    fun testStringComparison() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(context: KeyboardInputProvider.Context): Sequence<Char> {
+                    println("Providing input for overall call #${context.programLine}")
+                    return when (context.programLine) {
+                        100 -> "TEXAS\n".asSequence()
+                        110 -> "TEX\n".asSequence()
+                        else -> super.provideInput(context)
+                    }
+                }
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 INPUT "A$ IS ":A$
+            110 INPUT "B$ IS ":B$
+            120 IF A$=B$ THEN 160
+            130 IF A$<B$ THEN 180
+            140 PRINT "B$ IS LESS"
+            150 GOTO 190
+            160 PRINT "A$=B$"
+            170 GOTO 190
+            180 PRINT "B$ IS GREATER"
+            190 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(context: KeyboardInputProvider.Context): Sequence<Char> {
+                println("Providing input for program line #${context.programLine}")
+                return when (context.programLine) {
+                    100 -> "TAXES\n".asSequence()
+                    110 -> "TEX\n".asSequence()
+                    else -> super.provideInput(context)
+                }
+            }
+        })
+        interpreter.interpret("RUN", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to " >110 INPUT \"B\$ IS \":B\$",
+                2 to " >120 IF A\$=B\$ THEN 160",
+                3 to " >130 IF A\$<B\$ THEN 180",
+                4 to " >140 PRINT \"B\$ IS LESS\"",
+                5 to " >150 GOTO 190",
+                6 to " >160 PRINT \"A\$=B\$\"",
+                7 to " >170 GOTO 190",
+                8 to " >180 PRINT \"B$ IS GREATER\"",
+                9 to " >190 END",
+                10 to " >RUN",
+                11 to "  A$ IS TEXAS",
+                12 to "  B$ IS TEX",
+                13 to "  B$ IS LESS",
+                15 to "  ** DONE **",
+                17 to " >RUN",
+                18 to "  A$ IS TAXES",
+                19 to "  B$ IS TEX",
+                20 to "  B$ IS GREATER",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
