@@ -50,6 +50,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val remark by token("""REM(ARK)?.*""")
     private val resequence by token("""RES(EQUENCE)?""")
     private val run by token("\\bRUN\\b")
+    private val step by token("STEP")
     private val stop by token("STOP")
     private val then by token("THEN")
     private val to by token("TO")
@@ -216,8 +217,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val endStmt by end asJust EndStatement()
     private val stopStmt by stop asJust StopStatement()
-    private val forToStepStmt by skip(forToken) and assignNumberStmt and skip(to) and numericExpr use {
-        ForToStepStatement(t1, t2)
+    private val forToStepStmt by skip(forToken) and assignNumberStmt and skip(to) and numericExpr and
+            optional(skip(step) and numericExpr) use {
+        ForToStepStatement(t1, t2, t3)
     }
     private val nextStmt by skip(next) and numericVarRef use { NextStatement(name) }
     private val remarkStmt by remark use {

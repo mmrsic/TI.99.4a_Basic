@@ -63,4 +63,76 @@ class ForToStepTest {
         )
     }
 
+    @Test
+    fun testExampleOfFractionalIncrement() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM EXAMPLE OF          FRACTIONAL INCREMENT
+            110 FOR X=.1 TO 1 STEP .2
+            120 PRINT X;
+            130 NEXT X
+            140 PRINT :X
+            150 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 REM EXAMPLE OF",
+                12 to "  FRACTIONAL INCREMENT",
+                13 to " >110 FOR X=.1 TO 1 STEP .2",
+                14 to " >120 PRINT X;",
+                15 to " >130 NEXT X",
+                16 to " >140 PRINT :X",
+                17 to " >150 END",
+                18 to " >RUN",
+                19 to "   .1  .3  .5  .7  .9",
+                20 to "   1.1",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testChangeLimitWhileLooping() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 L=5
+            110 FOR I=1 TO L
+            120 L=20
+            130 PRINT L;I
+            140 NEXT I
+            150 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                7 to "  TI BASIC READY",
+                9 to " >100 L=5",
+                10 to " >110 FOR I=1 TO L",
+                11 to " >120 L=20",
+                12 to " >130 PRINT L;I",
+                13 to " >140 NEXT I",
+                14 to " >150 END",
+                15 to " >RUN",
+                16 to "   20  1",
+                17 to "   20  2",
+                18 to "   20  3",
+                19 to "   20  4",
+                20 to "   20  5",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

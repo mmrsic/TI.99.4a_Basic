@@ -171,17 +171,24 @@ class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumb
     }
 }
 
-class ForToStepStatement(val initializer: LetNumberStatement, val limit: NumericExpr) : Statement {
+class ForToStepStatement(val initializer: LetNumberStatement, val limit: NumericExpr, val step: NumericExpr?) :
+    Statement {
+
     override fun listText(): String {
-        return "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
+        return when (step) {
+            null -> "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
+            else -> "FOR ${initializer.listText().trim()} TO ${limit.listText()} STEP ${step.listText()}"
+        }
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val pln = programLineNumber ?: throw IllegalArgumentException("$this can be used as a statement only")
-        val interpreter = machine.programInterpreter ?: throw IllegalArgumentException(
-            "Machine program interpreter must be present for $this"
-        )
-        interpreter.beginForLoop(pln, initializer, limit)
+        val interpreter = machine.programInterpreter
+            ?: throw IllegalArgumentException("Machine program interpreter must be present for $this")
+        when (step) {
+            null -> interpreter.beginForLoop(pln, initializer, limit)
+            else -> interpreter.beginForLoop(pln, initializer, limit, step.value().toNative())
+        }
     }
 
     override fun requiresEmptyLineAfterExecution() = false
