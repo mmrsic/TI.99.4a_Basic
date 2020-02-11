@@ -171,13 +171,21 @@ class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumb
     }
 }
 
-class ForToStepStatement(val initializer: LetNumberStatement, val limit: NumericExpr, val step: NumericExpr?) :
+/**
+ * The FOR-TO-STEP statement is used for easy programming of repetitive (iterative) processes. Together with the
+ * [NextStatement], the FOR-TO-STEP statement is used to construct a FOR-NEXT loop. If the STEP clause is omitted,
+ * the computer uses an increment of +1.
+ * The limit, and, optionally, the increment are numeric expressions that are evaluated once during a loop performance
+ * and remain in effect until the loop is finished. Any change made to these values while a loop is in progress has no
+ * effect on the number of times the loop is performed.
+ */
+class ForToStepStatement(val initializer: LetNumberStatement, val limit: NumericExpr, val increment: NumericExpr?) :
     Statement {
 
     override fun listText(): String {
-        return when (step) {
+        return when (increment) {
             null -> "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
-            else -> "FOR ${initializer.listText().trim()} TO ${limit.listText()} STEP ${step.listText()}"
+            else -> "FOR ${initializer.listText().trim()} TO ${limit.listText()} STEP ${increment.listText()}"
         }
     }
 
@@ -185,9 +193,9 @@ class ForToStepStatement(val initializer: LetNumberStatement, val limit: Numeric
         val pln = programLineNumber ?: throw IllegalArgumentException("$this can be used as a statement only")
         val interpreter = machine.programInterpreter
             ?: throw IllegalArgumentException("Machine program interpreter must be present for $this")
-        when (step) {
+        when (increment) {
             null -> interpreter.beginForLoop(pln, initializer, limit)
-            else -> interpreter.beginForLoop(pln, initializer, limit, step.value().toNative())
+            else -> interpreter.beginForLoop(pln, initializer, limit, increment.value().toNative())
         }
     }
 
