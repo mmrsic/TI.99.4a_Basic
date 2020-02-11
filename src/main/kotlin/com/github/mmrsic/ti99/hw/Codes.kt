@@ -17,8 +17,11 @@ enum class TiFctnCode(override val code: Int) : TiCode {
 interface CodeSequenceProvider {
 
     /**
-     * Provide code sequence input as a [Sequence] of [TiCode]s.
+     * Provide code sequence input as a [Sequence] of [TiCode]s. If the return value contains a character with code 13,
+     * the input simulation ends. Otherwise, this method is called again.
+     *
      * @param ctx [Context] used to distinguish programmatically generated sequences
+     * @return a sequence of characters typed in by the user - must not be null but may be empty
      */
     fun provideInput(ctx: Context): Sequence<Char> {
         return sequenceOf(TiFctnCode.Enter.toChar())

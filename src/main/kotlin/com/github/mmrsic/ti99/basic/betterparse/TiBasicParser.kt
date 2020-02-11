@@ -39,6 +39,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val hchar by token("HCHAR")
     private val ifToken by token("IF")
     private val input by token("INPUT")
+    private val int by token("INT")
     private val let by token("LET")
     private val list by token("\\bLIST\\b")
     private val new by token("\\bNEW\\b")
@@ -82,8 +83,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val ws by token("\\s+", ignore = true)
 
     private val positiveInt by token("[0-9]+")
-    private val fractionConst by token("\\.[0-9]+")
-    private val numericConst by optional(minus) and positiveInt and optional(fractionConst) and
+    private val fractionPart by token("\\.[0-9]+")
+    private val fractionConst by fractionPart use { NumericConstant(text.toDouble()) }
+    private val numericConst by optional(minus) and positiveInt and optional(fractionPart) and
             optional(e and optional(minus or plus) and positiveInt) use {
         val factor = if (t1 == null) 1 else -1
         val mantissa = t2.text + (if (t3 != null) t3!!.text else "")
@@ -101,25 +103,29 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
     private val segFun by skip(seg) and skip(openParenthesis) and
-            parser(this::stringExpr) and skip(comma) and parser(this::numericExpr) and skip(comma) and parser(this::numericExpr) and
+            parser(::stringExpr) and skip(comma) and parser(::numericExpr) and skip(comma) and parser(::numericExpr) and
             skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
     private val stringFun by segFun
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
     }
     private val stringTerm: Parser<StringExpr> by stringConst or stringVarRef or stringFun or
-            (skip(openParenthesis) and parser(this::stringExpr) and skip(closeParenthesis))
+            (skip(openParenthesis) and parser(::stringExpr) and skip(closeParenthesis))
 
     private val stringExpr by leftAssociative(stringTerm, stringOperator) { a, _, b ->
         StringConcatenation(listOf(a, b))
     }
 
+    private val intFun by skip(int) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        IntFunction(this)
+    }
+    private val numericFun by intFun
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
     }
-    private val term by numericConst or numericVarRef or
-            (skip(minus) and parser(this::numericExpr) map { NegatedExpression(it) }) or
-            (skip(openParenthesis) and parser(this::numericExpr) and skip(closeParenthesis))
+    private val term: Parser<NumericExpr> by numericConst or numericVarRef or numericFun or fractionConst or
+            (skip(minus) and parser(::numericExpr) map { NegatedExpression(it) }) or
+            (skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis))
     private val expChain: Parser<NumericExpr> by leftAssociative(term, exponentiation) { a, _, b ->
         Exponentiation(a, b)
     }
