@@ -135,4 +135,42 @@ class ForToStepTest {
         )
     }
 
+    @Test
+    fun testChangeControlVariableWhileLoopIsPerformed() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 FOR I=1 TO 10
+            110 I=I+1
+            120 PRINT I
+            130 NEXT I
+            140 PRINT I
+            150 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "  TI BASIC READY",
+                8 to " >100 FOR I=1 TO 10",
+                9 to " >110 I=I+1",
+                10 to " >120 PRINT I",
+                11 to " >130 NEXT I",
+                12 to " >140 PRINT I",
+                13 to " >150 END",
+                14 to " >RUN",
+                15 to "   2",
+                16 to "   4",
+                17 to "   6",
+                18 to "   8",
+                19 to "   10",
+                20 to "   11",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
