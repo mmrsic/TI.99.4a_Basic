@@ -25,6 +25,8 @@ abstract class NumericExpr : Expression {
     abstract override fun value(): NumericConstant
     override fun displayValue(): String = value().displayValue()
     open fun visitAllValues(lambda: (value: NumericConstant) -> Any) = lambda.invoke(value())
+    /** Check whether this numeric expression equals zero. */
+    fun isZero(): Boolean = value().toNative() == 0.0
 }
 
 /** An [NumericExpr] representing a TI Basic arithmetic expression of exactly two numeric expressions. */

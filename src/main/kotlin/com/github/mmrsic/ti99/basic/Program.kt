@@ -6,7 +6,7 @@ import java.util.*
 class ProgramLine(val lineNumber: Int, val statements: List<Statement>)
 
 
-sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
+sealed class Program(protected val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
 
     fun store(line: ProgramLine) {
         val lineNumber = line.lineNumber
@@ -57,18 +57,21 @@ sealed class Program(private val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
         println("Resequenced: $lineMapping")
     }
 
-    class LineResult {
-        object End
-        open class Execute(val lineNumber: Int)
-
-        class Gosub(lineNumber: Int) : Execute(lineNumber)
-
-    }
-
     /** Adjust the line numbers of a statement to a given mapping from old to new line numbers. */
     private fun Statement.adjustLineNumbers(linNumbersMapping: Map<Int, Int>) {
         if (this is LineNumberDependentStatement) this.changeLineNumbers(linNumbersMapping)
     }
 }
 
-class TiBasicProgram : Program()
+class TiBasicProgram : Program() {
+
+    /** Find the minimum line satisfying a given predicate for its statements. */
+    fun findLineWithStatement(minLine: Int, predicate: (Statement) -> Boolean): Int? {
+        var candidate = lines[minLine]
+        while (candidate != null) {
+            if (candidate.statements.find(predicate) != null) return candidate.lineNumber
+            candidate = lines[nextLineNumber(candidate.lineNumber)]
+        }
+        return null
+    }
+}

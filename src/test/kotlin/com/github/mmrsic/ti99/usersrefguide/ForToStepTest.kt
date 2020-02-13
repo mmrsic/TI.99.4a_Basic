@@ -173,4 +173,95 @@ class ForToStepTest {
         )
     }
 
+    @Test
+    fun testLimitIsEvaluatedBeforeExpressionIsAssignedToControlVariable() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 I=5
+            110 FOR I=1 TO I
+            120 PRINT I;
+            130 NEXT I
+            140 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                13 to "  TI BASIC READY",
+                15 to " >100 I=5",
+                16 to " >110 FOR I=1 TO I",
+                17 to " >120 PRINT I;",
+                18 to " >130 NEXT I",
+                19 to " >140 END",
+                20 to " >RUN",
+                21 to "   1  2  3  4  5",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testNegativeStepWithChangedSignOfControlVariable() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 FOR I=2 TO -3 STEP -1
+            110 PRINT I;
+            120 NEXT I
+            130 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                14 to "  TI BASIC READY",
+                16 to " >100 FOR I=2 TO -3 STEP -1",
+                17 to " >110 PRINT I;",
+                18 to " >120 NEXT I",
+                19 to " >130 END",
+                20 to " >RUN",
+                21 to "   2  1  0 -1 -2 -3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testInitialValueTooGreat() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM INITIAL VALUE TOO   GREAT
+            110 FOR I=6 TO 5
+            120 PRINT I
+            130 NEXT I
+            140 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                12 to "  TI BASIC READY",
+                14 to " >100 REM INITIAL VALUE TOO",
+                15 to "  GREAT",
+                16 to " >110 FOR I=6 TO 5",
+                17 to " >120 PRINT I",
+                18 to " >130 NEXT I",
+                19 to " >140 END",
+                20 to " >RUN",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

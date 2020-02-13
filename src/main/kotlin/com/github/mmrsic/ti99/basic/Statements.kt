@@ -193,10 +193,11 @@ class ForToStepStatement(val initializer: LetNumberStatement, val limit: Numeric
         val pln = programLineNumber ?: throw IllegalArgumentException("$this can be used as a statement only")
         val interpreter = machine.programInterpreter
             ?: throw IllegalArgumentException("Machine program interpreter must be present for $this")
-        when (increment) {
-            null -> interpreter.beginForLoop(pln, initializer, limit)
-            else -> interpreter.beginForLoop(pln, initializer, limit, increment.value().toNative())
-        }
+        // Limit and increment must be evaluated before the initializer is executed!
+        val limitConst = limit.value()
+        val incrementConst = increment?.value()
+        initializer.execute(machine, programLineNumber)
+        interpreter.beginForLoop(pln, initializer.varName, limitConst, incrementConst)
     }
 
     override fun requiresEmptyLineAfterExecution() = false

@@ -3,7 +3,10 @@ package com.github.mmrsic.ti99.basic
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
-import com.github.mmrsic.ti99.basic.expr.*
+import com.github.mmrsic.ti99.basic.expr.Addition
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
+import com.github.mmrsic.ti99.basic.expr.PrintToken
+import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.hw.CodeSequenceProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiFctnCode
@@ -109,32 +112,34 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     }
 
     /** Begin a new for-loop. */
-    fun beginForLoop(lineNumber: Int, stmt: LetNumberStatement, limit: NumericExpr, increment: Double = 1.0) {
+    fun beginForLoop(lineNumber: Int, varName: String, limit: NumericConstant, givenIncrement: NumericConstant?) {
         val program = machine.program ?: throw IllegalArgumentException("Can't begin for-loop without program")
-        if (increment == 0.0) throw BadValue()
+        val increment = givenIncrement ?: NumericConstant(1)
+        if (increment.isZero()) throw BadValue()
         val jumpLineNumber = program.nextLineNumber(lineNumber)
             ?: throw IllegalArgumentException("Line number has no successor: $lineNumber")
-        stmt.execute(machine)
-        val varName = stmt.varName
-        val currValue = machine.getNumericVariableValue(varName)
-        val loop = ForLoop(jumpLineNumber, varName, currValue.toNative()..limit.value().toNative(), increment)
+        val loop = ForLoop(jumpLineNumber, varName, limit, increment)
         forLoopStack.push(loop)
         println("Started: $loop")
+        if (!loop.checkCtrlVariableValue(machine.getNumericVariableValue(varName))) {
+            jumpTo(program.findLineWithStatement(loop.startLineNumber) { stmt ->
+                stmt is NextStatement && stmt.varName == loop.varName
+            }!!)
+        }
     }
 
     /** Start the next for-loop step, or end the loop. */
     fun nextForLoopStep(varName: String) {
-        // TODO: Check variable name
         val loop = forLoopStack.peek()
-        val currValue: NumericConstant = machine.getNumericVariableValue(loop.varName)
-        val newValue: NumericConstant = Addition(currValue, loop.increment).value()
-        machine.setNumericVariable(loop.varName, newValue)
-        if (newValue.toNative() in loop.continueRange) {
+        if (loop.varName != varName) throw IllegalArgumentException("Expected: ${loop.varName}, got $varName")
+        val oldConst = machine.getNumericVariableValue(loop.varName)
+        val newConst = machine.setNumericVariable(loop.varName, Addition(oldConst, loop.increment))
+        if (loop.checkCtrlVariableValue(newConst)) {
             jumpTo(loop.startLineNumber)
-            return
+        } else {
+            forLoopStack.pop()
+            println("Ended: $loop")
         }
-        forLoopStack.pop()
-        println("Ended: $loop")
     }
 
     /** Unconditional jump, that is, GO TO a given program line number. */
@@ -169,13 +174,19 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     private val forLoopStack: Stack<ForLoop> = Stack()
     private var jumpToLineNumber: Int? = null
 
-    private class ForLoop(
+    private data class ForLoop(
         val startLineNumber: Int,
         val varName: String,
-        val continueRange: ClosedRange<Double>,
-        increment: Number
+        val limit: NumericConstant,
+        val increment: NumericConstant
     ) {
-        val increment = NumericConstant(increment)
+        /** Check whether a given value of the control variable is within the loop range. */
+        fun checkCtrlVariableValue(ctrlVariableValue: NumericConstant): Boolean {
+            val newValue = ctrlVariableValue.toNative()
+            val limitValue = limit.toNative()
+            val increasing = increment.toNative() > 0
+            return if (increasing) newValue <= limitValue else newValue >= limitValue
+        }
     }
 
     private val acceptUserInputCtx = object : CodeSequenceProvider.Context {
