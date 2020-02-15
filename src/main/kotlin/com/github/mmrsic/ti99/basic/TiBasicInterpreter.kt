@@ -171,7 +171,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     }
 
     /** Accept user input from [codeSequenceProvider] into a given variable. */
-    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String): String {
+    fun acceptUserInput(variableNames: List<String>, programLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
         acceptUserInputCtx.addCall(programLineNumber, prompt)
         val input = StringBuilder().apply {
@@ -185,7 +185,9 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             } while (inputPart.none { it in inputEndingChars })
         }.toString()
         machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))
-        machine.setVariable(variableName, input)
+        val inputValues = input.split(',')
+        if (inputValues.size != variableNames.size) throw BadValue() // TODO: Throw right exception
+        inputValues.forEachIndexed { idx, inputValue -> machine.setVariable(variableNames[idx], inputValue) }
         return input
     }
 

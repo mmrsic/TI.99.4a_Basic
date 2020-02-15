@@ -90,4 +90,39 @@ class InputStatementTest {
         )
     }
 
+    @Test
+    fun testVariableList() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context) = "10,HELLO,25,3.2\r".asSequence()
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+                100 INPUT A,B$,C,D
+                110 PRINT A:B$:C:D
+                120 END
+                RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                10 to "  TI BASIC READY",
+                12 to " >100 INPUT A,B$,C,D",
+                13 to " >110 PRINT A:B$:C:D",
+                14 to " >120 END",
+                15 to " >RUN",
+                16 to "  ? 10,HELLO,25,3.2",
+                17 to "   10",
+                18 to "  HELLO",
+                19 to "   25",
+                20 to "   3.2",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

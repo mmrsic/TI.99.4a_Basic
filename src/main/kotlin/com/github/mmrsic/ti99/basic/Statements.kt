@@ -1,6 +1,8 @@
 package com.github.mmrsic.ti99.basic
 
-import com.github.mmrsic.ti99.basic.expr.*
+import com.github.mmrsic.ti99.basic.expr.Expression
+import com.github.mmrsic.ti99.basic.expr.NumericExpr
+import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import kotlin.math.roundToInt
 
@@ -272,28 +274,25 @@ class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line
     }
 }
 
-sealed class InputStatement(val promptExpr: StringExpr?) : Statement {
-    abstract val variableName: String
+/**
+ * This form of the input statement is used when entering data via the keyboard. The INPUT statement causes the program
+ * to pause until valid data is entered from the keyboard.
+ * @param promptExpr optional [StringExpr] that indicates on the screen the values you should enter at that time
+ * @param varNameList contains those variable names which are assigned values when the INPUT statement is performed
+ */
+class InputStatement(val promptExpr: StringExpr?, val varNameList: List<String>) : Statement {
 
     override fun listText() = when (promptExpr) {
-        null -> "INPUT $variableName"
-        else -> "INPUT $promptExpr:$variableName"
+        null -> "INPUT ${varNameList.joinToString(",")}"
+        else -> "INPUT $promptExpr:${varNameList.joinToString(",")}"
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
         if (promptExpr != null) {
-            machine.acceptUserInput(variableName, programLineNumber, promptExpr.value().toNative())
+            machine.acceptUserInput(varNameList, programLineNumber, promptExpr.value().toNative())
         } else {
-            machine.acceptUserInput(variableName, programLineNumber)
+            machine.acceptUserInput(varNameList, programLineNumber)
         }
-    }
-
-    class NumberConst(numericVariable: NumericVariable, prompt: StringExpr? = null) : InputStatement(prompt) {
-        override val variableName = numericVariable.name
-    }
-
-    class StringConst(stringVariable: StringVariable, prompt: StringExpr? = null) : InputStatement(prompt) {
-        override val variableName = stringVariable.name
     }
 }

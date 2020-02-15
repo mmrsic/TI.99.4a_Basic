@@ -245,13 +245,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         IfStatement(t1, t2, t3)
     }
 
-    private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and (numericVarRef or stringVarRef) use {
+    private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and
+            separatedTerms(numericVarRef or stringVarRef, comma) use {
         val prompt: StringExpr? = t1
-        when (val varRef: Expression = t2) {
-            is NumericVariable -> InputStatement.NumberConst(varRef, prompt)
-            is StringVariable -> InputStatement.StringConst(varRef, prompt)
-            else -> throw IllegalArgumentException("Expecting variable, got $t2")
+        val varNameList: List<String> = t2.map { varRef ->
+            when (varRef) {
+                is NumericVariable -> varRef.name
+                is StringVariable -> varRef.name
+                else -> throw IllegalArgumentException("No input statement variable list expression: $varRef")
+            }
         }
+        InputStatement(prompt, varNameList)
     }
 
     // CALL SUBPROGRAM PARSERS

@@ -342,15 +342,15 @@ class TiBasicModule : TiModule {
 
     /**
      * Accept user input via keyboard storing it in a variable given by its name.
-     * @param variableName name of the variable where to store the user's input - must end with $ for string input
+     * @param variableNames names of the variables where to store the user's input - must end with a '$' for string variables
      * @param programLineNumber program line number used for programmatically provided user input
      * @param prompt screen text presented to the user when asking for input
      */
-    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String = "? ") {
+    fun acceptUserInput(variableNames: List<String>, programLineNumber: Int, prompt: String = "? ") {
         val interpreter = programInterpreter
             ?: throw IllegalArgumentException("User input is possible only while a program is running")
         printTokens(listOf(StringConstant(prompt), PrintToken.Adjacent))
-        interpreter.acceptUserInput(variableName, programLineNumber, prompt)
+        interpreter.acceptUserInput(variableNames, programLineNumber, prompt)
         screen.scroll()
         currentPrintColumn = null
     }
