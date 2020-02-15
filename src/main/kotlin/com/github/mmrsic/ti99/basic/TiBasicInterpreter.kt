@@ -123,7 +123,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
         println("Started: $loop")
         if (!loop.checkCtrlVariableValue(machine.getNumericVariableValue(varName))) {
             jumpTo(program.findLineWithStatement(loop.startLineNumber) { stmt ->
-                stmt is NextStatement && stmt.varName == loop.varName
+                stmt is NextStatement && stmt.ctrlVarName == loop.varName
             }!!)
         }
     }

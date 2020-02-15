@@ -225,13 +225,17 @@ class ForToStepStatement(val initializer: LetNumberStatement, val limit: Numeric
     override fun requiresEmptyLineAfterExecution() = false
 }
 
-class NextStatement(val varName: String) : Statement {
-    override fun listText() = "NEXT $varName"
+/**
+ * The NEXT statement is always paired with the [ForToStepStatement] for construction of a loop. The control-variable is
+ * the same one that appears in the corresponding FOR-TO-STEP statement.
+ * @param ctrlVarName name of the control-variable used in the for loop
+ */
+class NextStatement(val ctrlVarName: String) : Statement {
+    override fun listText() = "NEXT $ctrlVarName"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter = machine.programInterpreter ?: throw IllegalArgumentException(
-            "Machine program interpreter must be present for $this"
-        )
-        interpreter.nextForLoopStep(varName)
+        val interpreter =
+            machine.programInterpreter ?: throw IllegalArgumentException("Cannot use $this without program")
+        interpreter.nextForLoopStep(ctrlVarName)
     }
 
     override fun requiresEmptyLineAfterExecution() = false
