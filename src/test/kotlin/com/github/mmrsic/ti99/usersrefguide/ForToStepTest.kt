@@ -264,4 +264,54 @@ class ForToStepTest {
         )
     }
 
+    @Test
+    fun testLowestThreeDigitNumberEqualToSumOfCubesOfItsDigits() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM FIND THE LOWEST     THREE DIGIT NUMBER EQUAL TO THE SUM OF THE CUBES OF ITS DIGITS
+            110 FOR HUND=1 TO 9
+            120 FOR TENS=0 TO 9
+            130 FOR UNITS=0 TO 9
+            140 SUM=100*HUND+10*TENS+UNITS
+            150 IF SUM<>HUND^3+TENS^3+UNITS^3 THEN 180
+            160 PRINT SUM
+            170 GOTO 210
+            180 NEXT UNITS
+            190 NEXT TENS
+            200 NEXT HUND
+            210 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                2 to " >100 REM FIND THE LOWEST",
+                3 to "  THREE DIGIT NUMBER EQUAL TO",
+                4 to "  THE SUM OF THE CUBES OF ITS",
+                5 to "  DIGITS",
+                6 to " >110 FOR HUND=1 TO 9",
+                7 to " >120 FOR TENS=0 TO 9",
+                8 to " >130 FOR UNITS=0 TO 9",
+                9 to " >140 SUM=100*HUND+10*TENS+UNI",
+                10 to "  TS",
+                11 to " >150 IF SUM<>HUND^3+TENS^3+UN",
+                12 to "  ITS^3 THEN 180",
+                13 to " >160 PRINT SUM",
+                14 to " >170 GOTO 210",
+                15 to " >180 NEXT UNITS",
+                16 to " >190 NEXT TENS",
+                17 to " >200 NEXT HUND",
+                18 to " >210 END",
+                19 to " >RUN",
+                20 to "   153",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+
+    }
+
 }

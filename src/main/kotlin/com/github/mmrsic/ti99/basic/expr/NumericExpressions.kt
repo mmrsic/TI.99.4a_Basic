@@ -156,7 +156,7 @@ object RelationalExpr {
             fun fromSymbol(symbol: String): Operator {
                 return when (symbol) {
                     "=" -> EQUAL_TO
-                    "!=" -> NOT_EQUAL_TO
+                    "<>" -> NOT_EQUAL_TO
                     "<" -> LESS_THAN
                     "<=" -> LESS_THAN_OR_EQUAL_TO
                     ">" -> GREATER_THAN
