@@ -35,6 +35,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
     private val forToken by token("FOR")
+    private val gosub by token("GOSUB")
     private val goto by token("""GO\s?TO""")
     private val hchar by token("HCHAR")
     private val ifToken by token("IF")
@@ -49,6 +50,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val print by token("\\bPRINT\\b")
     private val remark by token("""REM(ARK)?.*""")
     private val resequence by token("""RES(EQUENCE)?""")
+    private val returnToken by token("RETURN")
     private val run by token("\\bRUN\\b")
     private val step by token("STEP")
     private val stop by token("STOP")
@@ -208,7 +210,6 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         printArgs.addAll(t4.map { PrintToken.fromString(it)!! })
         PrintStatement(printArgs)
     }
-
     private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and (numericExpr) use {
         LetNumberStatement(t1.name, t2)
     }
@@ -233,10 +234,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val onGotoStmt by skip(on) and numericExpr and skip(goto) and separatedTerms(positiveIntConst, comma) use {
         OnGotoStatement(t1, t2)
     }
-    private val breakStmt by skip(breakToken) and separated(positiveIntConst, comma, acceptZero = true) use {
-        BreakStatement(terms)
-    }
-    private val unbreakStmt by skip(unbreak) and separated(positiveIntConst, comma, acceptZero = true) use {
+    private val gosubStmt by skip(gosub) and positiveIntConst map { programLine -> GosubStatement(programLine) }
+    private val returnStmt by returnToken asJust ReturnStatement()
+    private val breakStmt by skip(breakToken) and separated(positiveIntConst, comma, true) use { BreakStatement(terms) }
+    private val unbreakStmt by skip(unbreak) and separated(positiveIntConst, comma, true) use {
         UnbreakStatement(terms)
     }
     private val ifStmt by skip(ifToken) and numericExpr and skip(then) and positiveIntConst and
@@ -273,7 +274,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
             callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
-            inputStmt or gotoStmt or onGotoStmt
+            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))

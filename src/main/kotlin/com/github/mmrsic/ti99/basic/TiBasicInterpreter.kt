@@ -131,15 +131,36 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     /** Start the next for-loop step, or end the loop. */
     fun nextForLoopStep(varName: String) {
         val loop = forLoopStack.peek()
+        val nestedLoopError = forLoopError[loop]
+        if (nestedLoopError != null) throw nestedLoopError
         if (loop.varName != varName) throw IllegalArgumentException("Expected: ${loop.varName}, got $varName")
         val oldConst = machine.getNumericVariableValue(loop.varName)
         val newConst = machine.setNumericVariable(loop.varName, Addition(oldConst, loop.increment))
         if (loop.checkCtrlVariableValue(newConst)) {
             jumpTo(loop.startLineNumber)
         } else {
-            forLoopStack.pop()
+            val oldElem = forLoopStack.pop()
+            forLoopStack.filter { stackElem -> stackElem.varName == oldElem.varName }.forEach {
+                forLoopError[it] = CantDoThat()
+            }
             println("Ended: $loop")
         }
+    }
+
+    /** GO to a subprogram given by its line number. */
+    fun gosub(subLineNumber: Int, currLineNumber: Int) {
+        val program = machine.program ?: throw IllegalArgumentException("Can't execute GOSUB without program")
+        val gosub = Gosub(subLineNumber, program.nextLineNumber(currLineNumber))
+        gosubStack.push(gosub)
+        jumpTo(gosub.subprogramLineNumber)
+        println("Called $gosub")
+    }
+
+    /** Return from the currently executing subprogram. */
+    fun returnFromGosub() {
+        val gosub = gosubStack.pop()
+        if (gosub.returnLineNumber != null) jumpTo(gosub.returnLineNumber) else machine.endProgramRun()
+        println("Returned from $gosub")
     }
 
     /** Unconditional jump, that is, GO TO a given program line number. */
@@ -172,6 +193,8 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     // HELPERS //
 
     private val forLoopStack: Stack<ForLoop> = Stack()
+    private val forLoopError: MutableMap<ForLoop, TiBasicError> = mutableMapOf()
+    private val gosubStack: Stack<Gosub> = Stack()
     private var jumpToLineNumber: Int? = null
 
     private data class ForLoop(
@@ -188,6 +211,8 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             return if (increasing) newValue <= limitValue else newValue >= limitValue
         }
     }
+
+    private data class Gosub(val subprogramLineNumber: Int, val returnLineNumber: Int?)
 
     private val acceptUserInputCtx = object : CodeSequenceProvider.Context {
         private val allCalls = mutableMapOf<Int, Int>()

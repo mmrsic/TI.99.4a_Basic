@@ -311,7 +311,47 @@ class ForToStepTest {
                 24 to " >"
             ), machine.screen
         )
+    }
 
+    @Test
+    fun testSameCtrlVariableInSubroutine() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 FOR I=1 TO 3
+            110 PRINT I
+            120 GOSUB 140
+            130 NEXT I
+            140 FOR I=1 TO 5
+            150 PRINT I;
+            160 NEXT I
+            170 RETURN
+            180 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                8 to "  TI BASIC READY",
+                10 to " >100 FOR I=1 TO 3",
+                11 to " >110 PRINT I",
+                12 to " >120 GOSUB 140",
+                13 to " >130 NEXT I",
+                14 to " >140 FOR I=1 TO 5",
+                15 to " >150 PRINT I;",
+                16 to " >160 NEXT I",
+                17 to " >170 RETURN",
+                18 to " >180 END",
+                19 to " >RUN",
+                20 to "   1",
+                21 to "   1  2  3  4  5",
+                22 to "  * CAN'T DO THAT IN 130",
+                24 to " >"
+            ), machine.screen
+        )
+        TestHelperScreen.assertCursorAt(24, 3, machine.screen)
     }
 
 }

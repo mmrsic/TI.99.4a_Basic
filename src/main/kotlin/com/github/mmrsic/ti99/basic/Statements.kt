@@ -155,6 +155,28 @@ class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int
     }
 }
 
+class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStatement {
+    override fun listText() = "GOSUB $subprogramLineNumber"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val interpreter = machine.programInterpreter
+            ?: throw IllegalArgumentException("GOSUB can be used only within a program")
+        interpreter.gosub(subprogramLineNumber, programLineNumber!!)
+    }
+
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+        TODO("not implemented")
+    }
+}
+
+class ReturnStatement : Statement {
+    override fun listText() = "RETURN"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val interpreter = machine.programInterpreter
+            ?: throw IllegalArgumentException("RETURN can be used only within a program")
+        interpreter.returnFromGosub()
+    }
+}
+
 class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumberDependentStatement {
     override fun listText() = if (lineNumberList != null) "UNBREAK $lineNumberList" else "UNBREAK"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
