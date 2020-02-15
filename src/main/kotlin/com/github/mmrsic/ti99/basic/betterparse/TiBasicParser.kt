@@ -245,11 +245,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         IfStatement(t1, t2, t3)
     }
 
-    private val inputStmt by skip(input) and optional(quoted and skip(colon)) and (numericVarRef or stringVarRef) use {
-        val prompt: String? = t1?.text
-        when (val varRef = t2) {
-            is NumericVariable -> InputStatement.NumberConst(varRef, unquote(prompt))
-            is StringVariable -> InputStatement.StringConst(varRef, unquote(prompt))
+    private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and (numericVarRef or stringVarRef) use {
+        val prompt: StringExpr? = t1
+        when (val varRef: Expression = t2) {
+            is NumericVariable -> InputStatement.NumberConst(varRef, prompt)
+            is StringVariable -> InputStatement.StringConst(varRef, prompt)
             else -> throw IllegalArgumentException("Expecting variable, got $t2")
         }
     }

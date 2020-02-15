@@ -1,19 +1,30 @@
 package com.github.mmrsic.ti99.hw
 
+/**
+ * All codes that may be used by the TI computers.
+ */
 interface TiCode {
     val code: Int
     fun toChar(): Char = code.toChar()
 }
 
+/**
+ * All codes that may be entered when pressing the CTRL meta key.
+ */
 enum class TiCtrlCode(override val code: Int) : TiCode {
 }
 
+/**
+ * All codes that may be entered when pressing the FCTN meta key.
+ */
 enum class TiFctnCode(override val code: Int) : TiCode {
     Clear(2),
     Enter(13),
 }
 
-
+/**
+ * A provider of [Char] sequences which are interpreted as [TiCode]s.
+ */
 interface CodeSequenceProvider {
 
     /**
@@ -29,6 +40,8 @@ interface CodeSequenceProvider {
 
     /** Context passed to any call of [provideInput]. */
     interface Context {
+        /** The prompt presented to the user. */
+        val prompt: String
         /** Number of overall calls of any [CodeSequenceProvider] within a program run. Starts at 1. */
         val overallCalls: Int
         /** Program line currently requesting the input. Ranges from 1 to 32767. */

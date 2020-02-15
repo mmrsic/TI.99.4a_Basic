@@ -272,24 +272,28 @@ class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line
     }
 }
 
-sealed class InputStatement(val prompt: String?) : Statement {
+sealed class InputStatement(val promptExpr: StringExpr?) : Statement {
     abstract val variableName: String
 
-    override fun listText() = when (prompt) {
+    override fun listText() = when (promptExpr) {
         null -> "INPUT $variableName"
-        else -> "INPUT $prompt:$variableName"
+        else -> "INPUT $promptExpr:$variableName"
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
-        machine.acceptUserInput(variableName, programLineNumber, prompt ?: "? ")
+        if (promptExpr != null) {
+            machine.acceptUserInput(variableName, programLineNumber, promptExpr.value().toNative())
+        } else {
+            machine.acceptUserInput(variableName, programLineNumber)
+        }
     }
 
-    class NumberConst(numericVariable: NumericVariable, prompt: String? = null) : InputStatement(prompt) {
+    class NumberConst(numericVariable: NumericVariable, prompt: StringExpr? = null) : InputStatement(prompt) {
         override val variableName = numericVariable.name
     }
 
-    class StringConst(stringVariable: StringVariable, prompt: String? = null) : InputStatement(prompt) {
+    class StringConst(stringVariable: StringVariable, prompt: StringExpr? = null) : InputStatement(prompt) {
         override val variableName = stringVariable.name
     }
 }

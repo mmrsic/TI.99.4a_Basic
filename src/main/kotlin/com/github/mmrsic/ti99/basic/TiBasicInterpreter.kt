@@ -171,9 +171,9 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     }
 
     /** Accept user input from [codeSequenceProvider] into a given variable. */
-    fun acceptUserInput(variableName: String, programLineNumber: Int): String {
+    fun acceptUserInput(variableName: String, programLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
-        acceptUserInputCtx.addCall(programLineNumber)
+        acceptUserInputCtx.addCall(programLineNumber, prompt)
         val input = StringBuilder().apply {
             do {
                 val inputPart = codeSequenceProvider.provideInput(acceptUserInputCtx)
@@ -216,6 +216,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
 
     private val acceptUserInputCtx = object : CodeSequenceProvider.Context {
         private val allCalls = mutableMapOf<Int, Int>()
+        override var prompt: String = ""
         override val overallCalls: Int
             get() = if (allCalls.isEmpty()) 0 else allCalls.values.reduce(Int::plus)
         override var programLine: Int = 0
@@ -223,8 +224,9 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             get() = allCalls[programLine] ?: 0
         override var unacceptedInputs: Int = 0
 
-        fun addCall(lineNumber: Int) {
+        fun addCall(lineNumber: Int, userPrompt: String = "? ") {
             programLine = lineNumber
+            prompt = userPrompt
             val oldValue = allCalls[lineNumber] ?: 0
             allCalls[lineNumber] = oldValue + 1
             unacceptedInputs = 0
