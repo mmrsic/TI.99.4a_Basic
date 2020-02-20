@@ -289,7 +289,8 @@ class TiBasicModule : TiModule {
         val currRow = 24
         var currCol = if (currentPrintColumn != null) currentPrintColumn!! else 3
         currentPrintColumn = null
-        for (expression in expressions) {
+        for ((exprIndex, expression) in expressions.withIndex()) {
+            if (exprIndex == expressions.size - 1 && expression == PrintToken.NextRecord) continue
             if (expression is NumericExpr) {
                 expression.visitAllValues { nc ->
                     if (nc.isOverflow) {
