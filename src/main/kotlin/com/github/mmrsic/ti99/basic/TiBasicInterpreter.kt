@@ -171,9 +171,9 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     }
 
     /** Accept user input from [codeSequenceProvider] into a given variable. */
-    fun acceptUserInput(variableNames: List<String>, programLineNumber: Int, prompt: String): String {
+    fun acceptUserInput(variableNames: List<String>, inputLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
-        acceptUserInputCtx.addCall(programLineNumber, prompt)
+        acceptUserInputCtx.addCall(inputLineNumber, prompt)
         val input = StringBuilder().apply {
             do {
                 val inputPart = codeSequenceProvider.provideInput(acceptUserInputCtx)
@@ -185,9 +185,12 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             } while (inputPart.none { it in inputEndingChars })
         }.toString()
         machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))
-        val inputValues = input.split(',')
-        if (inputValues.size != variableNames.size) throw BadValue() // TODO: Throw right exception
-        inputValues.forEachIndexed { idx, inputValue -> machine.setVariable(variableNames[idx], inputValue) }
+        val variableValues = parseUserInput(variableNames, input)
+        if (variableValues.size != variableNames.size) {
+            println("Wrong number of input values: ${variableValues.size}, expected: ${variableNames.size}")
+            throw BadValue() // TODO: Throw right exception
+        }
+        for (variableValue in variableValues) machine.setVariable(variableValue.key, variableValue.value)
         return input
     }
 
@@ -233,6 +236,40 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             allCalls[lineNumber] = oldValue + 1
             unacceptedInputs = 0
         }
+    }
+
+    private fun parseUserInput(variableNames: List<String>, input: String): Map<String, String> {
+        val commaPositions = mutableListOf<Int>()
+        val status = mutableListOf("nothing")
+        input.forEachIndexed { charPos, char ->
+            when (char) {
+                ',' -> if (status.last() == "nothing") commaPositions.add(charPos)
+                '"' -> when (status.last()) {
+                    "nothing" -> status.add("string")
+                    "string" -> status.add("stringEnd")
+                    "stringEnd" -> status.remove("stringEnd")
+                    else -> status.remove("string")
+                }
+            }
+        }
+        val inputParts = mutableListOf<String>()
+        val itr = commaPositions.listIterator()
+        while (itr.hasNext()) {
+            val start = if (itr.hasPrevious()) itr.previous() + 1 else 0
+            if (start > 0) itr.next()
+            val end = itr.next()
+            inputParts.add(input.substring(start, end))
+        }
+        val start = if (commaPositions.isEmpty()) 0 else commaPositions.last() + 1
+        inputParts.add(input.substring(start, input.length))
+
+        val result = mutableMapOf<String, String>()
+        variableNames.forEachIndexed { varIdx, varName ->
+            val trimmedPart = inputParts[varIdx].trim()
+            val unquotedPart = if (trimmedPart.first() == '"') trimmedPart.drop(1).dropLast(1) else trimmedPart
+            result[varName] = unquotedPart.replace("\"\"", "\"")
+        }
+        return result.toMap()
     }
 
 }
