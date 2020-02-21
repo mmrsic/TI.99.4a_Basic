@@ -5,8 +5,15 @@ import com.github.mmrsic.ti99.basic.expr.*
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class TiBasicModule : TiModule {
+
+    /** A dependent of a [TiBasicModule]. */
+    interface Dependent {
+        /** The [TiBasicModule] this instance depends on. */
+        val basicModule: TiBasicModule
+    }
 
     /** The optional program currently held in this TI Basic Module's memory. */
     var program: TiBasicProgram? = null
@@ -121,6 +128,20 @@ class TiBasicModule : TiModule {
         numericVariables[name] = result
         println("$name=$result")
         return result
+    }
+
+    /** The array variable value for a given variable name and index expression. */
+    fun getNumericArrayVariableValue(name: String, index: NumericExpr): NumericConstant {
+        return getNumericVariableValue(getArrayVariableName(name, index))
+    }
+
+    fun setNumericArrayVariable(name: String, index: NumericExpr, value: NumericConstant) {
+        setNumericVariable(getArrayVariableName(name, index), value)
+    }
+
+    fun getArrayVariableName(baseName: String, arrayIndex: NumericExpr): String {
+        val index = arrayIndex.value().toNative().roundToInt()
+        return "$baseName-$index"
     }
 
     /** Initialize the [screen] of this module to the command interpreter mode after entering the */
@@ -347,7 +368,7 @@ class TiBasicModule : TiModule {
      * @param programLineNumber program line number used for programmatically provided user input
      * @param prompt screen text presented to the user when asking for input
      */
-    fun acceptUserInput(variableNames: List<String>, programLineNumber: Int, prompt: String = "? ") {
+    fun acceptUserInput(variableNames: List<Expression>, programLineNumber: Int, prompt: String = "? ") {
         val interpreter = programInterpreter
             ?: throw IllegalArgumentException("User input is possible only while a program is running")
         printTokens(listOf(StringConstant(prompt), PrintToken.Adjacent))

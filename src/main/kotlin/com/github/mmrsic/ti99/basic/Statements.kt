@@ -280,7 +280,7 @@ class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line
  * @param promptExpr optional [StringExpr] that indicates on the screen the values you should enter at that time
  * @param varNameList contains those variable names which are assigned values when the INPUT statement is performed
  */
-class InputStatement(val promptExpr: StringExpr?, val varNameList: List<String>) : Statement {
+class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Expression>) : Statement {
 
     override fun listText() = when (promptExpr) {
         null -> "INPUT ${varNameList.joinToString(",")}"

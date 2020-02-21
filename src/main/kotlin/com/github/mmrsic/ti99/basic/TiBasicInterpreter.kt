@@ -3,10 +3,7 @@ package com.github.mmrsic.ti99.basic
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
-import com.github.mmrsic.ti99.basic.expr.Addition
-import com.github.mmrsic.ti99.basic.expr.NumericConstant
-import com.github.mmrsic.ti99.basic.expr.PrintToken
-import com.github.mmrsic.ti99.basic.expr.StringConstant
+import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.CodeSequenceProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiFctnCode
@@ -171,7 +168,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     }
 
     /** Accept user input from [codeSequenceProvider] into a given variable. */
-    fun acceptUserInput(variableNames: List<String>, inputLineNumber: Int, prompt: String): String {
+    fun acceptUserInput(variableNames: List<Expression>, inputLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
         acceptUserInputCtx.addCall(inputLineNumber, prompt)
         val input = StringBuilder().apply {
@@ -185,12 +182,18 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             } while (inputPart.none { it in inputEndingChars })
         }.toString()
         machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))
-        val variableValues = parseUserInput(variableNames, input)
-        if (variableValues.size != variableNames.size) {
-            println("Wrong number of input values: ${variableValues.size}, expected: ${variableNames.size}")
-            throw BadValue() // TODO: Throw right exception
+        val inputParts = parseInputParts(input)
+        variableNames.forEachIndexed { varIdx, varNameExpr ->
+            val trimmedPart = inputParts[varIdx].trim()
+            val unquotedPart = if (trimmedPart.first() == '"') trimmedPart.drop(1).dropLast(1) else trimmedPart
+            val memoryVarName = when (varNameExpr) {
+                is NumericVariable -> varNameExpr.name
+                is StringVariable -> varNameExpr.name
+                is NumericArrayAccess -> machine.getArrayVariableName(varNameExpr.baseName, varNameExpr.arrayIndex)
+                else -> throw IllegalArgumentException("Unknown variable expression: $varNameExpr")
+            }
+            machine.setVariable(memoryVarName, unquotedPart.replace("\"\"", "\""))
         }
-        for (variableValue in variableValues) machine.setVariable(variableValue.key, variableValue.value)
         return input
     }
 
@@ -238,7 +241,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
         }
     }
 
-    private fun parseUserInput(variableNames: List<String>, input: String): Map<String, String> {
+    private fun parseInputParts(input: String): List<String> {
         val commaPositions = mutableListOf<Int>()
         val status = mutableListOf("nothing")
         input.forEachIndexed { charPos, char ->
@@ -252,24 +255,17 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
                 }
             }
         }
-        val inputParts = mutableListOf<String>()
+        val result = mutableListOf<String>()
         val itr = commaPositions.listIterator()
         while (itr.hasNext()) {
             val start = if (itr.hasPrevious()) itr.previous() + 1 else 0
             if (start > 0) itr.next()
             val end = itr.next()
-            inputParts.add(input.substring(start, end))
+            result.add(input.substring(start, end))
         }
         val start = if (commaPositions.isEmpty()) 0 else commaPositions.last() + 1
-        inputParts.add(input.substring(start, input.length))
-
-        val result = mutableMapOf<String, String>()
-        variableNames.forEachIndexed { varIdx, varName ->
-            val trimmedPart = inputParts[varIdx].trim()
-            val unquotedPart = if (trimmedPart.first() == '"') trimmedPart.drop(1).dropLast(1) else trimmedPart
-            result[varName] = unquotedPart.replace("\"\"", "\"")
-        }
-        return result.toMap()
+        result.add(input.substring(start, input.length))
+        return result.toList()
     }
 
 }

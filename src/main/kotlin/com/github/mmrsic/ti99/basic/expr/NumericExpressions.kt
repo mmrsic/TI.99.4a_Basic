@@ -2,7 +2,7 @@ package com.github.mmrsic.ti99.basic.expr
 
 import com.github.mmrsic.ti99.basic.BadValue
 import com.github.mmrsic.ti99.basic.NumberTooBig
-import com.github.mmrsic.ti99.basic.StringNumberMismatch
+import com.github.mmrsic.ti99.hw.TiBasicModule
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
@@ -130,22 +130,19 @@ data class NumericVariable(val name: String, val calc: (String) -> NumericConsta
     override fun listText(): String = name
 }
 
-object RelationalExpr {
-    fun create(a: Expression, op: Operator, b: Expression): NumericExpr {
-        if (a is NumericExpr && b is NumericExpr) {
-            return RelationalNumericExpr(a, op, b)
-        }
-        if (a is StringExpr && b is StringExpr) {
-            return RelationalStringExpr(a, op, b)
-        }
-        if (a is StringExpr && b is NumericExpr) {
-            return StringNumberMismatchExpr(a, b)
-        }
-        if (a is NumericExpr && b is StringExpr) {
-            return StringNumberMismatchExpr(a, b)
-        }
-        throw IllegalStateException("Logic error in method: Not all possible combinations covered")
+class NumericArrayAccess(
+    val baseName: String,
+    val arrayIndex: NumericExpr, machine: TiBasicModule
+) : NumericExpr(), TiBasicModule.Dependent {
+
+    override val basicModule = machine
+    override fun listText() = "$baseName(${arrayIndex.listText()})"
+    override fun value(): NumericConstant {
+        return basicModule.getNumericArrayVariableValue(baseName, arrayIndex)
     }
+}
+
+object RelationalExpr {
 
     /** Operator of a [RelationalExpr]. */
     enum class Operator {
@@ -207,14 +204,6 @@ class RelationalStringExpr(val a: StringExpr, val op: RelationalExpr.Operator, v
 
     override fun listText(): String = "${a.listText()}$op${b.listText()}"
 
-}
-
-class StringNumberMismatchExpr(val a: NumericExpr, val b: StringExpr) : NumericExpr() {
-    constructor(a: StringExpr, b: NumericExpr) : this(b, a)
-
-    override fun value() = throw StringNumberMismatch()
-    override fun displayValue() = throw StringNumberMismatch()
-    override fun listText(): String = a.listText() + b.listText()
 }
 
 // HELPERS //

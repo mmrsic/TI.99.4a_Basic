@@ -123,10 +123,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         IntFunction(this)
     }
     private val numericFun by intFun
+    private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        NumericArrayAccess(t1.text, t2, machine)
+    }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
     }
-    private val term: Parser<NumericExpr> by numericConst or numericVarRef or numericFun or fractionConst or
+    private val term by numericConst or numericArrRef or numericVarRef or numericFun or fractionConst or
             (skip(minus) and parser(::numericExpr) map { NegatedExpression(it) }) or
             (skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis))
     private val expChain: Parser<NumericExpr> by leftAssociative(term, exponentiation) { a, _, b ->
@@ -246,15 +249,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
 
     private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and
-            separatedTerms(numericVarRef or stringVarRef, comma) use {
+            separatedTerms(numericArrRef or numericVarRef or stringVarRef, comma) use {
         val prompt: StringExpr? = t1
-        val varNameList: List<String> = t2.map { varRef ->
-            when (varRef) {
-                is NumericVariable -> varRef.name
-                is StringVariable -> varRef.name
-                else -> throw IllegalArgumentException("No input statement variable list expression: $varRef")
-            }
-        }
+        val varNameList: List<Expression> = t2
         InputStatement(prompt, varNameList)
     }
 

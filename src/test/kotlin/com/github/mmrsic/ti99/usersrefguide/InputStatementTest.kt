@@ -183,4 +183,37 @@ class InputStatementTest {
         )
     }
 
+    @Test
+    fun testAssignmentFromLeftToRight() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context) = "3,7\r".asSequence()
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+                100 INPUT I,A(I)
+                110 PRINT I:A(3)
+                120 END
+                RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                12 to "  TI BASIC READY",
+                14 to " >100 INPUT I,A(I)",
+                15 to " >110 PRINT I:A(3)",
+                16 to " >120 END",
+                17 to " >RUN",
+                18 to "  ? 3,7",
+                19 to "   3",
+                20 to "   7",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
