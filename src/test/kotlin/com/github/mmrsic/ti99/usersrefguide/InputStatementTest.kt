@@ -261,4 +261,45 @@ class InputStatementTest {
         )
     }
 
+    @Test
+    fun testNumericOverflowAndUnderflow() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+                    return (when (ctx.unacceptedInputs) {
+                        0 -> "23E139"
+                        1 -> "23E-139"
+                        else -> throw IllegalArgumentException("Code is not prepared to provide input for $ctx")
+                    } + "\r").asSequence()
+                }
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 INPUT A
+            110 PRINT A
+            120 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 INPUT A",
+                12 to " >110 PRINT A",
+                13 to " >120 END",
+                14 to " >RUN",
+                15 to "  ? 23E139",
+                17 to "  * WARNING:",
+                18 to "    NUMBER TOO BIG IN 100",
+                19 to "  TRY AGAIN: 23E-139",
+                20 to "   0",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

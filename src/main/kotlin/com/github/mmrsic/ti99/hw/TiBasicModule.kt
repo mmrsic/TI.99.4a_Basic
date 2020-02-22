@@ -87,7 +87,9 @@ class TiBasicModule : TiModule {
         if (variableName.last() == '$') {
             setStringVariable(variableName, StringConstant(value))
         } else {
-            setNumericVariable(variableName, NumericConstant(value.toDouble()))
+            val varValue = NumericConstant(value.toDouble())
+            if (varValue.isOverflow) throw NumberTooBig()
+            setNumericVariable(variableName, varValue)
         }
     }
 

@@ -188,7 +188,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
         val inputParts = parseInputParts(input)
         if (inputParts.size != variableNames.size) {
             println("Input error: Expecting ${variableNames.size} elements but got ${inputParts.size}")
-            raiseInputErrorWarning(inputLineNumber)
+            raiseInputErrorWarning(inputLineNumber, InputError())
         }
         variableNames.forEachIndexed { varIdx, varNameExpr ->
             val trimmedPart = inputParts[varIdx].trim()
@@ -202,8 +202,11 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             try {
                 machine.setVariable(memoryVarName, unquotedPart.replace("\"\"", "\""))
             } catch (e: NumberFormatException) {
-                println("Input error: Expecting number but got string: ${e.message}")
-                raiseInputErrorWarning(inputLineNumber)
+                println("Input warning: Expecting number but got string: ${e.message}")
+                raiseInputErrorWarning(inputLineNumber, InputError())
+            } catch (e: TiBasicWarning) {
+                println("Input warning: ${e.message}")
+                raiseInputErrorWarning(inputLineNumber, e)
             }
         }
         return input
@@ -280,11 +283,11 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
         return result.toList()
     }
 
-    private fun raiseInputErrorWarning(inputLineNumber: Int) {
+    private fun raiseInputErrorWarning(inputLineNumber: Int, exception: TiBasicException) {
         acceptUserInputCtx.unacceptedInputs++
         machine.printTokens(listOf(PrintToken.NextRecord))
         jumpTo(inputLineNumber)
-        throw InputError()
+        throw exception
     }
 
 }
