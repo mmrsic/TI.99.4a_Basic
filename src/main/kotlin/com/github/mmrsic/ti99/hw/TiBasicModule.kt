@@ -371,7 +371,6 @@ class TiBasicModule : TiModule {
     fun acceptUserInput(variableNames: List<Expression>, programLineNumber: Int, prompt: String = "? ") {
         val interpreter = programInterpreter
             ?: throw IllegalArgumentException("User input is possible only while a program is running")
-        printTokens(listOf(StringConstant(prompt), PrintToken.Adjacent))
         interpreter.acceptUserInput(variableNames, programLineNumber, prompt)
         screen.scroll()
         currentPrintColumn = null

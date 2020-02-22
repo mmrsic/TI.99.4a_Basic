@@ -216,4 +216,49 @@ class InputStatementTest {
         )
     }
 
+    @Test
+    fun testWarningsWrongNumberOfValuesAndWrongType() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : CodeSequenceProvider {
+                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+                    return (when (ctx.unacceptedInputs) {
+                        0 -> "12,HI,3"
+                        1 -> "HI,3"
+                        2 -> "23,HI"
+                        else -> throw IllegalArgumentException("Code is not prepared to provide input for $ctx")
+                    } + "\r").asSequence()
+                }
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 INPUT A,B$
+            110 PRINT A;B$
+            120 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                5 to "  TI BASIC READY",
+                7 to " >100 INPUT A,B$",
+                8 to " >110 PRINT A;B$",
+                9 to " >120 END",
+                10 to " >RUN",
+                11 to "  ? 12,HI,3",
+                13 to "  * WARNING:",
+                14 to "    INPUT ERROR IN 100",
+                15 to "  TRY AGAIN: HI,3",
+                17 to "  * WARNING:",
+                18 to "    INPUT ERROR IN 100",
+                19 to "  TRY AGAIN: 23,HI",
+                20 to "   23 HI",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

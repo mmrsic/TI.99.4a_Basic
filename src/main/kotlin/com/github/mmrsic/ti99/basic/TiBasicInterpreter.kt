@@ -96,6 +96,8 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             println("Executing $pc $stmt")
             try {
                 stmt.execute(machine, pc)
+            } catch (e: TiBasicWarning) {
+                TiBasicProgramException(pc, e).displayOn(machine.screen)
             } catch (e: TiBasicException) {
                 throw TiBasicProgramException(pc, e)
             }
@@ -171,6 +173,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     fun acceptUserInput(variableNames: List<Expression>, inputLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
         acceptUserInputCtx.addCall(inputLineNumber, prompt)
+        machine.printTokens(listOf(StringConstant(acceptUserInputCtx.prompt), PrintToken.Adjacent))
         val input = StringBuilder().apply {
             do {
                 val inputPart = codeSequenceProvider.provideInput(acceptUserInputCtx)
@@ -183,6 +186,10 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
         }.toString()
         machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))
         val inputParts = parseInputParts(input)
+        if (inputParts.size != variableNames.size) {
+            println("Input error: Expecting ${variableNames.size} elements but got ${inputParts.size}")
+            raiseInputErrorWarning(inputLineNumber)
+        }
         variableNames.forEachIndexed { varIdx, varNameExpr ->
             val trimmedPart = inputParts[varIdx].trim()
             val unquotedPart = if (trimmedPart.first() == '"') trimmedPart.drop(1).dropLast(1) else trimmedPart
@@ -192,7 +199,12 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
                 is NumericArrayAccess -> machine.getArrayVariableName(varNameExpr.baseName, varNameExpr.arrayIndex)
                 else -> throw IllegalArgumentException("Unknown variable expression: $varNameExpr")
             }
-            machine.setVariable(memoryVarName, unquotedPart.replace("\"\"", "\""))
+            try {
+                machine.setVariable(memoryVarName, unquotedPart.replace("\"\"", "\""))
+            } catch (e: NumberFormatException) {
+                println("Input error: Expecting number but got string: ${e.message}")
+                raiseInputErrorWarning(inputLineNumber)
+            }
         }
         return input
     }
@@ -225,6 +237,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
     private val acceptUserInputCtx = object : CodeSequenceProvider.Context {
         private val allCalls = mutableMapOf<Int, Int>()
         override var prompt: String = ""
+            get() = if (unacceptedInputs > 0) "TRY AGAIN: " else field
         override val overallCalls: Int
             get() = if (allCalls.isEmpty()) 0 else allCalls.values.reduce(Int::plus)
         override var programLine: Int = 0
@@ -237,7 +250,6 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
             prompt = userPrompt
             val oldValue = allCalls[lineNumber] ?: 0
             allCalls[lineNumber] = oldValue + 1
-            unacceptedInputs = 0
         }
     }
 
@@ -266,6 +278,13 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
         val start = if (commaPositions.isEmpty()) 0 else commaPositions.last() + 1
         result.add(input.substring(start, input.length))
         return result.toList()
+    }
+
+    private fun raiseInputErrorWarning(inputLineNumber: Int) {
+        acceptUserInputCtx.unacceptedInputs++
+        machine.printTokens(listOf(PrintToken.NextRecord))
+        jumpTo(inputLineNumber)
+        throw InputError()
     }
 
 }
