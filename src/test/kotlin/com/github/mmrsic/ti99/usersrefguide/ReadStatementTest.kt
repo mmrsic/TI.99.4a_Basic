@@ -121,4 +121,32 @@ class ReadStatementTest {
         )
     }
 
+    @Test
+    fun testDataError() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 READ A,B
+            110 DATA 12,HELLO
+            120 PRINT A;B
+            130 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                14 to "  TI BASIC READY",
+                16 to " >100 READ A,B",
+                17 to " >110 DATA 12,HELLO",
+                18 to " >120 PRINT A;B",
+                19 to " >130 END",
+                20 to " >RUN",
+                22 to "  * DATA ERROR IN 100",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

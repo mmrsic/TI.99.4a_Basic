@@ -257,12 +257,12 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         val varNameList: List<Expression> = t2
         InputStatement(prompt, varNameList)
     }
-    private val dataStmt by skip(data) and separatedTerms(numericConst, comma, acceptZero = true) use {
+    private val dataString: Parser<Constant> = name use { StringConstant(this.text) }
+    private val dataContent = numericConst or dataString
+    private val dataStmt by skip(data) and separatedTerms(dataContent, comma, true) use {
         DataStatement(this)
     }
-    private val readStmt by skip(read) and separatedTerms(varRef, comma, acceptZero = false) use {
-        ReadStatement(this)
-    }
+    private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use { ReadStatement(this) }
     private val restoreStmt by skip(restore) and optional(positiveIntConst) use { RestoreStatement(this) }
 
     // CALL SUBPROGRAM PARSERS

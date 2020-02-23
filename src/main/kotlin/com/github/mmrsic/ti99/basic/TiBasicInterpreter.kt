@@ -240,7 +240,12 @@ class TiBasicProgramInterpreter(
     fun readData(variableNames: List<Expression>) {
         for (varNameExpr in variableNames) {
             val varValue = programData.next().toNative().toString()
-            machine.setVariable(varNameExpr, varValue)
+            try {
+                machine.setVariable(varNameExpr, varValue)
+            } catch (e: java.lang.NumberFormatException) {
+                println("Failed to read numeric value from data entry: $varValue")
+                throw DataError()
+            }
         }
     }
 
