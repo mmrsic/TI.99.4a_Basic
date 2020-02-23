@@ -301,8 +301,8 @@ class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Expressi
 
 class DataStatement(val constants: List<Constant>) : Statement, TiBasicModule.ExecutedOnStore {
     override fun listText() = "DATA $constants"
-    override fun onStore(machine: TiBasicModule) {
-        machine.storeData(constants)
+    override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+        machine.storeData(lineNumber, constants)
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
@@ -318,6 +318,21 @@ class DataStatement(val constants: List<Constant>) : Statement, TiBasicModule.Ex
 class ReadStatement(val variableNames: List<Expression>) : Statement {
     override fun listText() = "READ $variableNames"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.readData(variableNames)
+        val interpreter =
+            machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
+        interpreter.readData(variableNames)
+    }
+}
+
+class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStatement {
+    override fun listText(): String = "RESTORE"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val interpreter =
+            machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
+        interpreter.restore(lineNumber)
+    }
+
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+        TODO("not implemented")
     }
 }

@@ -18,7 +18,7 @@ class TiBasicModule : TiModule {
     /** Any instance that has to be executed when it is stored in a [TiBasicModule] */
     interface ExecutedOnStore {
         /** Notify this instance that it is stored in a given [TiBasicModule]. */
-        fun onStore(machine: TiBasicModule)
+        fun onStore(lineNumber: Int, machine: TiBasicModule)
     }
 
     /** The optional program currently held in this TI Basic Module's memory. */
@@ -182,7 +182,7 @@ class TiBasicModule : TiModule {
             program = TiBasicProgram()
         }
         program!!.store(programLine)
-        programLine.statements.forEach { if (it is ExecutedOnStore) it.onStore(this) }
+        programLine.statements.forEach { if (it is ExecutedOnStore) it.onStore(programLine.lineNumber, this) }
         continueLine = null
     }
 
@@ -400,36 +400,19 @@ class TiBasicModule : TiModule {
     }
 
     /** Data for a program. */
-    private val programData = object {
-        val constants: MutableList<Constant> = mutableListOf()
-        private var nextIndex = 0
-        fun next() = constants[nextIndex++]
-        fun restore() {
-            nextIndex = 0
-        }
-    }
+    private val programData = mutableMapOf<Int, List<Constant>>()
 
-    /** Store some program data in memory to be used with [readData]. */
-    fun storeData(constants: List<Constant>) {
-        programData.constants.addAll(constants)
+    /** Store some program data in memory to be used on program run. */
+    fun storeData(lineNumber: Int, constants: List<Constant>) {
+        programData[lineNumber] = constants
+        println("Data @$lineNumber: $constants")
     }
-
-    /** Access some program data stored with [storeData]. */
-    fun readData(variableNames: List<Expression>) {
-        for (varNameExpr in variableNames) {
-            val varValue = programData.next().toNative().toString()
-            setVariable(varNameExpr, varValue)
-        }
-    }
-
-    /** Restore the data stored with [storeData], that is, the next [readData] starts from the beginning. */
-    fun restore() = programData.restore()
 
     // HELPERS //
 
     private fun interpretProgram(startLine: Int?) {
         currentPrintColumn = null // TODO: Move to program interpreter?
-        val interpreter = TiBasicProgramInterpreter(this, codeSequenceProvider)
+        val interpreter = TiBasicProgramInterpreter(this, codeSequenceProvider, programData)
         programInterpreter = interpreter
         interpretProgram(interpreter, startLine)
         programInterpreter = null

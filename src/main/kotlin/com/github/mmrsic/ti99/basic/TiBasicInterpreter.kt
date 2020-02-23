@@ -79,8 +79,11 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 }
 
 /** Interpreter for TI Basic programs. */
-class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequenceProvider: CodeSequenceProvider) :
-    TiBasicInterpreter(machine) {
+class TiBasicProgramInterpreter(
+    machine: TiBasicModule,
+    private val codeSequenceProvider: CodeSequenceProvider,
+    programD: Map<Int, List<Constant>>
+) : TiBasicInterpreter(machine) {
 
     /** Interpret the current program of this interpreter's [machine], optionally starting at a given start line number. */
     fun interpretAll(startLineNum: Int? = null) {
@@ -208,6 +211,42 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
 
 
     // HELPERS //
+
+    /** Data for a program. */
+    private val programData = object {
+        val constants: List<Constant>
+        private val restoreEntryPoints: Map<Int, Int>
+
+        init {
+            val sortedProgramData = TreeMap(programD)
+            constants = sortedProgramData.flatMap { it.value }
+            val entryPoints = mutableMapOf<Int, Int>()
+            var currOffset = 0
+            for ((line, constants) in sortedProgramData) {
+                entryPoints[line] = currOffset
+                currOffset += constants.size
+            }
+            restoreEntryPoints = entryPoints.toMap()
+        }
+
+        private var nextIndex = 0
+        fun next() = constants[nextIndex++]
+        fun restore(lineNumber: Int? = null) {
+            nextIndex = if (lineNumber != null) restoreEntryPoints.getValue(lineNumber) else 0
+        }
+    }
+
+    /** Access some program data stored with [storeData]. */
+    fun readData(variableNames: List<Expression>) {
+        for (varNameExpr in variableNames) {
+            val varValue = programData.next().toNative().toString()
+            machine.setVariable(varNameExpr, varValue)
+        }
+    }
+
+    /** Restore the data stored with [storeData], that is, the next [readData] starts from the beginning. */
+    fun restore(lineNumber: Int? = null) = programData.restore(lineNumber)
+
 
     private val forLoopStack: Stack<ForLoop> = Stack()
     private val forLoopError: MutableMap<ForLoop, TiBasicError> = mutableMapOf()

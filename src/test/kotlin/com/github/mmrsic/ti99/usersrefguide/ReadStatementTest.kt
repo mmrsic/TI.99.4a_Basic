@@ -74,4 +74,51 @@ class ReadStatementTest {
         )
     }
 
+    @Test
+    fun testRestoreWithLineNumber() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 FOR I=1 TO 2
+            110 FOR J=1 TO 4
+            120 READ A,B
+            130 PRINT A;B;
+            140 NEXT J
+            150 PRINT
+            160 RESTORE 190
+            170 NEXT I
+            180 DATA 2,4,6,8,10
+            190 DATA 12,14,16,18
+            200 DATA 20,22,24,26
+            210 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                3 to "  TI BASIC READY",
+                5 to " >100 FOR I=1 TO 2",
+                6 to " >110 FOR J=1 TO 4",
+                7 to " >120 READ A,B",
+                8 to " >130 PRINT A;B;",
+                9 to " >140 NEXT J",
+                10 to " >150 PRINT",
+                11 to " >160 RESTORE 190",
+                12 to " >170 NEXT I",
+                13 to " >180 DATA 2,4,6,8,10",
+                14 to " >190 DATA 12,14,16,18",
+                15 to " >200 DATA 20,22,24,26",
+                16 to " >210 END",
+                17 to " >RUN",
+                18 to "   2  4  6  8  10  12  14  16",
+                19 to "   12  14  16  18  20  22  24",
+                20 to "   26",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

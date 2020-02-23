@@ -51,6 +51,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val print by token("\\bPRINT\\b")
     private val read by token("READ")
     private val remark by token("""REM(ARK)?.*""")
+    private val restore by token("RESTORE")
     private val resequence by token("""RES(EQUENCE)?""")
     private val returnToken by token("RETURN")
     private val run by token("\\bRUN\\b")
@@ -262,6 +263,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val readStmt by skip(read) and separatedTerms(varRef, comma, acceptZero = false) use {
         ReadStatement(this)
     }
+    private val restoreStmt by skip(restore) and optional(positiveIntConst) use { RestoreStatement(this) }
 
     // CALL SUBPROGRAM PARSERS
 
@@ -283,7 +285,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
             callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
-            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or readStmt
+            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or readStmt or restoreStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))
