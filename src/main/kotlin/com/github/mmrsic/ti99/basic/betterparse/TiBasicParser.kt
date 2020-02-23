@@ -32,6 +32,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val char by token("CHAR")
     private val clear by token("CLEAR")
     private val continueToken by token("""CON(TINUE)?""")
+    private val data by token("DATA")
     private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
     private val forToken by token("FOR")
@@ -48,6 +49,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val number by token("""NUM(BER)?""")
     private val on by token("ON")
     private val print by token("\\bPRINT\\b")
+    private val read by token("READ")
     private val remark by token("""REM(ARK)?.*""")
     private val resequence by token("""RES(EQUENCE)?""")
     private val returnToken by token("RETURN")
@@ -247,12 +249,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             optional(skip(elseToken) and positiveIntConst) use {
         IfStatement(t1, t2, t3)
     }
-
     private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and
             separatedTerms(numericArrRef or numericVarRef or stringVarRef, comma) use {
         val prompt: StringExpr? = t1
         val varNameList: List<Expression> = t2
         InputStatement(prompt, varNameList)
+    }
+    private val dataStmt by skip(data) and separatedTerms(numericConst, comma, acceptZero = true) use {
+        DataStatement(this)
+    }
+    private val readStmt by skip(read) and separatedTerms(numericVarRef, comma, acceptZero = false) use {
+        ReadStatement(this)
     }
 
     // CALL SUBPROGRAM PARSERS
@@ -275,7 +282,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
             callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
-            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt
+            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or readStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))

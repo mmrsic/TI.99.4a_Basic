@@ -193,14 +193,8 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, private val codeSequence
         variableNames.forEachIndexed { varIdx, varNameExpr ->
             val trimmedPart = inputParts[varIdx].trim()
             val unquotedPart = if (trimmedPart.first() == '"') trimmedPart.drop(1).dropLast(1) else trimmedPart
-            val memoryVarName = when (varNameExpr) {
-                is NumericVariable -> varNameExpr.name
-                is StringVariable -> varNameExpr.name
-                is NumericArrayAccess -> machine.getArrayVariableName(varNameExpr.baseName, varNameExpr.arrayIndex)
-                else -> throw IllegalArgumentException("Unknown variable expression: $varNameExpr")
-            }
             try {
-                machine.setVariable(memoryVarName, unquotedPart.replace("\"\"", "\""))
+                machine.setVariable(varNameExpr, unquotedPart.replace("\"\"", "\""))
             } catch (e: NumberFormatException) {
                 println("Input warning: Expecting number but got string: ${e.message}")
                 raiseInputErrorWarning(inputLineNumber, InputError())

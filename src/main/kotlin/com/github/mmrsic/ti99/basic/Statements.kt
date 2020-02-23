@@ -1,5 +1,6 @@
 package com.github.mmrsic.ti99.basic
 
+import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.Expression
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.StringExpr
@@ -21,6 +22,7 @@ interface SkippedOnContinue
  * A [Statement] that may depend on at least one line number of a program
  */
 interface LineNumberDependentStatement : Statement {
+    /** Change the line numbers of this [Statement] for a given mapping from old to new line numbers. */
     fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
 }
 
@@ -294,5 +296,28 @@ class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Expressi
         } else {
             machine.acceptUserInput(varNameList, programLineNumber)
         }
+    }
+}
+
+class DataStatement(val constants: List<Constant>) : Statement, TiBasicModule.ExecutedOnStore {
+    override fun listText() = "DATA $constants"
+    override fun onStore(machine: TiBasicModule) {
+        machine.storeData(constants)
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        // Nothing to do: Everything is done on store
+    }
+}
+
+/**
+ * The READ statement allows you to read data stored inside your program in [DataStatement]s. The variable-list
+ * specifies those variables that are to have values assigned.
+ * @param variableNames may include numeric variables and/or string variables
+ */
+class ReadStatement(val variableNames: List<Expression>) : Statement {
+    override fun listText() = "READ $variableNames"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.readData(variableNames)
     }
 }

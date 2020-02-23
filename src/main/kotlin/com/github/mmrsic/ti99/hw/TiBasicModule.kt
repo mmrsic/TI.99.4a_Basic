@@ -15,6 +15,12 @@ class TiBasicModule : TiModule {
         val basicModule: TiBasicModule
     }
 
+    /** Any instance that has to be executed when it is stored in a [TiBasicModule] */
+    interface ExecutedOnStore {
+        /** Notify this instance that it is stored in a given [TiBasicModule]. */
+        fun onStore(machine: TiBasicModule)
+    }
+
     /** The optional program currently held in this TI Basic Module's memory. */
     var program: TiBasicProgram? = null
         private set
@@ -93,6 +99,20 @@ class TiBasicModule : TiModule {
         }
     }
 
+    /**
+     * Set a variable given as an [Expression] to a given string value. According to the resulting variable's name
+     * the string value may be interpreted as numeric value.
+     */
+    fun setVariable(varNameExpr: Expression, stringValue: String) {
+        val memoryVarName = when (varNameExpr) {
+            is NumericVariable -> varNameExpr.name
+            is StringVariable -> varNameExpr.name
+            is NumericArrayAccess -> getArrayVariableName(varNameExpr.baseName, varNameExpr.arrayIndex)
+            else -> throw IllegalArgumentException("Unknown variable expression: $varNameExpr")
+        }
+        setVariable(memoryVarName, stringValue.replace("\"\"", "\""))
+    }
+
     /** The current value of a string value given by its name. */
     fun getStringVariableValue(name: String): StringConstant {
         if (name.last() != '$') throw IllegalArgumentException("Illegal string variable name: $name")
@@ -162,6 +182,7 @@ class TiBasicModule : TiModule {
             program = TiBasicProgram()
         }
         program!!.store(programLine)
+        programLine.statements.forEach { if (it is ExecutedOnStore) it.onStore(this) }
         continueLine = null
     }
 
@@ -377,6 +398,32 @@ class TiBasicModule : TiModule {
         screen.scroll()
         currentPrintColumn = null
     }
+
+    /** Data for a program. */
+    private val programData = object {
+        val constants: MutableList<Constant> = mutableListOf()
+        private var nextIndex = 0
+        fun next() = constants[nextIndex++]
+        fun restore() {
+            nextIndex = 0
+        }
+    }
+
+    /** Store some program data in memory to be used with [readData]. */
+    fun storeData(constants: List<Constant>) {
+        programData.constants.addAll(constants)
+    }
+
+    /** Access some program data stored with [storeData]. */
+    fun readData(variableNames: List<Expression>) {
+        for (varNameExpr in variableNames) {
+            val varValue = programData.next().toNative().toString()
+            setVariable(varNameExpr, varValue)
+        }
+    }
+
+    /** Restore the data stored with [storeData], that is, the next [readData] starts from the beginning. */
+    fun restore() = programData.restore()
 
     // HELPERS //
 
