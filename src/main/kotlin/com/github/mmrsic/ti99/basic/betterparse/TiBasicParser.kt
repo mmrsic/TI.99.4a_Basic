@@ -249,8 +249,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             optional(skip(elseToken) and positiveIntConst) use {
         IfStatement(t1, t2, t3)
     }
+    private val varRef = numericArrRef or numericVarRef or stringVarRef
     private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and
-            separatedTerms(numericArrRef or numericVarRef or stringVarRef, comma) use {
+            separatedTerms(varRef, comma) use {
         val prompt: StringExpr? = t1
         val varNameList: List<Expression> = t2
         InputStatement(prompt, varNameList)
@@ -258,7 +259,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val dataStmt by skip(data) and separatedTerms(numericConst, comma, acceptZero = true) use {
         DataStatement(this)
     }
-    private val readStmt by skip(read) and separatedTerms(numericVarRef, comma, acceptZero = false) use {
+    private val readStmt by skip(read) and separatedTerms(varRef, comma, acceptZero = false) use {
         ReadStatement(this)
     }
 

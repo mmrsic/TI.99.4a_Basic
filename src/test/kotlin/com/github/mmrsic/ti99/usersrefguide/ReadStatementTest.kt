@@ -45,4 +45,33 @@ class ReadStatementTest {
         )
     }
 
+    @Test
+    fun testSubscriptExpressionsAreEvaluatedAfterVariablesToTheLeftHaveBeenAssigned() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+                100 READ I,A(I)
+                110 DATA 2,35
+                120 PRINT A(2)
+                130 END
+                RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                13 to "  TI BASIC READY",
+                15 to " >100 READ I,A(I)",
+                16 to " >110 DATA 2,35",
+                17 to " >120 PRINT A(2)",
+                18 to " >130 END",
+                19 to " >RUN",
+                20 to "   35",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
