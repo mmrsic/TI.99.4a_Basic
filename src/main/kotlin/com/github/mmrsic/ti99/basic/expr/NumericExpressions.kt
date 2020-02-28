@@ -83,7 +83,7 @@ data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
     override fun listText(): String = "-${original.listText()}"
 }
 
-data class NumericConstant(private val constant: Number) : NumericExpr(), Constant {
+data class NumericConstant(override val constant: Number) : NumericExpr(), Constant {
     val isOverflow = NumberRanges.isOverflow(constant)
     val isUnderflow = NumberRanges.isUnderflow(constant)
     val isInteger = constant.toDouble().roundToInt().toDouble() == constant.toDouble()
@@ -102,7 +102,7 @@ data class NumericConstant(private val constant: Number) : NumericExpr(), Consta
         if (isUnderflow) {
             return " 0 "
         }
-        if (isOverflow) {
+        if (isOverflow || toNative() == NumberRanges.MAX_VALUE) {
             return signCharacter + "9.99999E+**"
         }
         if (isInteger) {

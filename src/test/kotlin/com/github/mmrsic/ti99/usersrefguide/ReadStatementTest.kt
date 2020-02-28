@@ -149,4 +149,40 @@ class ReadStatementTest {
         )
     }
 
+    @Test
+    fun testUnderflowAndOverflowAndNoMoreRemaining() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 READ A,B
+            110 DATA 12E-135
+            120 DATA 36E142
+            130 PRINT :A:B
+            140 READ C
+            150 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "  TI BASIC READY",
+                8 to " >100 READ A,B",
+                9 to " >110 DATA 12E-135",
+                10 to " >120 DATA 36E142",
+                11 to " >130 PRINT :A:B",
+                12 to " >140 READ C",
+                13 to " >150 END",
+                14 to " >RUN",
+                16 to "  * WARNING:",
+                17 to "    NUMBER TOO BIG IN 100",
+                19 to "   0",
+                20 to "   9.99999E+**",
+                22 to "  * DATA ERROR IN 140",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

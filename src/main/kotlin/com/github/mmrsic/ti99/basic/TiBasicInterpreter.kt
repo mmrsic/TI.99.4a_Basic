@@ -230,7 +230,10 @@ class TiBasicProgramInterpreter(
         }
 
         private var nextIndex = 0
-        fun next() = constants[nextIndex++]
+        fun next(): Constant {
+            if (nextIndex >= constants.size) throw DataError()
+            return constants[nextIndex++]
+        }
         fun restore(lineNumber: Int? = null) {
             nextIndex = if (lineNumber != null) restoreEntryPoints.getValue(lineNumber) else 0
         }
@@ -239,7 +242,7 @@ class TiBasicProgramInterpreter(
     /** Access some program data stored with [storeData]. */
     fun readData(variableNames: List<Expression>) {
         for (varNameExpr in variableNames) {
-            val varValue = programData.next().toNative().toString()
+            val varValue = programData.next().constant.toString()
             try {
                 machine.setVariable(varNameExpr, varValue)
             } catch (e: java.lang.NumberFormatException) {

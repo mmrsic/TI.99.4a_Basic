@@ -13,7 +13,7 @@ abstract class StringExpr : Expression {
     }
 }
 
-data class StringConstant(val constant: String) : StringExpr(), Constant {
+data class StringConstant(override val constant: String) : StringExpr(), Constant {
     override fun value(): StringConstant = this
     override fun toNative(): String = constant
     override fun listText(): String = "\"$constant\""

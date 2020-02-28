@@ -19,6 +19,10 @@ interface Expression {
  * A constant may be converted to a native value, that is, a Kotlin value.
  */
 interface Constant {
+    /** The original constant of this instance. */
+    val constant: Any
+
+    /** The native value of this constant that is used within arithmetic operations. */
     fun toNative(): Any
 }
 

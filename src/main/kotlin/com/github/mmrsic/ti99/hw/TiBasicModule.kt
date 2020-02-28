@@ -94,7 +94,6 @@ class TiBasicModule : TiModule {
             setStringVariable(variableName, StringConstant(value))
         } else {
             val varValue = NumericConstant(value.toDouble())
-            if (varValue.isOverflow) throw NumberTooBig()
             setNumericVariable(variableName, varValue)
         }
     }
@@ -146,7 +145,12 @@ class TiBasicModule : TiModule {
     /** Change the value of a numeric variable of this instance. */
     fun setNumericVariable(name: String, expr: NumericExpr): NumericConstant {
         if (name.length > 15) throw BadName()
-        val result = expr.value()
+        val originalValue = expr.value()
+        if (originalValue.isOverflow) {
+            numericVariables[name] = NumericConstant(originalValue.toNative())
+            throw NumberTooBig()
+        }
+        val result = if (originalValue.isUnderflow) NumericConstant(0) else originalValue
         numericVariables[name] = result
         println("$name=$result")
         return result
