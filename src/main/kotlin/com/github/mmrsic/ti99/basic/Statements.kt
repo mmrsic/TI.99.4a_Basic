@@ -336,6 +336,18 @@ class ReadStatement(val variableList: List<Expression>) : Statement {
     }
 }
 
+/**
+ * The RESTORE statement tells your program which [DataStatement] to use with the next [ReadStatement].
+ * When RESTORE is used with no line number and the next [ReadStatement] is performed, values will be assigned beginning
+ * with the first [DataStatement] in the program.
+ * When RESTORE is followed by the line number of a [DataStatement] and the next [ReadStatement] is performed, values
+ * will be assigned beginning with the first data-item in the [DataStatement] specified by the line number.
+ * If the line number specified in a RESTORE statement is not a [DataStatement] or is not a program line number, then
+ * the next [ReadStatement] performed will start at the first [DataStatement] whose line number is greater than the one
+ * specified. If there is no such [DataStatement], then the next [ReadStatement] performed will cause an out-of-data
+ * condition and a "DATA ERROR" message will be displayed. If the line number specified is greater than the highest
+ * line number in the program, the program will stop running and the message "DATA ERROR IN xx" will be displayed.
+ */
 class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStatement {
     override fun listText(): String = "RESTORE"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {

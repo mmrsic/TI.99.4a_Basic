@@ -215,18 +215,18 @@ class TiBasicProgramInterpreter(
     /** Data for a program. */
     private val programData = object {
         val constants: List<Constant>
-        private val restoreEntryPoints: Map<Int, Int>
+        /** Mapping from program line to [constants] index. */
+        private val restoreEntryPoints: TreeMap<Int, Int>
 
         init {
             val sortedProgramData = TreeMap(programD)
             constants = sortedProgramData.flatMap { it.value }
-            val entryPoints = mutableMapOf<Int, Int>()
+            restoreEntryPoints = TreeMap()
             var currOffset = 0
             for ((line, constants) in sortedProgramData) {
-                entryPoints[line] = currOffset
+                restoreEntryPoints[line] = currOffset
                 currOffset += constants.size
             }
-            restoreEntryPoints = entryPoints.toMap()
         }
 
         private var nextIndex = 0
@@ -234,8 +234,14 @@ class TiBasicProgramInterpreter(
             if (nextIndex >= constants.size) throw DataError()
             return constants[nextIndex++]
         }
+
+        /** Restore the [readData] pointer, optionally to a given line number. */
         fun restore(lineNumber: Int? = null) {
-            nextIndex = if (lineNumber != null) restoreEntryPoints.getValue(lineNumber) else 0
+            nextIndex = when {
+                lineNumber == null -> 0
+                restoreEntryPoints.containsKey(lineNumber) -> restoreEntryPoints.getValue(lineNumber)
+                else -> restoreEntryPoints.getValue(restoreEntryPoints.higherKey(lineNumber))
+            }
         }
     }
 
