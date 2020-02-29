@@ -123,6 +123,10 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
     }
 
     override fun listText(): String = displayValue().trim()
+
+    companion object {
+        val ZERO = NumericConstant(0)
+    }
 }
 
 data class NumericVariable(val name: String, val calc: (String) -> NumericConstant) : NumericExpr() {

@@ -135,7 +135,7 @@ class TiBasicModule : TiModule {
     /** The current value of a numeric value given by its name. */
     fun getNumericVariableValue(name: String): NumericConstant {
         if (name.length > 15) throw BadName()
-        if (!numericVariables.containsKey(name)) numericVariables[name] = NumericConstant(0)
+        if (!numericVariables.containsKey(name)) numericVariables[name] = NumericConstant.ZERO
         return numericVariables[name]!!
     }
 
@@ -150,7 +150,7 @@ class TiBasicModule : TiModule {
             numericVariables[name] = NumericConstant(originalValue.toNative())
             throw NumberTooBig()
         }
-        val result = if (originalValue.isUnderflow) NumericConstant(0) else originalValue
+        val result = if (originalValue.isUnderflow) NumericConstant.ZERO else originalValue
         numericVariables[name] = result
         println("$name=$result")
         return result

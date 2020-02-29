@@ -7,7 +7,7 @@ class AbsFunctionTest {
 
     @Test
     fun testZero() {
-        val result = AbsFunction(NumericConstant(0)).value()
+        val result = AbsFunction(NumericConstant.ZERO).value()
         assertEquals(0.0, result.toNative(), "ABS(0) must yield 0")
         assertEquals(" 0 ", result.displayValue(), "ABS(0) must yield 0")
     }

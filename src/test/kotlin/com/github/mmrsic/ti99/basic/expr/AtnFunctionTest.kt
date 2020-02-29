@@ -7,7 +7,7 @@ class AtnFunctionTest {
 
     @Test
     fun testZero() {
-        val result = AtnFunction(NumericConstant(0)).value()
+        val result = AtnFunction(NumericConstant.ZERO).value()
         assertEquals(0.0, result.toNative(), "ATN(0) must yield 0")
         assertEquals(" 0 ", result.displayValue(), "ATN(0) must yield 0")
     }

@@ -23,7 +23,7 @@ class SgnFunctionTest {
 
     @Test
     fun testZero() {
-        val argument = NumericConstant(0)
+        val argument = NumericConstant.ZERO
         val result = SgnFunction(argument).value()
         assertEquals(0.0, result.toNative(), "SGN($argument)")
         assertEquals(" 0 ", result.displayValue(), "SGN($argument)")

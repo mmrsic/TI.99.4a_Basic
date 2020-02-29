@@ -17,6 +17,10 @@ data class StringConstant(override val constant: String) : StringExpr(), Constan
     override fun value(): StringConstant = this
     override fun toNative(): String = constant
     override fun listText(): String = "\"$constant\""
+
+    companion object {
+        val EMPTY = StringConstant("")
+    }
 }
 
 data class StringVariable(val name: String, val calc: (String) -> StringConstant) : StringExpr() {

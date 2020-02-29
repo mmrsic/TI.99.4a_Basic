@@ -80,6 +80,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val openParenthesis by token("\\(")
     private val closeParenthesis by token("\\)")
     private val assign by equals
+    private val doubleComma by token(",,", ignore = true)
     private val comma by token(",")
     private val semicolon by token(";")
     private val colon by token(":")
@@ -91,7 +92,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val positiveInt by token("[0-9]+")
     private val fractionPart by token("\\.[0-9]+")
     private val fractionConst by fractionPart use { NumericConstant(text.toDouble()) }
-    private val numericConst : Parser<NumericConstant> by optional(minus) and positiveInt and optional(fractionPart) and
+    private val numericConst: Parser<NumericConstant> by optional(minus) and positiveInt and optional(fractionPart) and
             optional(e and optional(minus or plus) and positiveInt) use {
         val factor = if (t1 == null) 1 else -1
         val mantissa = t2.text + (if (t3 != null) t3!!.text else "")
@@ -257,10 +258,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         val varNameList: List<Expression> = t2
         InputStatement(prompt, varNameList)
     }
+    private val emptyDataString: Parser<Constant> by doubleComma asJust StringConstant.EMPTY
     private val dataString: Parser<Constant> = name use { StringConstant(this.text) }
-    private val dataContent : Parser<Constant> = (numericConst or stringConst or dataString) as Parser<Constant>
-    private val dataStmt by skip(data) and separatedTerms(dataContent, comma, true) use {
-        DataStatement(this)
+    private val dataContent: Parser<Constant> =
+        (numericConst or stringConst or emptyDataString or dataString) as Parser<Constant>
+    private val dataStmt by skip(data) and separated(dataContent, doubleComma or comma, true) use {
+        val data = mutableListOf<Constant>()
+        for ((index, term) in terms.withIndex()) {
+            data.add(term)
+            val nextIndex = index + 1
+            if (nextIndex < terms.size && separators[index].text == ",,") data.add(StringConstant.EMPTY)
+        }
+        DataStatement(data)
     }
     private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use { ReadStatement(this) }
     private val restoreStmt by skip(restore) and optional(positiveIntConst) use { RestoreStatement(this) }

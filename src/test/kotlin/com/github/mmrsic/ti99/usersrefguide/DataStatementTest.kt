@@ -82,4 +82,39 @@ class DataStatementTest {
         )
     }
 
+    @Test
+    fun testEmptyUnquotedString() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+                100 READ A$,B$,C
+                110 DATA HI,,2
+                120 PRINT "A$ IS ";A$
+                130 PRINT "B$ IS ";B$
+                140 PRINT "C IS ";C
+                150 END
+                RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 READ A$,B$,C",
+                12 to " >110 DATA HI,,2",
+                13 to " >120 PRINT \"A$ IS \";A$",
+                14 to " >130 PRINT \"B$ IS \";B$",
+                15 to " >140 PRINT \"C IS \";C",
+                16 to " >150 END",
+                17 to " >RUN",
+                18 to "  A$ IS HI",
+                19 to "  B$ IS",
+                20 to "  C IS  2",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
