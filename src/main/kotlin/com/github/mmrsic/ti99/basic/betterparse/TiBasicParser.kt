@@ -91,7 +91,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val positiveInt by token("[0-9]+")
     private val fractionPart by token("\\.[0-9]+")
     private val fractionConst by fractionPart use { NumericConstant(text.toDouble()) }
-    private val numericConst by optional(minus) and positiveInt and optional(fractionPart) and
+    private val numericConst : Parser<NumericConstant> by optional(minus) and positiveInt and optional(fractionPart) and
             optional(e and optional(minus or plus) and positiveInt) use {
         val factor = if (t1 == null) 1 else -1
         val mantissa = t2.text + (if (t3 != null) t3!!.text else "")
@@ -258,7 +258,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         InputStatement(prompt, varNameList)
     }
     private val dataString: Parser<Constant> = name use { StringConstant(this.text) }
-    private val dataContent = numericConst or dataString
+    private val dataContent : Parser<Constant> = (numericConst or stringConst or dataString) as Parser<Constant>
     private val dataStmt by skip(data) and separatedTerms(dataContent, comma, true) use {
         DataStatement(this)
     }

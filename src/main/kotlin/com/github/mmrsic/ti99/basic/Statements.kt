@@ -299,10 +299,22 @@ class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Expressi
     }
 }
 
-class DataStatement(val constants: List<Constant>) : Statement, TiBasicModule.ExecutedOnStore {
-    override fun listText() = "DATA $constants"
+/**
+ * The DATA statement allows you to store data inside your program. Data in the data-lists are obtained via
+ * [ReadStatement]s when the program is run.
+ * When a program reaches a DATA statement, it proceeds to the next statement with no other effect.
+ * DATA statements may appear anywhere in a program, but the order in which they appear is important. Data from the
+ * data-lists are read sequentially, beginning with the first item in the first DATA statement. If your program includes
+ * more than one DATA statement, the DATA statements are read in ascending line-number order unless otherwise specified
+ * by a [RestoreStatement]. Thus, the order in which the data appears within the data-list and the order of the DATA
+ * statements within the program normally determine in which order the data is read.
+ * @param dataList The data-list contains the values to be assigned to the variables
+ * specified in the variable-list of the read statement.
+ */
+class DataStatement(val dataList: List<Constant>) : Statement, TiBasicModule.ExecutedOnStore {
+    override fun listText() = "DATA $dataList"
     override fun onStore(lineNumber: Int, machine: TiBasicModule) {
-        machine.storeData(lineNumber, constants)
+        machine.storeData(lineNumber, dataList)
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
@@ -313,14 +325,14 @@ class DataStatement(val constants: List<Constant>) : Statement, TiBasicModule.Ex
 /**
  * The READ statement allows you to read data stored inside your program in [DataStatement]s. The variable-list
  * specifies those variables that are to have values assigned.
- * @param variableNames may include numeric variables and/or string variables
+ * @param variableList may include numeric variables and/or string variables
  */
-class ReadStatement(val variableNames: List<Expression>) : Statement {
-    override fun listText() = "READ $variableNames"
+class ReadStatement(val variableList: List<Expression>) : Statement {
+    override fun listText() = "READ $variableList"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val interpreter =
             machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
-        interpreter.readData(variableNames)
+        interpreter.readData(variableList)
     }
 }
 
