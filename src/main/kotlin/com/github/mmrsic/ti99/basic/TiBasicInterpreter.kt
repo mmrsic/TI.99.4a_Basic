@@ -240,12 +240,19 @@ class TiBasicProgramInterpreter(
             nextIndex = when {
                 lineNumber == null -> 0
                 restoreEntryPoints.containsKey(lineNumber) -> restoreEntryPoints.getValue(lineNumber)
-                else -> restoreEntryPoints.getValue(restoreEntryPoints.higherKey(lineNumber))
+                else -> {
+                    val nextDataLineNumber = restoreEntryPoints.higherKey(lineNumber)
+                    if (nextDataLineNumber != null) {
+                        restoreEntryPoints.getValue(nextDataLineNumber)
+                    } else {
+                        constants.size // That is, throw a data error if READ follows
+                    }
+                }
             }
         }
     }
 
-    /** Access some program data stored with [storeData]. */
+    /** Access some program data stored with [TiBasicModule.storeData]. */
     fun readData(variableNames: List<Expression>) {
         for (varNameExpr in variableNames) {
             val varValue = programData.next().constant.toString()
@@ -258,7 +265,9 @@ class TiBasicProgramInterpreter(
         }
     }
 
-    /** Restore the data stored with [storeData], that is, the next [readData] starts from the beginning. */
+    /**
+     * Restore the data stored with [TiBasicModule.storeData], that is, the next [readData] starts from the beginning.
+     */
     fun restore(lineNumber: Int? = null) = programData.restore(lineNumber)
 
 

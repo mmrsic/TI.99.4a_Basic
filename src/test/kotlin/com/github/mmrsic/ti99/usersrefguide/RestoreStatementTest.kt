@@ -122,4 +122,75 @@ class RestoreStatementTest {
             ), machine.screen
         )
     }
+
+    @Test
+    fun testNonExistingLineNumberButNextDataStatementWitGreaterLineNumber() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 READ A,B
+            110 RESTORE 145
+            120 PRINT A;B
+            130 READ C,D
+            140 PRINT C;D
+            150 DATA 26.9,34.67
+            160 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 READ A,B",
+                12 to " >110 RESTORE 145",
+                13 to " >120 PRINT A;B",
+                14 to " >130 READ C,D",
+                15 to " >140 PRINT C;D",
+                16 to " >150 DATA 26.9,34.67",
+                17 to " >160 END",
+                18 to " >RUN",
+                19 to "   26.9  34.67",
+                20 to "   26.9  34.67",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testNonExistingLineNumberAndNoNextDataStatementWitGreaterLineNumber() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 READ A,B
+            110 RESTORE 155
+            120 PRINT A;B
+            130 READ C,D
+            140 PRINT C;D
+            150 DATA 26.9,34.67
+            160 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                10 to "  TI BASIC READY",
+                12 to " >100 READ A,B",
+                13 to " >110 RESTORE 155",
+                14 to " >120 PRINT A;B",
+                15 to " >130 READ C,D",
+                16 to " >140 PRINT C;D",
+                17 to " >150 DATA 26.9,34.67",
+                18 to " >160 END",
+                19 to " >RUN",
+                20 to "   26.9  34.67",
+                22 to "  * DATA ERROR IN 130",
+                24 to " >"
+            ), machine.screen
+        )
+    }
 }
