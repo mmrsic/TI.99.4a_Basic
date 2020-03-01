@@ -6,19 +6,20 @@ import com.github.mmrsic.ti99.hw.TiBasicModule
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.sign
 
 object NumberRanges {
     internal const val MIN_VALUE = 1e-128
     internal const val MAX_VALUE = 9.9999999999999e127
 
-    fun isOverflow(value: Number): Boolean {
-        return value == Double.NEGATIVE_INFINITY || value == Double.NaN as Number || abs(value.toDouble()) > MAX_VALUE
-    }
+    fun isOverflow(value: Number) =
+        listOf(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY).contains(value.toDouble())
+                || abs(value.toDouble()) > MAX_VALUE
 
-    fun isUnderflow(value: Number): Boolean {
-        return value != 0 && abs(value.toDouble()) < MIN_VALUE
-    }
+    fun isUnderflow(value: Number) = !isOverflow(value) && value != 0 && abs(value.toDouble()) < MIN_VALUE
 }
 
 abstract class NumericExpr : Expression {
@@ -86,9 +87,9 @@ data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
 data class NumericConstant(override val constant: Number) : NumericExpr(), Constant {
     val isOverflow = NumberRanges.isOverflow(constant)
     val isUnderflow = NumberRanges.isUnderflow(constant)
-    val isInteger = constant.toDouble().roundToInt().toDouble() == constant.toDouble()
-    val isExponential =
-        listOf(Double.NaN, Double.NEGATIVE_INFINITY).contains(constant) || constant.toString().contains("E", true)
+    private val bigDecimal =
+        if (isUnderflow || isOverflow) BigDecimal.ZERO else abs(constant.toDouble()).toBigDecimal().stripTrailingZeros()
+    val isInteger = bigDecimal.scale() <= 0
 
     override fun value(): NumericConstant = this
 
@@ -99,33 +100,33 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
     override fun displayValue(): String {
         val doubleValue = constant.toDouble()
         val signCharacter = if (doubleValue < 0) "-" else " "
-        if (isUnderflow) {
-            return " 0 "
-        }
-        if (isOverflow || toNative() == NumberRanges.MAX_VALUE) {
-            return signCharacter + "9.99999E+**"
-        }
-        if (isInteger) {
-            return signCharacter + abs(constant.toInt()) + " "
-        }
-        if (isExponential) {
-            val positiveSign = if (doubleValue < 0) "" else " "
-            val bigDecimal = BigDecimal(doubleValue)
-            val scaledDecimal = bigDecimal.setScale(-(bigDecimal.precision() - 9), RoundingMode.HALF_UP)
-            return positiveSign + scaledDecimal.toString().replace(Regex("(0+E)"), "E")
-        }
-
-        val numDigitsBeforeDot = if (doubleValue == 0.0) 0 else log10(abs(doubleValue)).toInt()
-        val numDigits = 9 - numDigitsBeforeDot + (if (abs(doubleValue) < 1) 1 else 0)
-        val formatSpec = "%." + numDigits + "f"
-        val numText = formatSpec.format(Locale.US, doubleValue).trimEnd('0').replace(Regex("^0+"), "")
-        return if (doubleValue < 0) "$numText " else " $numText "
+        if (isUnderflow || doubleValue == 0.0) return " 0 "
+        if (isOverflow || toNative() == NumberRanges.MAX_VALUE) return signCharacter + "9.99999E+**"
+        return "$signCharacter${bigDecimalToTiString()} "
     }
 
     override fun listText(): String = displayValue().trim()
 
     companion object {
+        /** Numeric constant of value zero. */
         val ZERO = NumericConstant(0)
+    }
+
+    // HELPERS //
+
+    private fun bigDecimalToTiString(): String {
+        val scl = bigDecimal.scale()
+        val prsn = bigDecimal.precision()
+        val numDigits = if (scl >= 0) max(scl, prsn) else prsn - scl
+        val isScientific = numDigits > 10 && (isInteger || (scl > prsn && numDigits >= 10))
+        return when {
+            isScientific -> "%.5E".format(Locale.US, bigDecimal).replace(Regex("(0+E)"), "E")
+            else -> {
+                val properScale = if (numDigits > 10 && scl > 0) scl + 10 - numDigits else bigDecimal.scale()
+                val scaledDecimal = bigDecimal.setScale(properScale, RoundingMode.HALF_UP).toPlainString()
+                (if (properScale > 0) scaledDecimal.trimEnd('0') else scaledDecimal).replace(Regex("^0."), ".")
+            }
+        }
     }
 }
 
