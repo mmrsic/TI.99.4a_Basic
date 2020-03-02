@@ -267,4 +267,68 @@ class PrintStatementTest {
         )
     }
 
+    @Test
+    fun testTrailingZerosAreOmmittedInFractionalPartOfMantissa() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 736.400E10", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT 736.400E10",
+                22 to "   7.364E+12",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testFifthDigitOfMantissaIsRounded() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 12.36587E-15", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT 12.36587E-15",
+                22 to "   1.23659E-14",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testExponentHasSignAndConsistsOfTwoDigits() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT 1.25E-9;-43.6E12", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT 1.25E-9;-43.6E12",
+                22 to "   1.25E-09 -4.36E+13",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testExponentWithMoreThanTwoDigits() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT .76E126;81E-115", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                19 to "  TI BASIC READY",
+                21 to " >PRINT .76E126;81E-115",
+                22 to "   7.6E+**  8.1E-**",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

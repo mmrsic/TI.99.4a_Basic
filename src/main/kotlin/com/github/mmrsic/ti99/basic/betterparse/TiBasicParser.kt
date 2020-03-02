@@ -89,16 +89,15 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val e by token("\\B[Ee]")
     private val ws by token("\\s+", ignore = true)
 
+    private val positiveDecimal by token ("[0-9]*\\.[0-9]+")
     private val positiveInt by token("[0-9]+")
-    private val fractionPart by token("\\.[0-9]+")
-    private val fractionConst by fractionPart use { NumericConstant(text.toDouble()) }
-    private val numericConst: Parser<NumericConstant> by optional(minus) and positiveInt and optional(fractionPart) and
+    private val numericConst: Parser<NumericConstant> by optional(minus) and (positiveDecimal or positiveInt) and
             optional(e and optional(minus or plus) and positiveInt) use {
         val factor = if (t1 == null) 1 else -1
-        val mantissa = t2.text + (if (t3 != null) t3!!.text else "")
-        val exponent = if (t4 != null) {
-            val exponentValue = t4!!.t3.text
-            "e" + (if (t4?.t2?.text == "-") "-" else "+") + exponentValue
+        val mantissa = t2.text
+        val exponent = if (t3 != null) {
+            val exponentValue = t3!!.t3.text
+            "e" + (if (t3?.t2?.text == "-") "-" else "+") + exponentValue
         } else ""
         NumericConstant(factor * (mantissa + exponent).toDouble())
     }
@@ -133,7 +132,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
     }
-    private val term by numericConst or numericArrRef or numericVarRef or numericFun or fractionConst or
+    private val term by numericConst or numericArrRef or numericVarRef or numericFun or
             (skip(minus) and parser(::numericExpr) map { NegatedExpression(it) }) or
             (skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis))
     private val expChain: Parser<NumericExpr> by leftAssociative(term, exponentiation) { a, _, b ->
