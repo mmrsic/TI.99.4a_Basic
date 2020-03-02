@@ -120,7 +120,9 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
         val numDigits = if (scl >= 0) max(scl, prsn) else prsn - scl
         val isScientific = numDigits > 10 && (isInteger || (scl > prsn && numDigits >= 10))
         return when {
-            isScientific -> "%.5E".format(Locale.US, bigDecimal).replace(Regex("(0+E)"), "E")
+            isScientific -> "%.5E".format(Locale.US, bigDecimal)
+                .replace(Regex("(0+E)"), "E")
+                .replace(Regex("""E([+-])\d{3}"""), "E$1**")
             else -> {
                 val properScale = if (numDigits > 10 && scl > 0) scl + 10 - numDigits else bigDecimal.scale()
                 val scaledDecimal = bigDecimal.setScale(properScale, RoundingMode.HALF_UP).toPlainString()
