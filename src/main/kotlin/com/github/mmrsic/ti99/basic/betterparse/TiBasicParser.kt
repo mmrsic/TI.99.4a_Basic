@@ -260,8 +260,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val emptyDataString: Parser<Constant> by doubleComma asJust StringConstant.EMPTY
     private val dataString: Parser<Constant> = name use { StringConstant(this.text) }
-    private val dataContent: Parser<Constant> =
-        (numericConst or stringConst or emptyDataString or dataString) as Parser<Constant>
+    private val dataContent = (numericConst as Parser<Constant> or stringConst or emptyDataString or dataString)
     private val dataStmt by skip(data) and separated(dataContent, doubleComma or comma, true) use {
         val data = mutableListOf<Constant>()
         for ((index, term) in terms.withIndex()) {
