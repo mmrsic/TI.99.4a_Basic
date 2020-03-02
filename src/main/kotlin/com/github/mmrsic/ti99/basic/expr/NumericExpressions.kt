@@ -11,21 +11,30 @@ import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sign
 
+/** Number ranges as defined by the TI BASIC module. */
 object NumberRanges {
     internal const val MIN_VALUE = 1e-128
     internal const val MAX_VALUE = 9.9999999999999e127
+    private val OVERFLOW_VALUES = listOf(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY)
 
-    fun isOverflow(value: Number) =
-        listOf(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY).contains(value.toDouble())
-                || abs(value.toDouble()) > MAX_VALUE
+    /** Whether a given [Number] is an overflow when used in calculations. */
+    fun isOverflow(value: Number) = OVERFLOW_VALUES.contains(value.toDouble()) || abs(value.toDouble()) > MAX_VALUE
 
+    /** Whether a given [Number] is an underflow (and treated silently as zero) when used in calculations. */
     fun isUnderflow(value: Number) = !isOverflow(value) && value != 0 && abs(value.toDouble()) < MIN_VALUE
 }
 
+/**
+ * Numeric expressions are constructed from [NumericVariable]s, [NumericConstant]s, and function references using
+ * arithmetic operators (+ - * / ^). All functions referenced in an expression must be either functions supplied by
+ * TI BASIC or defined by a [DefStatement].
+ */
 abstract class NumericExpr : Expression {
     abstract override fun value(): NumericConstant
     override fun displayValue(): String = value().displayValue()
+    /** Call a given lambda for all [NumericExpr.value]s of this expression. */
     open fun visitAllValues(lambda: (value: NumericConstant) -> Any) = lambda.invoke(value())
+
     /** Check whether this numeric expression equals zero. */
     fun isZero(): Boolean = value().toNative() == 0.0
 }
@@ -85,10 +94,13 @@ data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
 }
 
 data class NumericConstant(override val constant: Number) : NumericExpr(), Constant {
+    /** Whether this [NumericConstant] represents a numeric overflow and will cause a warning. */
     val isOverflow = NumberRanges.isOverflow(constant)
+    /** Whether this [NumericConstant] equals to [ZERO] because of numeric underflow. */
     val isUnderflow = NumberRanges.isUnderflow(constant)
     private val bigDecimal =
         if (isUnderflow || isOverflow) BigDecimal.ZERO else abs(constant.toDouble()).toBigDecimal().stripTrailingZeros()
+    /** Whether this [NumericConstant] represents an integer. */
     val isInteger = bigDecimal.scale() <= 0
 
     override fun value(): NumericConstant = this
@@ -114,20 +126,19 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
 
     // HELPERS //
 
+    /** Convert [bigDecimal] to a string in TI Basic output style. */
     private fun bigDecimalToTiString(): String {
-        val scl = bigDecimal.scale()
-        val prsn = bigDecimal.precision()
-        val numDigits = if (scl >= 0) max(scl, prsn) else prsn - scl
-        val isScientific = numDigits > 10 && (isInteger || (scl > prsn && numDigits >= 10))
-        return when {
-            isScientific -> "%.5E".format(Locale.US, bigDecimal)
-                .replace(Regex("(0+E)"), "E")
-                .replace(Regex("""E([+-])\d{3}"""), "E$1**")
-            else -> {
-                val properScale = if (numDigits > 10 && scl > 0) scl + 10 - numDigits else bigDecimal.scale()
-                val scaledDecimal = bigDecimal.setScale(properScale, RoundingMode.HALF_UP).toPlainString()
-                (if (properScale > 0) scaledDecimal.trimEnd('0') else scaledDecimal).replace(Regex("^0."), ".")
-            }
+        val scale = bigDecimal.scale()
+        val precision = bigDecimal.precision()
+        val numDigits = if (scale >= 0) max(scale, precision) else precision - scale
+        val isScientific = numDigits > 10 && (isInteger || (scale > precision && numDigits >= 10))
+        return if (isScientific) {
+            val nativeScientific = "%.5E".format(Locale.US, bigDecimal)
+            nativeScientific.replace(Regex("(0+E)"), "E").replace(Regex("""E([+-])\d{3}"""), "E$1**")
+        } else {
+            val properScale = if (numDigits > 10 && scale > 0) scale + 10 - numDigits else bigDecimal.scale()
+            val scaledDecimal = bigDecimal.setScale(properScale, RoundingMode.HALF_UP).toPlainString()
+            (if (properScale > 0) scaledDecimal.trimEnd('0') else scaledDecimal).replace(Regex("^0."), ".")
         }
     }
 }

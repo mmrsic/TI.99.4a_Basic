@@ -31,4 +31,13 @@ class NumericExpressionsTest {
         assertEquals(3.0, result.toNative(), "4+2^2/(2-6) must yield 3")
         assertEquals(" 3 ", result.displayValue(), "4+2^2/(2-6) must yield 3")
     }
+
+    @Test
+    fun testZeroExponentiationToZero() {
+        val expr = Exponentiation(NumericConstant.ZERO, NumericConstant.ZERO)
+        val result = expr.value()
+        assertEquals(1.0, result.toNative(), "0^0 must yield 1")
+        assertEquals(" 1 ", result.displayValue(), "0^0 must yield 1")
+    }
+
 }
