@@ -331,4 +331,21 @@ class PrintStatementTest {
         )
     }
 
+    @Test
+    fun testColonSeparators() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("PRINT \"A\"::\"B\"", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                17 to "  TI BASIC READY",
+                19 to " >PRINT \"A\"::\"B\"",
+                20 to "  A",
+                22 to "  B",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

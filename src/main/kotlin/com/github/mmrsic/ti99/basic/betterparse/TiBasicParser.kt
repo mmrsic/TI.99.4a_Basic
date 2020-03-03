@@ -21,7 +21,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     // TOKENS //
 
-    private val quoted by token("\".*\"")
+    private val quoted by token(""""([^"]|"")*"""")
 
     private val seg by token("SEG\\$")
     private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
@@ -89,7 +89,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val e by token("\\B[Ee]")
     private val ws by token("\\s+", ignore = true)
 
-    private val positiveDecimal by token ("[0-9]*\\.[0-9]+")
+    private val positiveDecimal by token("[0-9]*\\.[0-9]+")
     private val positiveInt by token("[0-9]+")
     private val numericConst: Parser<NumericConstant> by optional(minus) and (positiveDecimal or positiveInt) and
             optional(e and optional(minus or plus) and positiveInt) use {
