@@ -414,4 +414,38 @@ class PrintStatementTest {
         )
     }
 
+    @Test
+    fun testCommaSeparators() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A$="ZONE 1"
+            110 B$="ZONE 2"
+            120 PRINT A$,B$
+            130 PRINT A$:,B$,A$
+            140 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 A$=\"ZONE 1\"",
+                12 to " >110 B$=\"ZONE 2\"",
+                13 to " >120 PRINT A$,B$",
+                14 to " >130 PRINT A$:,B$,A$",
+                15 to " >140 END",
+                16 to " >RUN",
+                17 to "  ZONE 1        ZONE 2",
+                18 to "  ZONE 1",
+                19 to "                ZONE 2",
+                20 to "  ZONE 1",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

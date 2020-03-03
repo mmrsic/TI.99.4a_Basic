@@ -352,7 +352,16 @@ class TiBasicModule : TiModule {
             if (expression in PrintToken.values()) {
                 when (expression) {
                     PrintToken.NextRecord -> {
-                        screen.scroll(); currCol = 3
+                        screen.scroll();
+                        currCol = 3
+                    }
+                    PrintToken.NextField -> {
+                        if (currCol < 17) {
+                            currCol = 17
+                        } else {
+                            screen.scroll();
+                            currCol = 3
+                        }
                     }
                 }
             } else if (expression is Expression) {
