@@ -8,6 +8,7 @@ import kotlin.random.Random
  */
 abstract class NumericFunction(val name: String) : NumericExpr() {
     override fun listText() = "$name(${listArgs()})"
+
     /** Argument(s) description of this numeric expression as given by the LIST command. */
     abstract fun listArgs(): String
 }

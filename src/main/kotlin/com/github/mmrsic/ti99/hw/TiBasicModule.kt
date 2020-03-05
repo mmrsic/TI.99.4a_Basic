@@ -24,14 +24,17 @@ class TiBasicModule : TiModule {
     /** The optional program currently held in this TI Basic Module's memory. */
     var program: TiBasicProgram? = null
         private set
+
     /** The optional [program] interpreter currently executing in this TI Basic Module's memory. */
     var programInterpreter: TiBasicProgramInterpreter? = null
         private set
+
     /** Whether or not tracing is active when the [programInterpreter] interprets a [program]. */
     var traceProgramExecution: Boolean = false
 
     /** Current breakpoints of this program. */
     private val breakpoints = HashSet<Int>()
+
     /** Last hit breakpoint. */
     private var continueLine: Int? = null
 
@@ -333,9 +336,10 @@ class TiBasicModule : TiModule {
     /** Print a given list of tokens onto the screen. */
     fun printTokens(expressions: List<Any>, programLineNumber: Int? = null) {
         var suppressScroll = false
+        val minCol = 3
         val maxCol = TiBasicScreen.MAX_COLUMNS - 2
         val currRow = 24
-        var currCol = if (currentPrintColumn != null) currentPrintColumn!! else 3
+        var currCol = if (currentPrintColumn != null) currentPrintColumn!! else minCol
         currentPrintColumn = null
         for ((exprIndex, expression) in expressions.withIndex()) {
             if (exprIndex == expressions.size - 1 && expression == PrintToken.NextRecord) continue
@@ -349,44 +353,44 @@ class TiBasicModule : TiModule {
                 }
             }
             suppressScroll = expression == PrintToken.Adjacent
-            if (expression in PrintToken.values()) {
-                when (expression) {
-                    PrintToken.NextRecord -> {
-                        screen.scroll();
-                        currCol = 3
-                    }
-                    PrintToken.NextField -> {
-                        if (currCol < 17) {
-                            currCol = 17
-                        } else {
-                            screen.scroll();
-                            currCol = 3
-                        }
-                    }
+            when (expression) {
+                PrintToken.Adjacent -> {
+                    // Nothing to do
                 }
-            } else if (expression is Expression) {
-                val characters = expression.displayValue()
-                if (expression is NumericExpr && (currCol + characters.length) > maxCol + 1) {
-                    screen.scroll(); currCol = 3
-                }
-                var lefOver = screen.hchar(currRow, currCol, characters, maxCol)
-                currCol += characters.length - lefOver.length
-                while (lefOver.isNotEmpty()) {
+                PrintToken.NextRecord -> {
                     screen.scroll()
-                    currCol = 3
-                    val last = lefOver
-                    lefOver = screen.hchar(currRow, currCol, last, maxCol)
-                    currCol += lefOver.length - last.length
+                    currCol = minCol
                 }
-            } else {
-                println("Ignored in print statement: $expression")
+                PrintToken.NextField -> currCol = if (currCol < 17) 17 else {
+                    screen.scroll(); minCol
+                }
+                is TabFunction -> {
+                    val reasonableTabValue = max(1, expression.value().toNative().roundToInt())
+                    val newCol = (reasonableTabValue - 1) % 28 + minCol
+                    if (currCol > newCol) screen.scroll()
+                    currCol = newCol
+                }
+                is Expression -> {
+                    val characters = expression.displayValue()
+                    if (expression is NumericExpr && (currCol + characters.length) > maxCol + 1) {
+                        screen.scroll(); currCol = minCol
+                    }
+                    var lefOver = screen.hchar(currRow, currCol, characters, maxCol)
+                    currCol += characters.length - lefOver.length
+                    while (lefOver.isNotEmpty()) {
+                        screen.scroll()
+                        currCol = minCol
+                        val last = lefOver
+                        lefOver = screen.hchar(currRow, currCol, last, maxCol)
+                        currCol += lefOver.length - last.length
+                    }
+                }
+                else -> {
+                    println("Ignored in print statement: $expression")
+                }
             }
         }
-        if (suppressScroll) {
-            currentPrintColumn = currCol
-        } else {
-            screen.scroll()
-        }
+        if (suppressScroll) currentPrintColumn = currCol else screen.scroll()
     }
 
     /** Current [CodeSequenceProvider] used by this module. */

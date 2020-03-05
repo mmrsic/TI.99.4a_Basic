@@ -14,8 +14,10 @@ import com.github.mmrsic.ti99.hw.TiBasicModule
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
     /** Characters that may start a TI Basic variable. */
     private val nameStartChars = "A-Za-z@\\[\\]\\\\_"
+
     /** Characters a TI Basic variable may consist of. */
     private val nameChars = nameStartChars + "0-9"
+
     /** Suffix distinguishing a string variable from a numeric variable in TI Basic. */
     private val stringVarSuffix = "\\$"
 
@@ -57,6 +59,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val run by token("\\bRUN\\b")
     private val step by token("STEP")
     private val stop by token("STOP")
+    private val tab by token("TAB")
     private val then by token("THEN")
     private val to by token("TO")
     private val trace by token("TRACE")
@@ -124,6 +127,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val intFun by skip(int) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         IntFunction(this)
+    }
+    private val tabFun by skip(tab) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        TabFunction(this)
     }
     private val numericFun by intFun
     private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
@@ -197,11 +203,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     // STATEMENT PARSERS
 
-    private val printStmt by skip(print) and
-            zeroOrMore(printSeparator) and
-            optional(expr) and
-            zeroOrMore(oneOrMore(printSeparator) and expr) and
-            zeroOrMore(printSeparator) use {
+    private val printToken by expr or tabFun
+    private val printStmt by skip(print) and zeroOrMore(printSeparator) and optional(printToken) and
+            zeroOrMore(oneOrMore(printSeparator) and printToken) and zeroOrMore(printSeparator) use {
         val printArgs = mutableListOf<Expression>()
         // Add all leading separators
         printArgs.addAll(t1.map { PrintToken.fromString(it)!! })

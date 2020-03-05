@@ -6,10 +6,7 @@ import com.github.mmrsic.ti99.hw.TiBasicModule
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.pow
-import kotlin.math.sign
+import kotlin.math.*
 
 /** Number ranges as defined by the TI BASIC module. */
 object NumberRanges {
@@ -32,6 +29,7 @@ object NumberRanges {
 abstract class NumericExpr : Expression {
     abstract override fun value(): NumericConstant
     override fun displayValue(): String = value().displayValue()
+
     /** Call a given lambda for all [NumericExpr.value]s of this expression. */
     open fun visitAllValues(lambda: (value: NumericConstant) -> Any) = lambda.invoke(value())
 
@@ -96,10 +94,12 @@ data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
 data class NumericConstant(override val constant: Number) : NumericExpr(), Constant {
     /** Whether this [NumericConstant] represents a numeric overflow and will cause a warning. */
     val isOverflow = NumberRanges.isOverflow(constant)
+
     /** Whether this [NumericConstant] equals to [ZERO] because of numeric underflow. */
     val isUnderflow = NumberRanges.isUnderflow(constant)
     private val bigDecimal =
         if (isUnderflow || isOverflow) BigDecimal.ZERO else abs(constant.toDouble()).toBigDecimal().stripTrailingZeros()
+
     /** Whether this [NumericConstant] represents an integer. */
     val isInteger = bigDecimal.scale() <= 0
 
@@ -222,6 +222,22 @@ class RelationalStringExpr(val a: StringExpr, val op: RelationalExpr.Operator, v
 
     override fun listText(): String = "${a.listText()}$op${b.listText()}"
 
+}
+
+/**
+ * The TAB function specifies the starting position on the print-line for the next print item. The numeric-expression
+ * is evaluated and rounded to the nearest integer n. If n is less than one, then its value is replaced by one. If n
+ * is greater than 28, then n is repeatedly reduced by 28 until 1 <= n <= 28.
+ * If the number of characters already printed on the current line is greater than n, then the next item is printed on
+ * the next line beginning in position n.
+ */
+data class TabFunction(private val numericExpr: NumericExpr) : NumericFunction("TAB") {
+    override fun value(): NumericConstant {
+        val numSpaces = numericExpr.value().toNative().roundToInt()
+        return NumericConstant(if (numSpaces >= 1) numSpaces else 0)
+    }
+
+    override fun listArgs() = numericExpr.listText()
 }
 
 // HELPERS //

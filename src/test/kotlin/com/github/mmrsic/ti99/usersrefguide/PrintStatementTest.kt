@@ -448,4 +448,94 @@ class PrintStatementTest {
         )
     }
 
+    @Test
+    fun testTabFunctionWithLineWrapping() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=23.5
+            110 B=48.6
+            120 MSG$="HELLO"
+            130 REM N>28
+            140 PRINT TAB(5);MSG$;TAB(33);MSG$
+            150 REM CHARACTERS ALREADY  PRINTED<=N
+            160 PRINT A;TAB(10);B
+            170 REM CHARACTERS ALREADY  PRINTED>N
+            180 PRINT TAB(3);A;TAB(3);B
+            190 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                2 to " >100 A=23.5",
+                3 to " >110 B=48.6",
+                4 to " >120 MSG$=\"HELLO\"",
+                5 to " >130 REM N>28",
+                6 to " >140 PRINT TAB(5);MSG$;TAB(33",
+                7 to "  );MSG$",
+                8 to " >150 REM CHARACTERS ALREADY",
+                9 to "  PRINTED<=N",
+                10 to " >160 PRINT A;TAB(10);B",
+                11 to " >170 REM CHARACTERS ALREADY",
+                12 to "  PRINTED>N",
+                13 to " >180 PRINT TAB(3);A;TAB(3);B",
+                14 to " >190 END",
+                15 to " >RUN",
+                16 to "      HELLO",
+                17 to "      HELLO",
+                18 to "   23.5     48.6",
+                19 to "     23.5",
+                20 to "     48.6",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testTabWithNumbers() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=326
+            110 B=79
+            120 PRINT A;TAB(15);B
+            130 PRINT A,B
+            140 PRINT A;TAB(15),B
+            150 PRINT TAB(5);A;TAB(6);B
+            160 PRINT A;TAB(43);B
+            170 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                3 to "  TI BASIC READY",
+                5 to " >100 A=326",
+                6 to " >110 B=79",
+                7 to " >120 PRINT A;TAB(15);B",
+                8 to " >130 PRINT A,B",
+                9 to " >140 PRINT A;TAB(15),B",
+                10 to " >150 PRINT TAB(5);A;TAB(6);B",
+                11 to " >160 PRINT A;TAB(43);B",
+                12 to " >170 END",
+                13 to " >RUN",
+                14 to "   326           79",
+                15 to "   326           79",
+                16 to "   326",
+                17 to "   79",
+                18 to "       326",
+                19 to "        79",
+                20 to "   326           79",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

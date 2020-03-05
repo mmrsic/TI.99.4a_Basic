@@ -48,7 +48,7 @@ data class StrFunction(private val numericExpr: NumericExpr) : StringFunction("S
 }
 
 
-/** Convert a given ASCII code into a string containing the character asssociated with the code. */
+/** Convert a given ASCII code into a string containing the character associated with the code. */
 fun toChar(asciiCode: Int): String {
     return asciiCode.toChar().toString()
 }
