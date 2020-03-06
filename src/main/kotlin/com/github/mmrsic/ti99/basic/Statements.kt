@@ -36,15 +36,26 @@ class BreakStatement(private val lineNumberList: List<Int>? = null) : Statement,
     }
 }
 
-class PrintStatement(private val expressions: List<Expression>) : Statement, Command {
+/**
+ * The PRINT statement lets you print numbers and strings on the screen.
+ * When the computer performs a PRINT statement, the values of the expressions in the print-list are displayed on the
+ * screen in order from left to right, as specified by the print-separators and tab-functions.
+ *
+ * The DISPLAY statement is identical to the PRINT statement when you use it to print items on the screen. The DISPLAY
+ * statement may not be used to write on any device except the screen.
+ *
+ * @param printList consists of print-items - [NumericExpr] and [StringExpr] as well as [TabFunction] - and
+ * print-separators - the punctuation between print-items (commas, colons, and semicolons)
+ */
+class PrintStatement(val printList: List<Expression>) : Statement, Command {
     override val name: String = "PRINT"
     override fun listText(): String {
-        if (expressions.isEmpty()) return name
-        return "$name " + expressions.joinToString("") { it.listText() }
+        if (printList.isEmpty()) return name
+        return "$name " + printList.joinToString("") { it.listText() }
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.printTokens(expressions, programLineNumber)
+        machine.printTokens(printList, programLineNumber)
     }
 }
 

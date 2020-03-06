@@ -35,6 +35,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val clear by token("CLEAR")
     private val continueToken by token("""CON(TINUE)?""")
     private val data by token("DATA")
+    private val display by token("DISPLAY")
     private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
     private val forToken by token("FOR")
@@ -204,7 +205,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     // STATEMENT PARSERS
 
     private val printToken by expr or tabFun
-    private val printStmt by skip(print) and zeroOrMore(printSeparator) and optional(printToken) and
+    private val printStmt by skip(print or display) and zeroOrMore(printSeparator) and optional(printToken) and
             zeroOrMore(oneOrMore(printSeparator) and printToken) and zeroOrMore(printSeparator) use {
         val printArgs = mutableListOf<Expression>()
         // Add all leading separators
