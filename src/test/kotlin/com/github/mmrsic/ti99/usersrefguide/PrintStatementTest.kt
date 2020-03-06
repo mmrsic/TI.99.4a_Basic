@@ -614,4 +614,74 @@ class PrintStatementTest {
         )
     }
 
+    @Test
+    fun testNoPrintListResultsInEmptyLine() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=20
+            110 PRINT A
+            120 PRINT
+            130 B=15
+            140 PRINT B
+            150 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 A=20",
+                12 to " >110 PRINT A",
+                13 to " >120 PRINT",
+                14 to " >130 B=15",
+                15 to " >140 PRINT B",
+                16 to " >150 END",
+                17 to " >RUN",
+                18 to "   20",
+                20 to "   15",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testNoPrintListResultsInNewLine() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 FOR J=1 TO 2
+            110 FOR I=1 TO 3
+            120 PRINT I;
+            130 NEXT I
+            140 PRINT
+            150 NEXT J
+            160 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 FOR J=1 TO 2",
+                12 to " >110 FOR I=1 TO 3",
+                13 to " >120 PRINT I;",
+                14 to " >130 NEXT I",
+                15 to " >140 PRINT",
+                16 to " >150 NEXT J",
+                17 to " >160 END",
+                18 to " >RUN",
+                19 to "   1  2  3",
+                20 to "   1  2  3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
