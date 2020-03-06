@@ -3,6 +3,7 @@ package com.github.mmrsic.ti99.basic.expr
 import com.github.mmrsic.ti99.basic.BadValue
 import com.github.mmrsic.ti99.basic.NumberTooBig
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiBasicScreen
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
@@ -233,8 +234,9 @@ class RelationalStringExpr(val a: StringExpr, val op: RelationalExpr.Operator, v
  */
 data class TabFunction(private val numericExpr: NumericExpr) : NumericFunction("TAB") {
     override fun value(): NumericConstant {
-        val numSpaces = numericExpr.value().toNative().roundToInt()
-        return NumericConstant(if (numSpaces >= 1) numSpaces else 0)
+        val n = max(1, numericExpr.value().toNative().roundToInt())
+        val result = (n - 1) % TiBasicScreen.NUM_PRINT_COLUMNS + 1
+        return NumericConstant(result)
     }
 
     override fun listArgs() = numericExpr.listText()

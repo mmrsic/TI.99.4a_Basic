@@ -65,11 +65,6 @@ class TiBasicModule : TiModule {
     /** Cancel the effect of the BREAK command. */
     fun cancelBreak() = removeBreakpoints()
 
-    /** Cancel the effect of the TRACE command. */
-    fun cancelTrace() {
-        // TODO: Not yet implemented: Cancel TRACE
-    }
-
     /** Close any currently open files. */
     fun closeOpenFiles() {
         // TODO: Not yet implemented: Close open files
@@ -335,12 +330,13 @@ class TiBasicModule : TiModule {
 
     /** Print a given list of tokens onto the screen. */
     fun printTokens(expressions: List<Any>, programLineNumber: Int? = null) {
-        var suppressScroll = false
-        val minCol = 3
-        val maxCol = TiBasicScreen.MAX_COLUMNS - 2
-        val currRow = 24
+        val minCol = TiBasicScreen.FIRST_PRINT_COLUMN
+        val maxCol = TiBasicScreen.LAST_PRINT_COLUMN
+        val rightHalfMinCol = (TiBasicScreen.NUM_PRINT_COLUMNS / 2) + minCol
+        val currRow = TiBasicScreen.NUM_ROWS
         var currCol = if (currentPrintColumn != null) currentPrintColumn!! else minCol
         currentPrintColumn = null
+        var suppressScroll = false
         for ((exprIndex, expression) in expressions.withIndex()) {
             if (exprIndex == expressions.size - 1 && expression == PrintToken.NextRecord) continue
             if (expression is NumericExpr) {
@@ -358,15 +354,13 @@ class TiBasicModule : TiModule {
                     // Nothing to do
                 }
                 PrintToken.NextRecord -> {
-                    screen.scroll()
-                    currCol = minCol
+                    screen.scroll(); currCol = minCol
                 }
-                PrintToken.NextField -> currCol = if (currCol < 17) 17 else {
+                PrintToken.NextField -> currCol = if (currCol < rightHalfMinCol) rightHalfMinCol else {
                     screen.scroll(); minCol
                 }
                 is TabFunction -> {
-                    val reasonableTabValue = max(1, expression.value().toNative().roundToInt())
-                    val newCol = (reasonableTabValue - 1) % 28 + minCol
+                    val newCol = minCol - 1 + expression.value().toNative().toInt()
                     if (currCol > newCol) screen.scroll()
                     currCol = newCol
                 }

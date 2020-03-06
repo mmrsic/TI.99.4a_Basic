@@ -9,11 +9,13 @@ import com.github.mmrsic.ti99.basic.expr.toChar
 abstract class Screen(getCharPattern: (Int) -> String) {
     /** Screen representation with ASCII codes for all cells of 24 rows * 32 columns. */
     val codes: CodeScreen = CodeScreen()
+
     /** Screen representation where the [codes] are interpreted as rows of [String]s. */
     val strings: StringScreen = StringScreen(codes)
 
     /** Screen representation where the [codes] are interpreted as rows of character patterns. */
     val patterns: PatternScreen = PatternScreen(codes, getCharPattern)
+
     /** The optional cursor currently placed on this screen. */
     var cursor: Cursor? = null
         internal set
@@ -46,7 +48,7 @@ abstract class Screen(getCharPattern: (Int) -> String) {
     }
 
     /** Place a given characters string onto this screen. */
-    fun hchar(row: Int, startCol: Int, characters: String, maxCol: Int = TiBasicScreen.MAX_COLUMNS): String {
+    fun hchar(row: Int, startCol: Int, characters: String, maxCol: Int = TiBasicScreen.NUM_COLUMNS): String {
         if (startCol > maxCol) {
             throw Exception("Start column ($startCol) must not be greater than max column ($maxCol)")
         }
@@ -83,10 +85,15 @@ abstract class Screen(getCharPattern: (Int) -> String) {
 class TiBasicScreen(getCharPattern: (Int) -> String) : Screen(getCharPattern) {
 
     companion object {
-        const val MAX_ROWS = 24
-        const val MAX_COLUMNS = 32
-        const val PIXEL_WIDTH = MAX_COLUMNS * 8
-        const val PIXEL_HEIGHT = MAX_ROWS * 8
+        const val NUM_ROWS = 24
+        const val NUM_COLUMNS = 32
+        const val FIRST_PRINT_COLUMN = 3
+        const val LAST_PRINT_COLUMN = 30
+        const val NUM_PRINT_COLUMNS = LAST_PRINT_COLUMN - FIRST_PRINT_COLUMN + 1
+        const val CHAR_PIXELS_X = 8
+        const val CHAR_PIXELS_Y = 8
+        const val PIXEL_WIDTH = NUM_COLUMNS * CHAR_PIXELS_X
+        const val PIXEL_HEIGHT = NUM_ROWS * CHAR_PIXELS_Y
     }
 
 }
@@ -95,6 +102,7 @@ class Cursor(val row: Int, val column: Int)
 
 class CodeScreen {
     private val codeTable = mutableMapOf<Pair<Int, Int>, Int>()
+
     /** The code for the default character of the screen. */
     private val defaultChrCode = 32
 
@@ -118,7 +126,7 @@ class CodeScreen {
      * right.
      */
     fun hchar(startRow: Int, startCol: Int, codes: List<Int>) {
-        val numColumns = TiBasicScreen.MAX_COLUMNS
+        val numColumns = TiBasicScreen.NUM_COLUMNS
         for ((index, code) in codes.withIndex()) {
             val row = startRow + index / numColumns
             val col = startCol + index % numColumns
@@ -150,7 +158,7 @@ class CodeScreen {
 class StringScreen(private val codes: CodeScreen) {
 
     fun withoutTrailingBlanks(row: Int, column: Int) = buildString {
-        for (col in column..TiBasicScreen.MAX_COLUMNS) {
+        for (col in column..TiBasicScreen.NUM_COLUMNS) {
             append(toChar(codes.codeAt(row, col)))
         }
         trimEnd()
@@ -161,9 +169,9 @@ class StringScreen(private val codes: CodeScreen) {
      */
     fun nonEmptyRightTrimmed(): Map<Int, String> {
         val result = mutableMapOf<Int, String>()
-        for (row in 1..TiBasicScreen.MAX_ROWS) {
+        for (row in 1..TiBasicScreen.NUM_ROWS) {
             val rowCandidateBuilder = StringBuilder()
-            for (col in 1..TiBasicScreen.MAX_COLUMNS) {
+            for (col in 1..TiBasicScreen.NUM_COLUMNS) {
                 rowCandidateBuilder.append(toChar(codes.codeAt(row, col)))
             }
             val rowValue = rowCandidateBuilder.trimEnd()
@@ -186,8 +194,8 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
 
     /** Execute a piece of code for all character patterns at each and every cell of this pattern screen. */
     fun patternsDo(lambda: (Int, Int, String) -> Unit) {
-        for (row in 1..TiBasicScreen.MAX_ROWS) {
-            for (col in 1..TiBasicScreen.MAX_COLUMNS) {
+        for (row in 1..TiBasicScreen.NUM_ROWS) {
+            for (col in 1..TiBasicScreen.NUM_COLUMNS) {
                 lambda.invoke(row, col, patternAt(row, col))
             }
         }
@@ -197,7 +205,7 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
 
     private fun patternAt(row: Int, col: Int): String {
         val code = codes.codeAt(row, col)
-        if (definedPatterns.containsKey(code)) return definedPatterns[code]!!
+        if (definedPatterns.containsKey(code)) return definedPatterns.getValue(code)
         return defaultPatterns(code)
     }
 

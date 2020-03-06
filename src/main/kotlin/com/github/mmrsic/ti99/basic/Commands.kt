@@ -24,7 +24,7 @@ class NewCommand : Command {
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.eraseProgram()
         machine.cancelBreak()
-        machine.cancelTrace()
+        machine.traceProgramExecution = false
         machine.closeOpenFiles()
         machine.resetCharacters()
         machine.resetVariables()
