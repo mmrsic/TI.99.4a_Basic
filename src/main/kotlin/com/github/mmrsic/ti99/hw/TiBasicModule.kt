@@ -336,7 +336,6 @@ class TiBasicModule : TiModule {
         val currRow = TiBasicScreen.NUM_ROWS
         var currCol = if (currentPrintColumn != null) currentPrintColumn!! else minCol
         currentPrintColumn = null
-        var suppressScroll = false
         for ((exprIndex, expression) in expressions.withIndex()) {
             if (exprIndex == expressions.size - 1 && expression == PrintToken.NextRecord) continue
             if (expression is NumericExpr) {
@@ -348,7 +347,6 @@ class TiBasicModule : TiModule {
                     }
                 }
             }
-            suppressScroll = expression == PrintToken.Adjacent
             when (expression) {
                 PrintToken.Adjacent -> {
                     // Nothing to do
@@ -365,25 +363,29 @@ class TiBasicModule : TiModule {
                     currCol = newCol
                 }
                 is Expression -> {
-                    val characters = expression.displayValue()
-                    if (expression is NumericExpr && (currCol + characters.length) > maxCol + 1) {
+                    val exprString = expression.displayValue()
+                    val exprChars = when {
+                        expression is NumericExpr && currCol + exprString.length == maxCol + 2 -> exprString.dropLast(1)
+                        else -> exprString
+                    }
+                    if (currCol > minCol && currCol + exprChars.length > maxCol + 1) {
                         screen.scroll(); currCol = minCol
                     }
-                    var lefOver = screen.hchar(currRow, currCol, characters, maxCol)
-                    currCol += characters.length - lefOver.length
-                    while (lefOver.isNotEmpty()) {
+                    var leftOver = screen.hchar(currRow, currCol, exprChars, maxCol)
+                    currCol += exprChars.length - leftOver.length
+                    while (leftOver.isNotEmpty()) {
                         screen.scroll()
                         currCol = minCol
-                        val last = lefOver
-                        lefOver = screen.hchar(currRow, currCol, last, maxCol)
-                        currCol += lefOver.length - last.length
+                        val last = leftOver
+                        leftOver = screen.hchar(currRow, currCol, last, maxCol)
+                        currCol += leftOver.length - last.length
                     }
                 }
-                else -> {
-                    println("Ignored in print statement: $expression")
-                }
+                else -> println("Ignored in print statement: $expression")
             }
+            println("Current column: $currCol (Expression: $expression)")
         }
+        val suppressScroll = expressions.lastOrNull() == PrintToken.Adjacent
         if (suppressScroll) currentPrintColumn = currCol else screen.scroll()
     }
 

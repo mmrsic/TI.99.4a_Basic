@@ -538,4 +538,42 @@ class PrintStatementTest {
         )
     }
 
+    @Test
+    fun testWrapOnlyTrailingSpaceOfNumericConst() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=23767
+            110 B=79856
+            120 C=A+B
+            130 D=B-A
+            140 PRINT A;B;C;D
+            150 PRINT "A=";A;"B=";B;"C=";C;"D=";D
+            160 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                7 to "  TI BASIC READY",
+                9 to " >100 A=23767",
+                10 to " >110 B=79856",
+                11 to " >120 C=A+B",
+                12 to " >130 D=B-A",
+                13 to " >140 PRINT A;B;C;D",
+                14 to " >150 PRINT \"A=\";A;\"B=\";B;\"C=\"",
+                15 to "  ;C;\"D=\";D",
+                16 to " >160 END",
+                17 to " >RUN",
+                18 to "   23767  79856  103623  56089",
+                19 to "  A= 23767 B= 79856 C= 103623",
+                20 to "  D= 56089",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
