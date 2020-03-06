@@ -26,12 +26,14 @@ interface Constant {
     fun toNative(): Any
 }
 
-/** Special tokens used for formatting in print command. */
-enum class PrintToken : Expression {
+/** Separators used for formatting in PRINT statement. */
+enum class PrintSeparator : Expression {
     /** Print next value adjacent to previous one. */
     Adjacent,
+
     /** Print next value at the next field. For printing on the screen, this means the next (of two) columns. */
     NextField,
+
     /** Print next vale at the next record. For printing on the screen, this means the next row. */
     NextRecord;
 
@@ -46,12 +48,12 @@ enum class PrintToken : Expression {
 
     companion object {
         /**
-         * The [PrintToken] for a given text representation.
+         * The [PrintSeparator] for a given text representation.
          * @param text text representation of the print token as given by [value]
-         * @return any of the [PrintToken.values] if its [value] equals the specified text, null if no such print token
+         * @return any of the [PrintSeparator.values] if its [value] equals the specified text, null if no such print token
          * exists
          */
-        fun fromString(text: String): PrintToken? = when (text) {
+        fun fromString(text: String): PrintSeparator? = when (text) {
             ";" -> Adjacent
             "," -> NextField
             ":" -> NextRecord

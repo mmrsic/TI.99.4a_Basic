@@ -576,4 +576,42 @@ class PrintStatementTest {
         )
     }
 
+    @Test
+    fun testPrintSeparatorsAtEnd() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=23
+            110 B=597
+            120 PRINT A,
+            130 PRINT B
+            140 PRINT A;B;
+            150 C=468
+            160 PRINT C
+            170 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                8 to "  TI BASIC READY",
+                10 to " >100 A=23",
+                11 to " >110 B=597",
+                12 to " >120 PRINT A,",
+                13 to " >130 PRINT B",
+                14 to " >140 PRINT A;B;",
+                15 to " >150 C=468",
+                16 to " >160 PRINT C",
+                17 to " >170 END",
+                18 to " >RUN",
+                19 to "   23            597",
+                20 to "   23  597  468",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

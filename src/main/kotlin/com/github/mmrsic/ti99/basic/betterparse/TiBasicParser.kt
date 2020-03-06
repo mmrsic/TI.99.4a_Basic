@@ -208,16 +208,16 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             zeroOrMore(oneOrMore(printSeparator) and printToken) and zeroOrMore(printSeparator) use {
         val printArgs = mutableListOf<Expression>()
         // Add all leading separators
-        printArgs.addAll(t1.map { PrintToken.fromString(it)!! })
+        printArgs.addAll(t1.map { PrintSeparator.fromString(it)!! })
         // Add first expression if present
         if (t2 != null) printArgs.add(t2!!)
         // Add second expression with leading separators if present
         for (separatorsBeforeExpr in t3) {
-            printArgs.addAll(separatorsBeforeExpr.t1.map { PrintToken.fromString(it)!! })
+            printArgs.addAll(separatorsBeforeExpr.t1.map { PrintSeparator.fromString(it)!! })
             printArgs.add(separatorsBeforeExpr.t2)
         }
         // Add all trailing separators
-        printArgs.addAll(t4.map { PrintToken.fromString(it)!! })
+        printArgs.addAll(t4.map { PrintSeparator.fromString(it)!! })
         PrintStatement(printArgs)
     }
     private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and (numericExpr) use {

@@ -337,7 +337,7 @@ class TiBasicModule : TiModule {
         var currCol = if (currentPrintColumn != null) currentPrintColumn!! else minCol
         currentPrintColumn = null
         for ((exprIndex, expression) in expressions.withIndex()) {
-            if (exprIndex == expressions.size - 1 && expression == PrintToken.NextRecord) continue
+            if (exprIndex == expressions.size - 1 && expression == PrintSeparator.NextRecord) continue
             if (expression is NumericExpr) {
                 expression.visitAllValues { nc ->
                     if (nc.isOverflow) {
@@ -348,13 +348,13 @@ class TiBasicModule : TiModule {
                 }
             }
             when (expression) {
-                PrintToken.Adjacent -> {
+                PrintSeparator.Adjacent -> {
                     // Nothing to do
                 }
-                PrintToken.NextRecord -> {
+                PrintSeparator.NextRecord -> {
                     screen.scroll(); currCol = minCol
                 }
-                PrintToken.NextField -> currCol = if (currCol < rightHalfMinCol) rightHalfMinCol else {
+                PrintSeparator.NextField -> currCol = if (currCol < rightHalfMinCol) rightHalfMinCol else {
                     screen.scroll(); minCol
                 }
                 is TabFunction -> {
@@ -383,9 +383,9 @@ class TiBasicModule : TiModule {
                 }
                 else -> println("Ignored in print statement: $expression")
             }
-            println("Current column: $currCol (Expression: $expression)")
         }
-        val suppressScroll = expressions.lastOrNull() == PrintToken.Adjacent
+        val suppressScroll =
+            listOf(PrintSeparator.Adjacent, PrintSeparator.NextField).contains(expressions.lastOrNull())
         if (suppressScroll) currentPrintColumn = currCol else screen.scroll()
     }
 

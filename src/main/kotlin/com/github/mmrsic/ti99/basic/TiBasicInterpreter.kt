@@ -92,7 +92,7 @@ class TiBasicProgramInterpreter(
         var pc: Int? = startLineNum ?: program.firstLineNumber()
         while (pc != null && machine.programInterpreter != null) {
             if (machine.traceProgramExecution) {
-                PrintStatement(listOf(StringConstant("<$pc>"), PrintToken.Adjacent)).execute(machine, pc)
+                PrintStatement(listOf(StringConstant("<$pc>"), PrintSeparator.Adjacent)).execute(machine, pc)
             }
             if (machine.hasBreakpoint(pc)) throw TiBasicProgramException(pc, Breakpoint())
             val stmt = program.getStatements(pc)[0]
@@ -176,7 +176,7 @@ class TiBasicProgramInterpreter(
     fun acceptUserInput(variableNames: List<Expression>, inputLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
         acceptUserInputCtx.addCall(inputLineNumber, prompt)
-        machine.printTokens(listOf(StringConstant(acceptUserInputCtx.prompt), PrintToken.Adjacent))
+        machine.printTokens(listOf(StringConstant(acceptUserInputCtx.prompt), PrintSeparator.Adjacent))
         val input = StringBuilder().apply {
             do {
                 val inputPart = codeSequenceProvider.provideInput(acceptUserInputCtx)
@@ -187,7 +187,7 @@ class TiBasicProgramInterpreter(
                 }
             } while (inputPart.none { it in inputEndingChars })
         }.toString()
-        machine.printTokens(listOf(StringConstant(input), PrintToken.Adjacent))
+        machine.printTokens(listOf(StringConstant(input), PrintSeparator.Adjacent))
         val inputParts = parseInputParts(input)
         if (inputParts.size != variableNames.size) {
             println("Input error: Expecting ${variableNames.size} elements but got ${inputParts.size}")
@@ -341,7 +341,7 @@ class TiBasicProgramInterpreter(
 
     private fun raiseInputErrorWarning(inputLineNumber: Int, exception: TiBasicException) {
         acceptUserInputCtx.unacceptedInputs++
-        machine.printTokens(listOf(PrintToken.NextRecord))
+        machine.printTokens(listOf(PrintSeparator.NextRecord))
         jumpTo(inputLineNumber)
         throw exception
     }
