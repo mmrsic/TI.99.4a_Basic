@@ -18,6 +18,14 @@ class TestHelperScreen {
             assertEquals(expText, actualText, "Print contents")
         }
 
+        fun assertAllPatternsEqual(expectedPattern: String, screen: Screen) {
+            screen.patterns.patternsDo { row, col, actualPattern ->
+                assertEquals(expectedPattern, actualPattern, "Pattern at row $row, column $col")
+            }
+        }
+
+        // HELPERS //
+
         private fun toWrappedText(lines: Map<Int, String>) = buildString {
             for (line in lines) append(line).append("\n")
         }

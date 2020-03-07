@@ -108,6 +108,7 @@ class TiBasicProgramInterpreter(
                 checkLineNumber(jumpToLineNumber!!)
                 if (!program.hasLineNumber(jumpToLineNumber!!)) throw BadLineNumber()
             }
+            machine.programLineExecutionComplete(pc)
             pc = jumpToLineNumber ?: program.nextLineNumber(pc)
             jumpToLineNumber = null
         }

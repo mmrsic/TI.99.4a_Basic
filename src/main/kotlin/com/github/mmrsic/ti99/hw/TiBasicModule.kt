@@ -38,6 +38,9 @@ class TiBasicModule : TiModule {
     /** Last hit breakpoint. */
     private var continueLine: Int? = null
 
+    /** All program line hooks */
+    private val programLineHooks = mutableMapOf<(ProgramLine) -> Boolean, (TiBasicModule) -> Unit>()
+
     private var currentPrintColumn: Int? = null
 
     private val stringVariables: MutableMap<String, StringConstant> = TreeMap()
@@ -312,6 +315,23 @@ class TiBasicModule : TiModule {
             if (lineAfterSkip != null) interpretProgram(lineAfterSkip)
         } else {
             interpretProgram(lastBreakLine)
+        }
+    }
+
+    /**
+     * Add a given code to be executed after execution of a program line for which a given line filter applies.
+     * @param lineFilter executed after each program line, defining whether to execute the specified hook code
+     * @param hookCode executed for every program line for which the specified filter returned true
+     */
+    fun addProgramLineHookAfter(lineFilter: (ProgramLine) -> Boolean, hookCode: (TiBasicModule) -> Unit) {
+        programLineHooks[lineFilter] = hookCode
+    }
+
+    internal fun programLineExecutionComplete(programLineNumber: Int) {
+        program!!.withProgramLineNumberDo(programLineNumber) { programLine ->
+            programLineHooks.entries.forEach {
+                if (it.key.invoke(programLine)) it.value.invoke(this)
+            }
         }
     }
 

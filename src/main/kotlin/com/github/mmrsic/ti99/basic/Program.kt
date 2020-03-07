@@ -27,6 +27,12 @@ sealed class Program(protected val lines: TreeMap<Int, ProgramLine> = TreeMap())
         return line.statements
     }
 
+    /** Execute a given lambda accepting the [ProgramLine] at a given line number. */
+    fun withProgramLineNumberDo(lineNumber: Int, lambda: (ProgramLine) -> Unit) {
+        val programLine = lines[lineNumber] ?: throw IllegalArgumentException("No such line: $lineNumber")
+        lambda.invoke(programLine)
+    }
+
     /** Check whether this program statements for a given line number. */
     fun hasLineNumber(lineNumber: Int): Boolean = lines.containsKey(lineNumber)
 
@@ -56,6 +62,8 @@ sealed class Program(protected val lines: TreeMap<Int, ProgramLine> = TreeMap())
         }
         println("Resequenced: $lineMapping")
     }
+
+    // HELPERS //
 
     /** Adjust the line numbers of a statement to a given mapping from old to new line numbers. */
     private fun Statement.adjustLineNumbers(linNumbersMapping: Map<Int, Int>) {
