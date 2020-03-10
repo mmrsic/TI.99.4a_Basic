@@ -16,6 +16,9 @@ abstract class Screen(getCharPattern: (Int) -> String) {
     /** Screen representation where the [codes] are interpreted as rows of character patterns. */
     val patterns: PatternScreen = PatternScreen(codes, getCharPattern)
 
+    /** Screen representation where the [codes] are interpreted as rows of foreground/background pairs. */
+    val colors: ColorScreen = ColorScreen(codes, TiCharacterColor(TiColor.Black, TiColor.Transparent))
+
     /** The optional cursor currently placed on this screen. */
     var cursor: Cursor? = null
         internal set
@@ -193,7 +196,7 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
     private val definedPatterns: Map<Int, String> = mutableMapOf()
 
     /** Execute a piece of code for all character patterns at each and every cell of this pattern screen. */
-    fun patternsDo(lambda: (Int, Int, String) -> Unit) {
+    fun forEachCellDo(lambda: (Int, Int, String) -> Unit) {
         for (row in 1..TiBasicScreen.NUM_ROWS) {
             for (col in 1..TiBasicScreen.NUM_COLUMNS) {
                 lambda.invoke(row, col, patternAt(row, col))
@@ -205,8 +208,62 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
 
     private fun patternAt(row: Int, col: Int): String {
         val code = codes.codeAt(row, col)
-        if (definedPatterns.containsKey(code)) return definedPatterns.getValue(code)
-        return defaultPatterns(code)
+        return if (definedPatterns.containsKey(code)) definedPatterns.getValue(code) else defaultPatterns(code)
+    }
+
+}
+
+class ColorScreen(private val codes: CodeScreen, val defaultCharColors: TiCharacterColor) {
+
+    var backgroundColor: TiColor = TiColor.LightGreen
+
+    private val definedColors: MutableMap<Int, TiCharacterColor> = mutableMapOf()
+
+    fun setCharacterSet(charSetNumber: Int, charSetColors: TiCharacterColor) {
+        definedColors[charSetNumber] = charSetColors
+        println("New colors for character set $charSetNumber: $charSetColors")
+    }
+
+    internal fun forEachCellDo(lambda: (Int, Int, TiCharacterColor) -> Unit) {
+        for (row in 1..TiBasicScreen.NUM_ROWS) {
+            for (col in 1..TiBasicScreen.NUM_COLUMNS) {
+                val charColor = characterColorAt(row, col)
+                lambda.invoke(row, col, charColor)
+            }
+        }
+    }
+
+    // HELPERS //
+
+    private fun colorSet(charCode: Int): Int {
+        return when (charCode) {
+            in 32..39 -> 1
+            in 40..47 -> 2
+            in 48..55 -> 3
+            in 56..63 -> 4
+            in 64..71 -> 5
+            in 72..79 -> 6
+            in 80..87 -> 7
+            in 88..95 -> 8
+            in 96..103 -> 9
+            in 104..111 -> 10
+            in 112..119 -> 11
+            in 120..127 -> 12
+            in 128..135 -> 13
+            in 136..143 -> 14
+            in 144..151 -> 15
+            in 152..159 -> 16
+            else -> throw IllegalArgumentException("Illegal character code for color set: $charCode")
+        }
+    }
+
+    private fun characterColorAt(row: Int, column: Int): TiCharacterColor {
+        val colorSet = colorSet(codes.codeAt(row, column))
+        return if (definedColors.containsKey(colorSet)) definedColors.getValue(colorSet) else defaultCharColors()
+    }
+
+    private fun defaultCharColors(): TiCharacterColor {
+        return defaultCharColors.replaceTransparentBy(backgroundColor)
     }
 
 }

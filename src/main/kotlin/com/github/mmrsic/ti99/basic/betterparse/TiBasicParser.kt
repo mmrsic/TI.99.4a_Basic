@@ -33,6 +33,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val call by token("CALL")
     private val char by token("CHAR")
     private val clear by token("CLEAR")
+    private val color by token("COLOR")
     private val continueToken by token("""CON(TINUE)?""")
     private val data by token("DATA")
     private val display by token("DISPLAY")
@@ -282,13 +283,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and
             numericExpr and skip(comma) and stringConst and skip(closeParenthesis) use { CharSubprogram(t1, t2) }
     private val callClear: Parser<Statement> by skip(call) and clear asJust ClearSubprogram()
+    private val callColor: Parser<Statement> by skip(call) and skip(color) and skip(openParenthesis) and numericExpr and
+            skip(comma) and numericExpr and skip(comma) and numericExpr and skip(closeParenthesis) use {
+        ColorSubprogram(t1, t2, t3)
+    }
     private val callHchar: Parser<Statement> by skip(call and hchar and openParenthesis) and
             numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and
             optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
         val repetition = t4
         if (repetition != null) HcharSubprogram(t1, t2, t3, repetition) else HcharSubprogram(t1, t2, t3)
     }
-    private val callParser: Parser<Statement> by callChar or callClear or callHchar
+    private val callParser: Parser<Statement> by callChar or callClear or callColor or callHchar
 
     // PARSER HIERARCHY
 

@@ -1,6 +1,7 @@
 package com.github.mmrsic.ti99
 
 import com.github.mmrsic.ti99.hw.Screen
+import com.github.mmrsic.ti99.hw.TiCharacterColor
 import kotlin.test.assertEquals
 
 class TestHelperScreen {
@@ -19,8 +20,16 @@ class TestHelperScreen {
         }
 
         fun assertAllPatternsEqual(expectedPattern: String, screen: Screen) {
-            screen.patterns.patternsDo { row, col, actualPattern ->
+            screen.patterns.forEachCellDo { row, col, actualPattern ->
                 assertEquals(expectedPattern, actualPattern, "Pattern at row $row, column $col")
+            }
+        }
+
+        fun assertColors(cellValidator: (Int, Int, TiCharacterColor) -> Boolean, screen: Screen) {
+            screen.colors.forEachCellDo { row, col, charColors ->
+                assert(cellValidator.invoke(row, col, charColors)) {
+                    "Wrong colors at row $row, column $col: $charColors"
+                }
             }
         }
 

@@ -485,6 +485,13 @@ class TiBasicModule : TiModule {
         }
     }
 
+    fun setColor(characterSet: NumericConstant, foreground: NumericConstant, background: NumericConstant) {
+        val charSetNumber = characterSet.value().toNative().roundToInt()
+        val fCode = foreground.value().toNative().roundToInt()
+        val bCode = background.value().toNative().roundToInt()
+        screen.colors.setCharacterSet(charSetNumber, TiCharacterColor(TiColor.fromCode(fCode), TiColor.fromCode(bCode)))
+    }
+
 }
 
 /** Check whether a given line number is in the allowed range. */
