@@ -65,6 +65,30 @@ class ClearSubprogram : Statement, Command {
  * |     15     |  Gray          |
  * |     16     |  White         |
  * ```
+ *
+ * To use CALL COLOR you must also specify to which of sixteen character sets the character you are printing belongs.
+ * The list of ASCII character codes for the standard characters is given in the Appendix. The character is displayed
+ * in the color specified when you use the [HcharSubprogram] or the [VcharSubprogram]. The character-set-numbers are
+ * given below:
+ * ```
+ * | Set Number | Character Codes |
+ * |      1     |      32-39      |
+ * |      2     |      40-47      |
+ * |      3     |      48-55      |
+ * |      4     |      56-63      |
+ * |      5     |      64-71      |
+ * |      6     |      72-79      |
+ * |      7     |      80-87      |
+ * |      8     |      88-95      |
+ * |      9     |      96-103     |
+ * |     10     |     104-111     |
+ * |     11     |     112-119     |
+ * |     12     |     120-127     |
+ * |     13     |     128-135     |
+ * |     14     |     136-143     |
+ * |     15     |     144-151     |
+ * |     16     |     152-159     |
+ * ```
  */
 class ColorSubprogram(
     val characterSetNumber: NumericExpr,
@@ -107,5 +131,27 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
     override fun listText() = "CALL $name(${colorCode.listText()})"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.screen.colors.backgroundColor = TiColor.fromCode(colorCode.value().toNative().roundToInt())
+    }
+}
+
+class VcharSubprogram(
+    private val row: NumericExpr, private val column: NumericExpr,
+    private val characterCode: NumericExpr, private val repetition: NumericExpr = NumericConstant(1)
+) : Statement, Command {
+    override val name = "VCHAR"
+    override fun listText(): String {
+        val rowPart = row.listText().trim()
+        val columnPart = column.listText().trim()
+        val codePart = characterCode.listText().trim()
+        val optionalRepetitionPart = if (repetition != null) ",${repetition.listText().trim()}" else ""
+        return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val row = row.value().toNative().toInt()
+        val column = column.value().toNative().toInt()
+        val characterCode = characterCode.value().toNative().toInt()
+        val repetition = repetition.value().toNative().toInt()
+        machine.screen.vchar(row, column, characterCode, repetition)
     }
 }

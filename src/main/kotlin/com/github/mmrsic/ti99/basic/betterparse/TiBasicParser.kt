@@ -68,6 +68,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val trace by token("TRACE")
     private val unbreak by token("UNBREAK")
     private val untrace by token("UNTRACE")
+    private val vchar by token("VCHAR")
 
     private val minus by token("-")
     private val plus by token("\\+")
@@ -296,7 +297,14 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and
             numericExpr and skip(closeParenthesis) use { ScreenSubprogram(this) }
-    private val callParser: Parser<Statement> by callChar or callClear or callColor or callHchar or callScreen
+    private val callVchar: Parser<Statement> by skip(call and vchar and openParenthesis) and
+            numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and
+            optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
+        val repetition = t4
+        if (repetition != null) VcharSubprogram(t1, t2, t3, repetition) else VcharSubprogram(t1, t2, t3)
+    }
+    private val callParser: Parser<Statement> by callChar or callClear or callColor or callHchar or callScreen or
+            callVchar
 
     // PARSER HIERARCHY
 

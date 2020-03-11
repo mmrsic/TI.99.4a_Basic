@@ -73,6 +73,11 @@ abstract class Screen(
         codes.hchar(row, col, List(repetition) { code })
     }
 
+    /** Place a given code (repeatedly) onto this screen. */
+    fun vchar(row: Int, col: Int, code: Int, repetition: Int) {
+        codes.vchar(row, col, List(repetition) { code })
+    }
+
     /** Clear the whole screen, that is, set code 32 (space) at each and every position. */
     fun clear() = codes.clear()
 
@@ -140,6 +145,19 @@ class CodeScreen {
         for ((index, code) in codes.withIndex()) {
             val row = startRow + index / numColumns
             val col = startCol + index % numColumns
+            codeTable[Pair(row, col)] = code
+        }
+    }
+
+    /**
+     * Place a list of character codes vertically at a given row at a given start index extending the codes to the
+     * bottom.
+     */
+    fun vchar(startRow: Int, startCol: Int, codes: List<Int>) {
+        val numRows = TiBasicScreen.NUM_ROWS
+        for ((index, code) in codes.withIndex()) {
+            val col = startCol + index / numRows
+            val row = startRow + index % numRows
             codeTable[Pair(row, col)] = code
         }
     }
