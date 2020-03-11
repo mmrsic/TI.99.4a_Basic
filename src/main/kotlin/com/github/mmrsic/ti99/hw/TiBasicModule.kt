@@ -80,7 +80,7 @@ class TiBasicModule : TiModule {
 
     /** Reset all color sets to the standard colors. */
     fun resetColors() {
-        // TODO: Not yet implemented: Reset colors
+        screen.colors.reset()
     }
 
     /** Reset [getAllNumericVariableValues] and [getAllStringVariableValues] of this instance to an empty map. */
@@ -489,7 +489,8 @@ class TiBasicModule : TiModule {
         val charSetNumber = characterSet.value().toNative().roundToInt()
         val fCode = foreground.value().toNative().roundToInt()
         val bCode = background.value().toNative().roundToInt()
-        screen.colors.setCharacterSet(charSetNumber, TiCharacterColor(TiColor.fromCode(fCode), TiColor.fromCode(bCode)))
+        val charSetColors = TiCharacterColor(TiColor.fromCode(fCode), TiColor.fromCode(bCode))
+        screen.colors.setCharacterSet(charSetNumber, charSetColors)
     }
 
 }

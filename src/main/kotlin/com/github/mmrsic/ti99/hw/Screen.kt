@@ -6,7 +6,11 @@ import com.github.mmrsic.ti99.basic.expr.toChar
 /**
  * Representation of the TI 99/4a's screen (graphics chip) where codes, strings, and patterns may be printed.
  */
-abstract class Screen(getCharPattern: (Int) -> String) {
+abstract class Screen(
+    getCharPattern: (Int) -> String,
+    defaultCharColors: TiCharacterColor,
+    defaultBackgroundColor: TiColor
+) {
     /** Screen representation with ASCII codes for all cells of 24 rows * 32 columns. */
     val codes: CodeScreen = CodeScreen()
 
@@ -17,7 +21,7 @@ abstract class Screen(getCharPattern: (Int) -> String) {
     val patterns: PatternScreen = PatternScreen(codes, getCharPattern)
 
     /** Screen representation where the [codes] are interpreted as rows of foreground/background pairs. */
-    val colors: ColorScreen = ColorScreen(codes, TiCharacterColor(TiColor.Black, TiColor.Transparent))
+    val colors: ColorScreen = ColorScreen(codes, defaultCharColors, defaultBackgroundColor)
 
     /** The optional cursor currently placed on this screen. */
     var cursor: Cursor? = null
@@ -85,7 +89,8 @@ abstract class Screen(getCharPattern: (Int) -> String) {
 /**
  * TI Basic's representation of the [Screen].
  */
-class TiBasicScreen(getCharPattern: (Int) -> String) : Screen(getCharPattern) {
+class TiBasicScreen(getCharPattern: (Int) -> String) :
+    Screen(getCharPattern, DEFAULT_CHAR_COLORS, DEFAULT_BACKGROUND_COLOR) {
 
     companion object {
         const val NUM_ROWS = 24
@@ -97,6 +102,8 @@ class TiBasicScreen(getCharPattern: (Int) -> String) : Screen(getCharPattern) {
         const val CHAR_PIXELS_Y = 8
         const val PIXEL_WIDTH = NUM_COLUMNS * CHAR_PIXELS_X
         const val PIXEL_HEIGHT = NUM_ROWS * CHAR_PIXELS_Y
+        val DEFAULT_CHAR_COLORS = TiCharacterColor(TiColor.Black, TiColor.Transparent)
+        val DEFAULT_BACKGROUND_COLOR = TiColor.Cyan
     }
 
 }
@@ -213,15 +220,17 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
 
 }
 
-class ColorScreen(private val codes: CodeScreen, val defaultCharColors: TiCharacterColor) {
-
-    var backgroundColor: TiColor = TiColor.LightGreen
-
+class ColorScreen(
+    private val codes: CodeScreen,
+    val defaultCharColors: TiCharacterColor,
+    val defaultBackgroundColor: TiColor
+) {
+    var backgroundColor: TiColor = defaultBackgroundColor
     private val definedColors: MutableMap<Int, TiCharacterColor> = mutableMapOf()
 
     fun setCharacterSet(charSetNumber: Int, charSetColors: TiCharacterColor) {
         definedColors[charSetNumber] = charSetColors
-        println("New colors for character set $charSetNumber: $charSetColors")
+        println("New colors for character set #$charSetNumber: $charSetColors")
     }
 
     internal fun forEachCellDo(lambda: (Int, Int, TiCharacterColor) -> Unit) {
@@ -259,11 +268,13 @@ class ColorScreen(private val codes: CodeScreen, val defaultCharColors: TiCharac
 
     private fun characterColorAt(row: Int, column: Int): TiCharacterColor {
         val colorSet = colorSet(codes.codeAt(row, column))
-        return if (definedColors.containsKey(colorSet)) definedColors.getValue(colorSet) else defaultCharColors()
+        val origColors = definedColors.getOrElse(colorSet) { -> defaultCharColors }
+        return origColors.replaceTransparentBy(backgroundColor)
     }
 
-    private fun defaultCharColors(): TiCharacterColor {
-        return defaultCharColors.replaceTransparentBy(backgroundColor)
+    fun reset() {
+        definedColors.clear()
+        backgroundColor = defaultBackgroundColor
     }
 
 }

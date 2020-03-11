@@ -4,10 +4,7 @@ import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.basic.expr.*
-import com.github.mmrsic.ti99.hw.CodeSequenceProvider
-import com.github.mmrsic.ti99.hw.TiBasicModule
-import com.github.mmrsic.ti99.hw.TiFctnCode
-import com.github.mmrsic.ti99.hw.checkLineNumber
+import com.github.mmrsic.ti99.hw.*
 import java.util.*
 
 /**
@@ -85,9 +82,14 @@ class TiBasicProgramInterpreter(
     programD: Map<Int, List<Constant>>
 ) : TiBasicInterpreter(machine) {
 
+    companion object {
+        val RUN_BACKGROUND_COLOR = TiColor.LightGreen
+    }
+
     /** Interpret the current program of this interpreter's [machine], optionally starting at a given start line number. */
     fun interpretAll(startLineNum: Int? = null) {
         val program = machine.program ?: throw CantDoThat()
+        machine.screen.colors.backgroundColor = RUN_BACKGROUND_COLOR
         println("Executing $program")
         var pc: Int? = startLineNum ?: program.firstLineNumber()
         while (pc != null && machine.programInterpreter != null) {
@@ -216,6 +218,7 @@ class TiBasicProgramInterpreter(
     /** Data for a program. */
     private val programData = object {
         val constants: List<Constant>
+
         /** Mapping from program line to [constants] index. */
         private val restoreEntryPoints: TreeMap<Int, Int>
 

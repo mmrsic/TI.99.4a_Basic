@@ -59,6 +59,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val resequence by token("""RES(EQUENCE)?""")
     private val returnToken by token("RETURN")
     private val run by token("\\bRUN\\b")
+    private val screen by token("SCREEN")
     private val step by token("STEP")
     private val stop by token("STOP")
     private val tab by token("TAB")
@@ -293,7 +294,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         val repetition = t4
         if (repetition != null) HcharSubprogram(t1, t2, t3, repetition) else HcharSubprogram(t1, t2, t3)
     }
-    private val callParser: Parser<Statement> by callChar or callClear or callColor or callHchar
+    private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and
+            numericExpr and skip(closeParenthesis) use { ScreenSubprogram(this) }
+    private val callParser: Parser<Statement> by callChar or callClear or callColor or callHchar or callScreen
 
     // PARSER HIERARCHY
 

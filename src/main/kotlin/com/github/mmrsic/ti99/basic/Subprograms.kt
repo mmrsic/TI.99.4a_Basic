@@ -4,6 +4,8 @@ import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiColor
+import kotlin.math.roundToInt
 
 /**
  * The CHAR subprogram allows you to define special graphics characters. You can redefine the standard sets of
@@ -97,5 +99,13 @@ class HcharSubprogram(
         val characterCode = characterCode.value().toNative().toInt()
         val repetition = repetition.value().toNative().toInt()
         machine.screen.hchar(row, column, characterCode, repetition)
+    }
+}
+
+class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command {
+    override val name = "SCREEN"
+    override fun listText() = "CALL $name(${colorCode.listText()})"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.screen.colors.backgroundColor = TiColor.fromCode(colorCode.value().toNative().roundToInt())
     }
 }
