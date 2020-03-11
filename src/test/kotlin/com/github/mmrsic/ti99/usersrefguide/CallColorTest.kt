@@ -39,7 +39,7 @@ class CallColorTest {
                 } + "\r").asSequence()
             }
         })
-        machine.addProgramLineHookAfter({ line -> line.lineNumber == 160 }, { _ ->
+        machine.addProgramLineHookAfter({ line -> line.lineNumber == 160 }, {
             TestHelperScreen.assertColors({ row, col, charColors ->
                 if (row == 12 && col in 3..30) {
                     charColors == TiCharacterColor(TiColor.Black, TiColor.Magenta)
@@ -73,7 +73,7 @@ class CallColorTest {
             140 GOTO 140
             """.trimIndent(), machine
         )
-        machine.addProgramLineHookAfter({ line -> line.lineNumber == 140 }, { _ ->
+        machine.addProgramLineHookAfter({ line -> line.lineNumber == 140 }, {
             TestHelperScreen.assertColors({ row, col, charColors ->
                 if (row == 12 && col in 3..30) {
                     charColors == TiCharacterColor(TiColor.fromCode(12), TiColor.fromCode(7))
@@ -109,7 +109,7 @@ class CallColorTest {
             140 GOTO 140
             """.trimIndent(), machine
         )
-        machine.addProgramLineHookAfter({ line -> line.lineNumber == 140 }, { _ ->
+        machine.addProgramLineHookAfter({ line -> line.lineNumber == 140 }, {
             TestHelperScreen.assertAllColors(TiCharacterColor(TiColor.White, TiColor.Magenta), machine.screen)
             machine.addBreakpoint(140)
         })
