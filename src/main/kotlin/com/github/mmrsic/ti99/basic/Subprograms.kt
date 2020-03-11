@@ -126,6 +126,38 @@ class HcharSubprogram(
     }
 }
 
+/**
+ * The SCREEN subprogram enhances the graphic capabilities of the TI computer by allowing you to change the screen
+ * color. The standard screen color while a program is running is light green (color-code = 4).
+ *
+ * The color code is a numeric expression which, when evaluated, has a value of 1 through 16. The table of the sixteen
+ * available colors and their codes is given below.
+ * ```
+ *   Color-code     Color
+ *        1         Transparent
+ *        2         Black
+ *        3         Medium Green
+ *        4         Light Green
+ *        5         Dark Blue
+ *        6         Light Blue
+ *        7         Dark Red
+ *        8         Cyan
+ *        9         Medium Red
+ *       10         Light Red
+ *       11         Dark Yellow
+ *       12         Light Yellow
+ *       13         Dark Green
+ *       14         Magenta
+ *       15         Gray
+ *       16         White
+ * ```
+ * When the CALL SCREEN is performed, the entire screen background changes to the color specified by the color-code.
+ * All characters on the screen remain the same unless you have specified a transparent foreground or background color
+ * for them. In that case, the screen color "shows through" the transparent foreground or background.
+ *
+ * The screen is set to cyan (code 8) when a program stops for a breakpoint or terminates. If you [ContinueCommand] a
+ * program after a breakpoint, the screen is reset to the standard color (light green).
+ */
 class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command {
     override val name = "SCREEN"
     override fun listText() = "CALL $name(${colorCode.listText()})"

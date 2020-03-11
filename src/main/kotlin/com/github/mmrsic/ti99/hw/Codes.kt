@@ -31,6 +31,8 @@ interface CodeSequenceProvider {
      * Provide code sequence input as a [Sequence] of [TiCode]s. If the return value contains a character with code 13,
      * the input simulation ends. Otherwise, this method is called again.
      *
+     * Throw Breakpoint() in order to leave the program while the input command is active.
+     *
      * @param ctx [Context] used to distinguish programmatically generated sequences
      * @return a sequence of characters typed in by the user - must not be null but may be empty
      */
@@ -42,12 +44,16 @@ interface CodeSequenceProvider {
     interface Context {
         /** The prompt presented to the user. */
         val prompt: String
+
         /** Number of overall calls of any [CodeSequenceProvider] within a program run. Starts at 1. */
         val overallCalls: Int
+
         /** Program line currently requesting the input. Ranges from 1 to 32767. */
         val programLine: Int
+
         /** Number of calls made from the [programLine] within a program run. */
         val programLineCalls: Int
+
         /** Number of unaccepted inputs at the current [programLine] and the current [programLineCalls]. */
         val unacceptedInputs: Int
     }
