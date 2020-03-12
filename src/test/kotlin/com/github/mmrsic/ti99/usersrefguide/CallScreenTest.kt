@@ -63,7 +63,7 @@ class CallScreenTest {
             ), machine.screen
         )
         TestHelperScreen.assertCursorAt(24, 3, machine.screen)
-        TestHelperScreen.assertAllColors(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
+        TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
     }
 
 }

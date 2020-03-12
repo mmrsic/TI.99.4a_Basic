@@ -224,14 +224,13 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
     fun forEachCellDo(lambda: (Int, Int, String) -> Unit) {
         for (row in 1..TiBasicScreen.NUM_ROWS) {
             for (col in 1..TiBasicScreen.NUM_COLUMNS) {
-                lambda.invoke(row, col, patternAt(row, col))
+                lambda.invoke(row, col, at(row, col))
             }
         }
     }
 
-    // HELPERS //
-
-    private fun patternAt(row: Int, col: Int): String {
+    /** The current character pattern at a given row/column combination. */
+    fun at(row: Int, col: Int): String {
         val code = codes.codeAt(row, col)
         return if (definedPatterns.containsKey(code)) definedPatterns.getValue(code) else defaultPatterns(code)
     }

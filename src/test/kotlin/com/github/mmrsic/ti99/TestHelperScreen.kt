@@ -25,7 +25,15 @@ class TestHelperScreen {
             }
         }
 
-        fun assertAllColors(expectedColor: TiCharacterColor, screen: Screen) =
+        fun assertPatterns(cellValidator: (Int, Int, String) -> Boolean, screen: Screen) {
+            screen.patterns.forEachCellDo { row, col, actualPattern ->
+                assert(cellValidator.invoke(row, col, actualPattern)) {
+                    "Wrong pattern at row $row, column $col: $actualPattern"
+                }
+            }
+        }
+
+        fun assertAllColorsEqual(expectedColor: TiCharacterColor, screen: Screen) =
             assertColors({ _, _, charColors -> charColors == expectedColor }, screen)
 
         fun assertColors(cellValidator: (Int, Int, TiCharacterColor) -> Boolean, screen: Screen) {

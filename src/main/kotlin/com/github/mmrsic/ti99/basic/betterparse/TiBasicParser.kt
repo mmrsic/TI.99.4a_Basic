@@ -25,6 +25,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val quoted by token(""""([^"]|"")*"""")
 
+    private val chr by token("CHR\\$")
     private val seg by token("SEG\\$")
     private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
 
@@ -118,7 +119,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val segFun by skip(seg) and skip(openParenthesis) and
             parser(::stringExpr) and skip(comma) and parser(::numericExpr) and skip(comma) and parser(::numericExpr) and
             skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
-    private val stringFun by segFun
+    private val chrFun by skip(chr) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        ChrFunction(this)
+    }
+    val stringFun by segFun or chrFun
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
     }
@@ -207,7 +211,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     // STATEMENT PARSERS
 
-    private val printToken by expr or tabFun
+    private val printToken by expr or tabFun or stringFun or numericFun
     private val printStmt by skip(print or display) and zeroOrMore(printSeparator) and optional(printToken) and
             zeroOrMore(oneOrMore(printSeparator) and printToken) and zeroOrMore(printSeparator) use {
         val printArgs = mutableListOf<Expression>()
@@ -283,7 +287,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     // CALL SUBPROGRAM PARSERS
 
     private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and
-            numericExpr and skip(comma) and stringConst and skip(closeParenthesis) use { CharSubprogram(t1, t2) }
+            numericExpr and skip(comma) and stringExpr and skip(closeParenthesis) use { CharSubprogram(t1, t2) }
     private val callClear: Parser<Statement> by skip(call) and clear asJust ClearSubprogram()
     private val callColor: Parser<Statement> by skip(call) and skip(color) and skip(openParenthesis) and numericExpr and
             skip(comma) and numericExpr and skip(comma) and numericExpr and skip(closeParenthesis) use {

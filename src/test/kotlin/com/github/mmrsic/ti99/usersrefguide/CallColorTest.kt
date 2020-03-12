@@ -93,7 +93,7 @@ class CallColorTest {
                 24 to " >"
             ), machine.screen
         )
-        TestHelperScreen.assertAllColors(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
+        TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
     }
 
     @Test
@@ -110,7 +110,7 @@ class CallColorTest {
             """.trimIndent(), machine
         )
         machine.addProgramLineHookAfter({ line -> line.lineNumber == 140 }, {
-            TestHelperScreen.assertAllColors(TiCharacterColor(TiColor.White, TiColor.Magenta), machine.screen)
+            TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.White, TiColor.Magenta), machine.screen)
             machine.addBreakpoint(140)
         })
         interpreter.interpret("RUN", machine)
@@ -143,7 +143,7 @@ class CallColorTest {
                 24 to " >"
             ), machine.screen
         )
-        TestHelperScreen.assertAllColors(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
+        TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
     }
 
 }

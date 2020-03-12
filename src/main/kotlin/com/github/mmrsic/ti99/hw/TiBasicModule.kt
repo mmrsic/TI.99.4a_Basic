@@ -327,6 +327,15 @@ class TiBasicModule : TiModule {
         programLineHooks[lineFilter] = hookCode
     }
 
+    /**
+     * Add a given code to be executed after execution of a program line with a given line number.
+     * @param lineNumber existing line number of the program executed
+     * @param hookCode executed after the program line with the specified line number
+     */
+    fun addProgramLineHookAfterLine(lineNumber: Int, hookCode: (TiBasicModule) -> Unit) {
+        addProgramLineHookAfter({ programLine -> programLine.lineNumber == lineNumber }, hookCode)
+    }
+
     internal fun programLineExecutionComplete(programLineNumber: Int) {
         program!!.withProgramLineNumberDo(programLineNumber) { programLine ->
             programLineHooks.entries.forEach {

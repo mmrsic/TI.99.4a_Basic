@@ -2,7 +2,7 @@ package com.github.mmrsic.ti99.basic
 
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
-import com.github.mmrsic.ti99.basic.expr.StringConstant
+import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiColor
 import kotlin.math.roundToInt
@@ -11,13 +11,23 @@ import kotlin.math.roundToInt
  * The CHAR subprogram allows you to define special graphics characters. You can redefine the standard sets of
  * characters (ASCII codes 32-127) and the undefined characters, ASCII codes 128-159.
  * The CHAR subprogram is the inverse of the [CharpatSubprogram].
+ *
+ * @param code The char-code specifies the code of the character you wish to define and must be a numeric expression
+ * with a value between 32 and 159, inclusive. If the character you are defining is in the range 128-159 and there is
+ * insufficient free memory to define the character, the program will terminate with a "MEMORY FULL" error.
+ * @param pattern The pattern-identifier is a 16-character string expression which specifies the pattern of the
+ * character you want to use in your program. The string expression is a coded representation of the 64 dots which make
+ * up a character position on the screen. These 64 dots comprise an 8-by-8 grid. Each row is partitioned into two blocks
+ * of four dots each. The first two characters in the string describe the pattern for row one of the dot-grid, the next
+ * two describe row two, and so on. If the pattern is less than 16 characters, the computer will assume that the
+ * remaining characters are zero. If it is longer than 16 characters, the computer will ignore the excess.
  */
-class CharSubprogram(private val code: NumericExpr, private val pattern: StringConstant) : Statement, Command {
+class CharSubprogram(private val code: NumericExpr, private val pattern: StringExpr) : Statement, Command {
     override val name = "CHAR"
     override fun listText() = "CALL $name(${code.listText().trim()},${pattern.listText()})"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val characterCode = code.value().toNative().toInt()
-        val patternIdentifier = pattern.constant
+        val patternIdentifier = pattern.displayValue()
         machine.defineCharacter(characterCode, patternIdentifier)
     }
 }
