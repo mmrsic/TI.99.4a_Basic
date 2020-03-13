@@ -123,4 +123,40 @@ class CallCharTest {
         assert(actualPatternAfterEnd == "0103070F1F3F7FFF") { "Wrong pattern: $actualPatternAfterEnd" }
     }
 
+    @Test
+    fun testChangeAfterProgramEnd() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 CALL CLEAR
+            110 CALL CHAR(128,"FFFFFFFFFFFFFFFF")
+            120 CALL CHAR(42,"0F0F0F0F0F0F0F0F")
+            130 CALL HCHAR(12,17,42)
+            140 CALL HCHAR(14,17,128)
+            150 FOR DELAY=1 TO 350
+            160 NEXT DELAY
+            170 END
+            """.trimIndent(), machine
+        )
+        machine.addProgramLineHookAfterLine(140) {
+            TestHelperScreen.assertPatterns({ row, col, actualPattern ->
+                actualPattern == when {
+                    row == 12 && col == 17 -> "0F".repeat(8)
+                    row == 14 && col == 17 -> "F".repeat(16)
+                    else -> "0".repeat(16)
+                }
+            }, machine.screen)
+        }
+        interpreter.interpret("RUN", machine)
+
+        TestHelperScreen.assertPatterns({ row, col, actualPattern ->
+            when {
+                row == 9 && col == 17 -> actualPattern == "000028107C102800"
+                row == 11 && col == 17 -> actualPattern == "F".repeat(16)
+                else -> true
+            }
+        }, machine.screen)
+    }
+
 }

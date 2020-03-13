@@ -75,7 +75,7 @@ class TiBasicModule : TiModule {
 
     /** Release all space that had been allocated for special characters. */
     fun resetCharacters() {
-        characterPatterns.clear() // TODO: Clear only the character patterns in the standard character set
+        for (code in 32..127) characterPatterns.remove(code)
     }
 
     /** Reset all color sets to the standard colors. */
@@ -241,6 +241,7 @@ class TiBasicModule : TiModule {
     /** Unconditionally stop the current program run. Has no effect, if no program is running. */
     fun endProgramRun() {
         programInterpreter = null
+        resetCharacters()
     }
 
     /**
@@ -490,6 +491,7 @@ class TiBasicModule : TiModule {
             toAsciiCode('T') -> "007C101010101010"
             toAsciiCode('Y') -> "0044442810101010"
             toAsciiCode('>') -> "0020100804081020"
+            toAsciiCode('*') -> "000028107C102800"
             else -> "0000000000000000"
         }
     }
