@@ -9,7 +9,7 @@ class PosFunctionTest {
     fun testPanA1() {
         val arg1 = StringConstant("PAN")
         val arg2 = StringConstant("A")
-        val arg3 = NumericConstant(1)
+        val arg3 = NumericConstant.ONE
         val result = PosFunction(arg1, arg2, arg3).value()
         assertEquals(2.0, result.toNative(), "POS($arg1,$arg2,$arg3)")
         assertEquals(" 2 ", result.displayValue(), "POS($arg1,$arg2,$arg3)")
@@ -39,7 +39,7 @@ class PosFunctionTest {
     fun testPabnanAn1() {
         val arg1 = StringConstant("PABNAN")
         val arg2 = StringConstant("AN")
-        val arg3 = NumericConstant(1)
+        val arg3 = NumericConstant.ONE
         val result = PosFunction(arg1, arg2, arg3).value()
         assertEquals(5.0, result.toNative(), "POS($arg1,$arg2,$arg3)")
         assertEquals(" 5 ", result.displayValue(), "POS($arg1,$arg2,$arg3)")

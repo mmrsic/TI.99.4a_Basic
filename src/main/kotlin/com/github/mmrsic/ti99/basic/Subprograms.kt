@@ -114,24 +114,38 @@ class ColorSubprogram(
     }
 }
 
+/**
+ * The HCHAR subprogram places a character anywhere on the screen and, optionally, repeats it horizontally. The
+ * row-number and column-number locate the starting position on the screen.
+ *
+ * If the evaluation of any of the numeric expressions results in a non-integer value, the result is rounded to obtain
+ * an integer. The valid ranges are given below:
+ * ```
+ * Value                    Range
+ * Row-number               1-24, inclusive
+ * Column-number            1-32, inclusive
+ * Char-code                0-32767, inclusive
+ * Number-of-repetitions    0-32767, inclusive
+ * ```
+ */
 class HcharSubprogram(
-    private val row: NumericExpr, private val column: NumericExpr,
-    private val characterCode: NumericExpr, private val repetition: NumericExpr = NumericConstant(1)
+    private val row: NumericExpr, private val column: NumericExpr, private val charCode: NumericExpr,
+    private val repetitions: NumericExpr = NumericConstant.ONE
 ) : Statement, Command {
     override val name = "HCHAR"
     override fun listText(): String {
         val rowPart = row.listText().trim()
         val columnPart = column.listText().trim()
-        val codePart = characterCode.listText().trim()
-        val optionalRepetitionPart = if (repetition != null) ",${repetition.listText().trim()}" else ""
+        val codePart = charCode.listText().trim()
+        val optionalRepetitionPart = if (repetitions != null) ",${repetitions.listText().trim()}" else ""
         return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val row = row.value().toNative().toInt()
-        val column = column.value().toNative().toInt()
-        val characterCode = characterCode.value().toNative().toInt()
-        val repetition = repetition.value().toNative().toInt()
+        val row = row.value().toNative().roundToInt()
+        val column = column.value().toNative().roundToInt()
+        val characterCode = charCode.value().toNative().roundToInt()
+        val repetition = repetitions.value().toNative().roundToInt()
         machine.screen.hchar(row, column, characterCode, repetition)
     }
 }
@@ -178,7 +192,7 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
 
 class VcharSubprogram(
     private val row: NumericExpr, private val column: NumericExpr,
-    private val characterCode: NumericExpr, private val repetition: NumericExpr = NumericConstant(1)
+    private val characterCode: NumericExpr, private val repetition: NumericExpr = NumericConstant.ONE
 ) : Statement, Command {
     override val name = "VCHAR"
     override fun listText(): String {

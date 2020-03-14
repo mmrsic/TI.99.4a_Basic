@@ -4,6 +4,10 @@ enum class TiColor {
     Transparent, Black, MediumGreen, LightGreen, DarkBlue, LightBlue, DarkRed, Cyan,
     MediumRed, LightRed, DarkYellow, LightYellow, DarkGreen, Magenta, Gray, White;
 
+    override fun toString(): String {
+        return super.toString() + toCode()
+    }
+
     companion object {
         fun fromCode(code: Int): TiColor = mapping().getValue(code)
     }
@@ -15,6 +19,12 @@ fun TiColor.replaceTransparentBy(replacementColor: TiColor): TiColor {
 }
 
 data class TiCharacterColor(val foreground: TiColor, val background: TiColor) {
+
+    constructor(foregroundCode: Int, backgroundCode: Int) : this(
+        TiColor.fromCode(foregroundCode),
+        TiColor.fromCode(backgroundCode)
+    )
+
 
     fun contains(color: TiColor): Boolean {
         return foreground == color || background == color

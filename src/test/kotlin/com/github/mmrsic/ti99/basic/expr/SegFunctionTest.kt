@@ -8,7 +8,7 @@ class SegFunctionTest {
     @Test
     fun testFirstnameLastnameOneNine() {
         val arg1 = StringConstant("FIRSTNAME LASTNAME")
-        val arg2 = NumericConstant(1)
+        val arg2 = NumericConstant.ONE
         val arg3 = NumericConstant(9)
         val result = SegFunction(arg1, arg2, arg3).value()
         assertEquals("FIRSTNAME", result.toNative())
@@ -29,7 +29,7 @@ class SegFunctionTest {
     fun testFirstnameLastnameTenOne() {
         val arg1 = StringConstant("FIRSTNAME LASTNAME")
         val arg2 = NumericConstant(10)
-        val arg3 = NumericConstant(1)
+        val arg3 = NumericConstant.ONE
         val result = SegFunction(arg1, arg2, arg3).value()
         assertEquals(" ", result.toNative())
         assertEquals(" ", result.displayValue())

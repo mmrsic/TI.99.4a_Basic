@@ -119,7 +119,7 @@ class TiBasicProgramInterpreter(
     /** Begin a new for-loop. */
     fun beginForLoop(lineNumber: Int, varName: String, limit: NumericConstant, givenIncrement: NumericConstant?) {
         val program = machine.program ?: throw IllegalArgumentException("Can't begin for-loop without program")
-        val increment = givenIncrement ?: NumericConstant(1)
+        val increment = givenIncrement ?: NumericConstant.ONE
         if (increment.isZero()) throw BadValue()
         val jumpLineNumber = program.nextLineNumber(lineNumber)
             ?: throw IllegalArgumentException("Line number has no successor: $lineNumber")

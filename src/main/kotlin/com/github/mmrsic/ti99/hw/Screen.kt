@@ -238,14 +238,12 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
 }
 
 class ColorScreen(
-    private val codes: CodeScreen,
-    val defaultCharColors: TiCharacterColor,
-    val defaultBackgroundColor: TiColor
+    private val codes: CodeScreen, val defaultCharColors: TiCharacterColor, val defaultBackgroundColor: TiColor
 ) {
     var backgroundColor: TiColor = defaultBackgroundColor
     private val definedColors: MutableMap<Int, TiCharacterColor> = mutableMapOf()
 
-    fun setCharacterSet(charSetNumber: Int, charSetColors: TiCharacterColor) {
+    internal fun setCharacterSet(charSetNumber: Int, charSetColors: TiCharacterColor) {
         definedColors[charSetNumber] = charSetColors
         println("New colors for character set #$charSetNumber: $charSetColors")
     }

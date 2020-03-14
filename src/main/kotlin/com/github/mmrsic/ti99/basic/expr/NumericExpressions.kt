@@ -123,6 +123,9 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
     companion object {
         /** Numeric constant of value zero. */
         val ZERO = NumericConstant(0)
+
+        /** Numeric constant of value one. */
+        val ONE = NumericConstant(1)
     }
 
     // HELPERS //
