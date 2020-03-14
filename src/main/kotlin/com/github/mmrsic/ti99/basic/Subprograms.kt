@@ -101,9 +101,9 @@ class ClearSubprogram : Statement, Command {
  * ```
  */
 class ColorSubprogram(
-    val characterSetNumber: NumericExpr,
-    val foregrColorCode: NumericExpr,
-    val backgrColorCode: NumericExpr
+    private val characterSetNumber: NumericExpr,
+    private val foregrColorCode: NumericExpr,
+    private val backgrColorCode: NumericExpr
 ) : Statement, Command {
     override val name = "COLOR"
     override fun listText() =
@@ -127,6 +127,12 @@ class ColorSubprogram(
  * Char-code                0-32767, inclusive
  * Number-of-repetitions    0-32767, inclusive
  * ```
+ * Although you may specify a value as large as 32767 for char-code, the computer will convert the value specified to
+ * a range of 0 through 255. Character codes 32 through 127 are defined as the standard ASCII character codes. Character
+ * codes 128 through 159 may be defined using the [CharSubprogram]. If you specify an undefined character for char-code,
+ * you get whatever is in memory at the time the HCHAR subprogram is called.
+ * @param row A value of 1 indicates the top of the screen.
+ * @param column A value of 1 indicates the left side of the screen.
  */
 class HcharSubprogram(
     private val row: NumericExpr, private val column: NumericExpr, private val charCode: NumericExpr,
@@ -137,7 +143,7 @@ class HcharSubprogram(
         val rowPart = row.listText().trim()
         val columnPart = column.listText().trim()
         val codePart = charCode.listText().trim()
-        val optionalRepetitionPart = if (repetitions != null) ",${repetitions.listText().trim()}" else ""
+        val optionalRepetitionPart = if (repetitions != NumericConstant.ONE) ",${repetitions.listText().trim()}" else ""
         return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
     }
 
@@ -199,7 +205,7 @@ class VcharSubprogram(
         val rowPart = row.listText().trim()
         val columnPart = column.listText().trim()
         val codePart = characterCode.listText().trim()
-        val optionalRepetitionPart = if (repetition != null) ",${repetition.listText().trim()}" else ""
+        val optionalRepetitionPart = if (repetition != NumericConstant.ONE) ",${repetition.listText().trim()}" else ""
         return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
     }
 

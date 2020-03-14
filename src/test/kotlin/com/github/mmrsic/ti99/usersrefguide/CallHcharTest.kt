@@ -85,4 +85,30 @@ class CallHcharTest {
         TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
     }
 
+    @Test
+    fun testHugeCharCode() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            listOf(
+                "CALL HCHAR(24,14,29752)",
+                "CALL HCHAR(24,14,35)",
+                "CALL HCHAR(24,14,132)"
+            ), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                16 to "  TI BASIC READY",
+                18 to " >CALL HCHAR(24,14,29752)",
+                19 to "             8",
+                20 to " >CALL HCHAR(24,14,35)",
+                21 to "             #",
+                22 to " >CALL HCHAR(24,14,132)",
+                23 to "             " + 132.toChar(),
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

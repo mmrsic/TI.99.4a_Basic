@@ -145,7 +145,7 @@ class CodeScreen {
         for ((index, code) in codes.withIndex()) {
             val row = startRow + index / numColumns
             val col = startCol + index % numColumns
-            codeTable[Pair(row, col)] = code
+            codeTable[Pair(row, col)] = code % 256
         }
     }
 
