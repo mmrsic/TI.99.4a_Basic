@@ -111,4 +111,37 @@ class CallHcharTest {
         )
     }
 
+    @Test
+    fun testRepetition() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 CALL CLEAR
+            110 FOR I=9 TO 15
+            120 CALL HCHAR(I,13,36,6)
+            130 NEXT I
+            140 GOTO 140
+            """.trimIndent(), machine
+        )
+        machine.addProgramLineHookAfterLine(140) {
+            throw TiBasicProgramException(140, Breakpoint())
+        }
+        interpreter.interpret("RUN", machine)
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                7 to " ".repeat(12) + "$".repeat(6),
+                8 to " ".repeat(12) + "$".repeat(6),
+                9 to " ".repeat(12) + "$".repeat(6),
+                10 to " ".repeat(12) + "$".repeat(6),
+                11 to " ".repeat(12) + "$".repeat(6),
+                12 to " ".repeat(12) + "$".repeat(6),
+                13 to " ".repeat(12) + "$".repeat(6),
+                23 to "  * BREAKPOINT AT 140",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
