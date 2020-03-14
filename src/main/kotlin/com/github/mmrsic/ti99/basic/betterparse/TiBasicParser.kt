@@ -61,11 +61,12 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val returnToken by token("RETURN")
     private val run by token("\\bRUN\\b")
     private val screen by token("SCREEN")
+    private val sound by token("SOUND")
     private val step by token("STEP")
     private val stop by token("STOP")
     private val tab by token("TAB")
     private val then by token("THEN")
-    private val to by token("TO")
+    private val to by token("TO\\b")
     private val trace by token("TRACE")
     private val unbreak by token("UNBREAK")
     private val untrace by token("UNTRACE")
@@ -99,9 +100,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val positiveDecimal by token("[0-9]*\\.[0-9]+")
     private val positiveInt by token("[0-9]+")
-    private val numericConst: Parser<NumericConstant> by optional(minus) and (positiveDecimal or positiveInt) and
+    private val numericConst: Parser<NumericConstant> by optional(minus or plus) and (positiveDecimal or positiveInt) and
             optional(e and optional(minus or plus) and positiveInt) use {
-        val factor = if (t1 == null) 1 else -1
+        val factor = if (t1?.text == minus.pattern) -1 else 1
         val mantissa = t2.text
         val exponent = if (t3 != null) {
             val exponentValue = t3!!.t3.text
@@ -301,6 +302,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and
             numericExpr and skip(closeParenthesis) use { ScreenSubprogram(this) }
+    private val callSound: Parser<Statement> by skip(call and sound and openParenthesis) and
+            numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and skip(closeParenthesis) use {
+        SoundSubprogram(t1, t2, t3)
+    }
     private val callVchar: Parser<Statement> by skip(call and vchar and openParenthesis) and
             numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and
             optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
@@ -308,7 +313,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         if (repetition != null) VcharSubprogram(t1, t2, t3, repetition) else VcharSubprogram(t1, t2, t3)
     }
     private val callParser: Parser<Statement> by callChar or callClear or callColor or callHchar or callScreen or
-            callVchar
+            callSound or callVchar
 
     // PARSER HIERARCHY
 

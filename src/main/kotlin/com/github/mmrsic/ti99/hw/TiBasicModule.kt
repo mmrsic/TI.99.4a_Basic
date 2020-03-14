@@ -21,6 +21,9 @@ class TiBasicModule : TiModule {
         fun onStore(lineNumber: Int, machine: TiBasicModule)
     }
 
+    /** Sound producing component of this [TiBasicModule]. */
+    val sound: TiSound = TiSoundDummy()
+
     /** The optional program currently held in this TI Basic Module's memory. */
     var program: TiBasicProgram? = null
         private set

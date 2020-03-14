@@ -197,6 +197,66 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
 }
 
 /**
+ * The SOUND subprogram tells the computer to produce tones of different frequencies. The values you include control
+ * three aspects of the tone:
+ *  * duration - how long the tone lasts
+ *  * frequency - what tone actually plays
+ *  * volume - how loud the tone is
+ *
+ *  The duration, frequency, and volume are numeric expressions. If the evaluation of any of the numeric expressions
+ *  results in a non-integer value, the result is rounded to obtain an integer. The valid ranges for each of these are
+ *  given in the table and discussed further below.
+ *  ```
+ *  Value           Range
+ *  duration        1 to 4250, inclusive
+ *                  -1 to -4250, inclusive
+ *  frequency       (Tone) 110 to 44733, inclusive
+ *                  (Noise) -1 to -8, inclusive
+ *  volume          0 (loudest) to 30 (quietest), inclusive
+ *  ```
+ *  A maximum of three tones and one noise can be activated simultaneously. For each tone or noise specified, its volume
+ *  must be indicated immediately following the tone or noise.
+ *  @param duration The duration is measured in milliseconds. Thus, the duration ranges from .001 to 4.25 seconds. (The
+ *  actual duration may vary as much as 1/60th of a second.) On a negative value, the previous sound is stopped and the
+ *  new one is begun immediately, otherwise the new sound is delayed until the previous finishes.
+ *  @param frequency1 The frequency may be either a tone or a noise. The tones, measured in Hertz (one cycle per
+ *  second), can be specified from a low-pitch of 100 Hz to a high-pitch of 44733 Hz, well above human hearing limits.
+ *  If a negative value for frequency is specified, a noise, rather than a tone, is produced. The noise is either a
+ *  "white noise", or "periodic noise". The noise associated with each value is given in the table below.
+ *   ```
+ *   Frequency value    Characteristic
+ *          -1          Periodic Noise, Type 1
+ *          -2          Periodic Noise, Type 2
+ *          -3          Periodic Noise, Type 3
+ *          -4          Periodic Noise that varies with the frequency of the third tone specified
+ *          -5          White Noise, Type 1
+ *          -6          White Noise, Type 2
+ *          -7          White Noise, Type 3
+ *          -8          White Noise that varies with the frequency of the third tone specified
+ *   ```
+ */
+class SoundSubprogram(
+    private val duration: NumericExpr,
+    private val frequency1: NumericExpr,
+    private val volume1: NumericExpr,
+    private val frequency2: NumericExpr? = null,
+    private val volume2: NumericExpr? = null,
+    private val frequency3: NumericExpr? = null,
+    private val volume3: NumericExpr? = null
+) : Statement, Command {
+    override val name = "SOUND"
+    override fun listText() = "CALL $name($duration,$frequency1,$volume1)"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.sound.play(
+            duration.value(),
+            frequency1.value(), volume1.value(),
+            frequency2?.value(), volume2?.value(),
+            frequency3?.value(), volume3?.value()
+        )
+    }
+}
+
+/**
  * The VCHAR subprogram performs very much like the [HcharSubprogram] except that it repeats characters vertically
  * rather than horizontally. The computer will display the character beginning at the specified position and continuing
  * down the screen. If the bottom of the screen is reached, the display will continue at the top of the next column to
