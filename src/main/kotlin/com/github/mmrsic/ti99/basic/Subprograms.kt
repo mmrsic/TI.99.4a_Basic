@@ -196,24 +196,31 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
     }
 }
 
+/**
+ * The VCHAR subprogram performs very much like the [HcharSubprogram] except that it repeats characters vertically
+ * rather than horizontally. The computer will display the character beginning at the specified position and continuing
+ * down the screen. If the bottom of the screen is reached, the display will continue at the top of the next column to
+ * the right. If the right edge of the screen is reached, the display will continue at the left edge. See the
+ * [HcharSubprogram] for more details.
+ */
 class VcharSubprogram(
     private val row: NumericExpr, private val column: NumericExpr,
-    private val characterCode: NumericExpr, private val repetition: NumericExpr = NumericConstant.ONE
+    private val charCode: NumericExpr, private val repetitions: NumericExpr = NumericConstant.ONE
 ) : Statement, Command {
     override val name = "VCHAR"
     override fun listText(): String {
         val rowPart = row.listText().trim()
         val columnPart = column.listText().trim()
-        val codePart = characterCode.listText().trim()
-        val optionalRepetitionPart = if (repetition != NumericConstant.ONE) ",${repetition.listText().trim()}" else ""
+        val codePart = charCode.listText().trim()
+        val optionalRepetitionPart = if (repetitions != NumericConstant.ONE) ",${repetitions.listText().trim()}" else ""
         return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val row = row.value().toNative().toInt()
         val column = column.value().toNative().toInt()
-        val characterCode = characterCode.value().toNative().toInt()
-        val repetition = repetition.value().toNative().toInt()
+        val characterCode = charCode.value().toNative().toInt()
+        val repetition = repetitions.value().toNative().toInt()
         machine.screen.vchar(row, column, characterCode, repetition)
     }
 }
