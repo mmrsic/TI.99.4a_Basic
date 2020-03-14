@@ -237,12 +237,10 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
  */
 class SoundSubprogram(
     private val duration: NumericExpr,
-    private val frequency1: NumericExpr,
-    private val volume1: NumericExpr,
-    private val frequency2: NumericExpr? = null,
-    private val volume2: NumericExpr? = null,
-    private val frequency3: NumericExpr? = null,
-    private val volume3: NumericExpr? = null
+    private val frequency1: NumericExpr, private val volume1: NumericExpr,
+    private val frequency2: NumericExpr? = null, private val volume2: NumericExpr? = null,
+    private val frequency3: NumericExpr? = null, private val volume3: NumericExpr? = null,
+    private val noise: NumericExpr? = null, private val volumeNoise: NumericExpr? = null
 ) : Statement, Command {
     override val name = "SOUND"
     override fun listText() = "CALL $name($duration,$frequency1,$volume1)"

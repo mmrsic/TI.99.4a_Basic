@@ -303,8 +303,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and
             numericExpr and skip(closeParenthesis) use { ScreenSubprogram(this) }
     private val callSound: Parser<Statement> by skip(call and sound and openParenthesis) and
-            numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and skip(closeParenthesis) use {
-        SoundSubprogram(t1, t2, t3)
+            numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and
+            optional(
+                skip(comma) and numericExpr and skip(comma) and numericExpr and
+                        optional(skip(comma) and numericExpr and skip(comma) and numericExpr and
+                        optional(skip(comma) and numericExpr and skip(comma) and numericExpr)
+            )) and skip(closeParenthesis) use {
+        when {
+            t4 == null -> SoundSubprogram(t1, t2, t3)
+            t4?.t3 == null -> SoundSubprogram(t1, t2, t3, t4?.t1, t4?.t2)
+            t4?.t3?.t3 == null -> SoundSubprogram(t1, t2, t3, t4?.t1, t4?.t2, t4?.t3?.t1, t4?.t3?.t2)
+            else -> SoundSubprogram(t1, t2, t3, t4?.t1, t4?.t2, t4?.t3?.t1, t4?.t3?.t2, t4?.t3?.t3?.t1, t4?.t3?.t3?.t2)
+        }
     }
     private val callVchar: Parser<Statement> by skip(call and vchar and openParenthesis) and
             numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and
