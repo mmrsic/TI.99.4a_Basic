@@ -2,6 +2,7 @@ package com.github.mmrsic.ti99.basic
 
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
+import com.github.mmrsic.ti99.basic.expr.NumericVariable
 import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiColor
@@ -113,6 +114,30 @@ class ColorSubprogram(
         machine.setColor(characterSetNumber.value(), foregrColorCode.value(), backgrColorCode.value())
     }
 }
+
+/**
+ * The GCHAR subprogram allows you to read a character from anywhere on the display screen.
+ * The row and column arguments are numeric expressions. If the evaluation of the numeric expressions results in a non-
+ * integer value, the result is rounded to obtain an integer.
+ * @param row row of the character position to read - a value between 1 (=top) and 24 (=bottom)
+ * @param column column of the character position to read - a value between 1 (=left side) and 32 (=right side)
+ * @param numericVarRef where to put the ASCII numeric code of the requested character
+ */
+class GcharSubprogram(
+    private val row: NumericExpr,
+    private val column: NumericExpr,
+    private val numericVarRef: NumericVariable
+) : Statement, Command {
+
+    override val name = "GCHAR"
+    override fun listText() = "CALL $name(${row.listText()},${column.listText()},$numericVarRef)"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val intRow = row.value().toNative().roundToInt()
+        val intCol = column.value().toNative().roundToInt()
+        machine.readScreenCharCode(numericVarRef.name, intRow, intCol)
+    }
+}
+
 
 /**
  * The HCHAR subprogram places a character anywhere on the screen and, optionally, repeats it horizontally. The

@@ -361,6 +361,22 @@ class TiBasicModule : TiModule {
         return defaultCharacterPattern(characterCode)
     }
 
+    /** Set the color of any of the available character sets to given foreground and background colors. */
+    fun setColor(characterSet: NumericConstant, foreground: NumericConstant, background: NumericConstant) {
+        val charSetNumber = characterSet.value().toNative().roundToInt()
+        val fCode = foreground.value().toNative().roundToInt()
+        val bCode = background.value().toNative().roundToInt()
+        val charSetColors = TiCharacterColor(TiColor.fromCode(fCode), TiColor.fromCode(bCode))
+        screen.colors.setCharacterSet(charSetNumber, charSetColors)
+    }
+
+    /** Read the code of the character currently displayed at the [screen] of this module. */
+    fun readScreenCharCode(numericVarName: String, row: Int, column: Int): Int {
+        val charCode = screen.codes.codeAt(row, column)
+        setNumericVariable(numericVarName, NumericConstant(charCode))
+        return charCode
+    }
+
     /** Print a given list of tokens onto the screen. */
     fun printTokens(expressions: List<Any>, programLineNumber: Int? = null) {
         val minCol = TiBasicScreen.FIRST_PRINT_COLUMN
@@ -498,15 +514,6 @@ class TiBasicModule : TiModule {
             else -> "0000000000000000"
         }
     }
-
-    fun setColor(characterSet: NumericConstant, foreground: NumericConstant, background: NumericConstant) {
-        val charSetNumber = characterSet.value().toNative().roundToInt()
-        val fCode = foreground.value().toNative().roundToInt()
-        val bCode = background.value().toNative().roundToInt()
-        val charSetColors = TiCharacterColor(TiColor.fromCode(fCode), TiColor.fromCode(bCode))
-        screen.colors.setCharacterSet(charSetNumber, charSetColors)
-    }
-
 }
 
 /** Check whether a given line number is in the allowed range. */
