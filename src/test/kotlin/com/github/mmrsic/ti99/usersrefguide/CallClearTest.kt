@@ -59,8 +59,8 @@ class CallClearTest {
             """.trimIndent(), machine
         )
         machine.addProgramLineHookAfter({ line -> line.lineNumber == 110 }, { tiBasicModule ->
-            TestHelperScreen.assertAllPatternsEqual("0103070F1F3F7FFF", tiBasicModule.screen)
-            tiBasicModule.addBreakpoint(120)
+            TestHelperScreen.assertAllPatternsEqual("0103070F1F3F7FFF", machine.screen)
+            machine.addBreakpoint(120)
         })
 
         interpreter.interpret("RUN", machine)

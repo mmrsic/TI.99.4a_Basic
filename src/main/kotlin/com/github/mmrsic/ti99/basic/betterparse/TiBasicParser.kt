@@ -31,6 +31,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val breakToken by token("BREAK")
     private val bye by token("\\bBYE\\b")
+    private val key by token("CALL\\s+KEY\\b")
     private val call by token("CALL")
     private val char by token("CHAR")
     private val clear by token("CLEAR")
@@ -305,15 +306,21 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         val repetition = t4
         if (repetition != null) HcharSubprogram(t1, t2, t3, repetition) else HcharSubprogram(t1, t2, t3)
     }
+    private val callKey: Parser<Statement> by skip(key and openParenthesis) and numericExpr and
+            skip(comma) and numericVarRef and skip(comma) and numericVarRef and skip(closeParenthesis) use {
+        KeySubprogram(t1, t2, t3)
+    }
     private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and
             numericExpr and skip(closeParenthesis) use { ScreenSubprogram(this) }
     private val callSound: Parser<Statement> by skip(call and sound and openParenthesis) and
             numericExpr and skip(comma) and numericExpr and skip(comma) and numericExpr and
             optional(
                 skip(comma) and numericExpr and skip(comma) and numericExpr and
-                        optional(skip(comma) and numericExpr and skip(comma) and numericExpr and
-                        optional(skip(comma) and numericExpr and skip(comma) and numericExpr)
-            )) and skip(closeParenthesis) use {
+                        optional(
+                            skip(comma) and numericExpr and skip(comma) and numericExpr and
+                                    optional(skip(comma) and numericExpr and skip(comma) and numericExpr)
+                        )
+            ) and skip(closeParenthesis) use {
         when {
             t4 == null -> SoundSubprogram(t1, t2, t3)
             t4?.t3 == null -> SoundSubprogram(t1, t2, t3, t4?.t1, t4?.t2)
@@ -328,7 +335,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         if (repetition != null) VcharSubprogram(t1, t2, t3, repetition) else VcharSubprogram(t1, t2, t3)
     }
     private val callParser: Parser<Statement> by callChar or callClear or callColor or callGchar or callHchar or
-            callScreen or callSound or callVchar
+            callKey or callScreen or callSound or callVchar
 
     // PARSER HIERARCHY
 

@@ -78,7 +78,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 /** Interpreter for TI Basic programs. */
 class TiBasicProgramInterpreter(
     machine: TiBasicModule,
-    private val codeSequenceProvider: CodeSequenceProvider,
+    private val keyboardInputProvider: KeyboardInputProvider,
     programD: Map<Int, List<Constant>>
 ) : TiBasicInterpreter(machine) {
 
@@ -175,14 +175,14 @@ class TiBasicProgramInterpreter(
         println("Set jump to program line number: $jumpToLineNumber")
     }
 
-    /** Accept user input from [codeSequenceProvider] into a given variable. */
+    /** Accept user input from [keyboardInputProvider] into a given variable. */
     fun acceptUserInput(variableNames: List<Expression>, inputLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
         acceptUserInputCtx.addCall(inputLineNumber, prompt)
         machine.printTokens(listOf(StringConstant(acceptUserInputCtx.prompt), PrintSeparator.Adjacent))
         val input = StringBuilder().apply {
             do {
-                val inputPart = codeSequenceProvider.provideInput(acceptUserInputCtx)
+                val inputPart = keyboardInputProvider.provideInput(acceptUserInputCtx)
                 if (inputPart.contains(TiFctnCode.Clear.toChar())) throw Breakpoint()
                 for (char in inputPart.takeWhile { it !in inputEndingChars }) append(char)
                 if (length > 10000) {
@@ -297,7 +297,7 @@ class TiBasicProgramInterpreter(
 
     private data class Gosub(val subprogramLineNumber: Int, val returnLineNumber: Int?)
 
-    private val acceptUserInputCtx = object : CodeSequenceProvider.Context {
+    private val acceptUserInputCtx = object : KeyboardInputProvider.InputContext {
         private val allCalls = mutableMapOf<Int, Int>()
         override var prompt: String = ""
             get() = if (unacceptedInputs > 0) "TRY AGAIN: " else field

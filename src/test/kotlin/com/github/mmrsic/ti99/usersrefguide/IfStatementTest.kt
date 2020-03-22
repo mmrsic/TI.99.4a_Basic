@@ -2,7 +2,7 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
-import com.github.mmrsic.ti99.hw.CodeSequenceProvider
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
@@ -14,8 +14,8 @@ class IfStatementTest {
     @Test
     fun testFindTheLargestInputValue() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                     println("Providing keyboard input for line=${ctx.programLine}, call=${ctx.programLineCalls}")
                     return when (ctx.programLine) {
                         110 -> "3\r"
@@ -77,8 +77,8 @@ class IfStatementTest {
     @Test
     fun testStringComparison() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                     println("Providing input for program line #${ctx.programLine}")
                     return when (ctx.programLine) {
                         100 -> "TEXAS\r".asSequence()
@@ -105,8 +105,8 @@ class IfStatementTest {
             """.trimIndent(), machine
         )
 
-        machine.setKeyboardInputProvider(object : CodeSequenceProvider {
-            override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                 println("Providing input for program line #${ctx.programLine}")
                 return when (ctx.programLine) {
                     100 -> "TAXES\r".asSequence()
@@ -146,8 +146,8 @@ class IfStatementTest {
     @Test
     fun testAlternativeFormat() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                     return when (ctx.programLine) {
                         100 -> when (ctx.programLineCalls) {
                             1, 2 -> "2\r"

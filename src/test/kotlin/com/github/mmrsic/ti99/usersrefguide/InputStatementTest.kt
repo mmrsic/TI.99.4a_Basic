@@ -2,7 +2,7 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
-import com.github.mmrsic.ti99.hw.CodeSequenceProvider
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
@@ -14,8 +14,8 @@ class InputStatementTest {
     @Test
     fun testSimpleNumberWithoutPrompt() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context) = "25\r".asSequence()
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext) = "25\r".asSequence()
             })
         }
         val interpreter = TiBasicCommandLineInterpreter(machine)
@@ -46,8 +46,8 @@ class InputStatementTest {
     @Test
     fun testVariousPrompts() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                     return when (ctx.prompt) {
                         "COST OF CAR?" -> "5500\r"
                         "TAX?" -> "500\r"
@@ -93,8 +93,8 @@ class InputStatementTest {
     @Test
     fun testVariableList() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context) = "10,HELLO,25,3.2\r".asSequence()
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext) = "10,HELLO,25,3.2\r".asSequence()
             })
         }
         val interpreter = TiBasicCommandLineInterpreter(machine)
@@ -128,8 +128,8 @@ class InputStatementTest {
     @Test
     fun testQuotedStringInputOptions() {
         val machine = TiBasicModule()
-        machine.setKeyboardInputProvider(object : CodeSequenceProvider {
-            override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                 return (when (ctx.programLine) {
                     100 -> "\"JONES, MARY\""
                     120 -> "\"\"\"HELLO THERE\"\"\""
@@ -186,8 +186,8 @@ class InputStatementTest {
     @Test
     fun testAssignmentFromLeftToRight() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context) = "3,7\r".asSequence()
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext) = "3,7\r".asSequence()
             })
         }
         val interpreter = TiBasicCommandLineInterpreter(machine)
@@ -219,8 +219,8 @@ class InputStatementTest {
     @Test
     fun testWarningsWrongNumberOfValuesAndWrongType() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                     return (when (ctx.unacceptedInputs) {
                         0 -> "12,HI,3"
                         1 -> "HI,3"
@@ -264,8 +264,8 @@ class InputStatementTest {
     @Test
     fun testNumericOverflowAndUnderflow() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                     return (when (ctx.unacceptedInputs) {
                         0 -> "23E139"
                         1 -> "23E-139"

@@ -2,7 +2,7 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
-import com.github.mmrsic.ti99.hw.CodeSequenceProvider
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
@@ -14,8 +14,8 @@ class ForToStepTest {
     @Test
     fun testComputingSimpleInterestForTenYears() {
         val machine = TiBasicModule().apply {
-            setKeyboardInputProvider(object : CodeSequenceProvider {
-                override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                     return when (ctx.programLine) {
                         110 -> "100\r"
                         120 -> ".0775\r"

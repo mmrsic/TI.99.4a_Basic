@@ -3,7 +3,7 @@ package com.github.mmrsic.ti99.usersrefguide
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.Breakpoint
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
-import com.github.mmrsic.ti99.hw.CodeSequenceProvider
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiCharacterColor
 import com.github.mmrsic.ti99.hw.TiColor
@@ -31,8 +31,8 @@ class CallScreenTest {
             180 GOTO 110
             """.trimIndent(), machine
         )
-        machine.setKeyboardInputProvider(object : CodeSequenceProvider {
-            override fun provideInput(ctx: CodeSequenceProvider.Context): Sequence<Char> {
+        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
                 if (ctx.programLineCalls > 1) throw Breakpoint()
                 return (when (ctx.prompt) {
                     "SCREEN COLOR?" -> "7"

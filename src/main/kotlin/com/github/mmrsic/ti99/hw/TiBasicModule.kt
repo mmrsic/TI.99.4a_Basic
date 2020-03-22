@@ -42,7 +42,7 @@ class TiBasicModule : TiModule {
     private var continueLine: Int? = null
 
     /** All program line hooks */
-    private val programLineHooks = mutableMapOf<(ProgramLine) -> Boolean, (TiBasicModule) -> Unit>()
+    private val programLineHooks = mutableMapOf<(ProgramLine) -> Boolean, (ProgramLine) -> Unit>()
 
     private var currentPrintColumn: Int? = null
 
@@ -327,7 +327,7 @@ class TiBasicModule : TiModule {
      * @param lineFilter executed after each program line, defining whether to execute the specified hook code
      * @param hookCode executed for every program line for which the specified filter returned true
      */
-    fun addProgramLineHookAfter(lineFilter: (ProgramLine) -> Boolean, hookCode: (TiBasicModule) -> Unit) {
+    fun addProgramLineHookAfter(lineFilter: (ProgramLine) -> Boolean, hookCode: (ProgramLine) -> Unit) {
         programLineHooks[lineFilter] = hookCode
     }
 
@@ -336,14 +336,14 @@ class TiBasicModule : TiModule {
      * @param lineNumber existing line number of the program executed
      * @param hookCode executed after the program line with the specified line number
      */
-    fun addProgramLineHookAfterLine(lineNumber: Int, hookCode: (TiBasicModule) -> Unit) {
+    fun addProgramLineHookAfterLine(lineNumber: Int, hookCode: (ProgramLine) -> Unit) {
         addProgramLineHookAfter({ programLine -> programLine.lineNumber == lineNumber }, hookCode)
     }
 
     internal fun programLineExecutionComplete(programLineNumber: Int) {
         program!!.withProgramLineNumberDo(programLineNumber) { programLine ->
             programLineHooks.entries.forEach {
-                if (it.key.invoke(programLine)) it.value.invoke(this)
+                if (it.key.invoke(programLine)) it.value.invoke(programLine)
             }
         }
     }
@@ -438,13 +438,13 @@ class TiBasicModule : TiModule {
         if (suppressScroll) currentPrintColumn = currCol else screen.scroll()
     }
 
-    /** Current [CodeSequenceProvider] used by this module. */
-    private var codeSequenceProvider: CodeSequenceProvider = object : CodeSequenceProvider {
+    /** Current [KeyboardInputProvider] used by this module. */
+    private var keyboardInputProvider: KeyboardInputProvider = object : KeyboardInputProvider {
     }
 
     /** Set the provider for keyboard input to a given instance. */
-    fun setKeyboardInputProvider(newProvider: CodeSequenceProvider) {
-        codeSequenceProvider = newProvider
+    fun setKeyboardInputProvider(newProvider: KeyboardInputProvider) {
+        keyboardInputProvider = newProvider
     }
 
     /**
@@ -461,6 +461,26 @@ class TiBasicModule : TiModule {
         currentPrintColumn = null
     }
 
+    /** Accept a single keyboard key press from the TI 99/4a keyboard. */
+    fun acceptKeyboardInput(
+        programLineNumber: Int?,
+        keyUnit: NumericConstant,
+        returnVar: NumericVariable,
+        statusVar: NumericVariable
+    ) {
+        val keyCode = keyboardInputProvider.currentlyPressedKeyCode(object : KeyboardInputProvider.CallKeyContext {
+            override val programLineNumber = programLineNumber
+            override val keyUnit = keyUnit.toNative().roundToInt()
+        })
+        if (keyCode == null) {
+            setNumericVariable(statusVar.name, NumericConstant.ZERO)
+            return
+        }
+        println("Keyboard codes: $keyCode")
+        setNumericVariable(statusVar.name, NumericConstant.ONE) // TODO: May be -1 if same key is pressed again
+        setNumericVariable(returnVar.name, NumericConstant(keyCode.code))
+    }
+
     /** Data for a program. */
     private val programData = mutableMapOf<Int, List<Constant>>()
 
@@ -474,7 +494,7 @@ class TiBasicModule : TiModule {
 
     private fun interpretProgram(startLine: Int?) {
         currentPrintColumn = null // TODO: Move to program interpreter?
-        val interpreter = TiBasicProgramInterpreter(this, codeSequenceProvider, programData)
+        val interpreter = TiBasicProgramInterpreter(this, keyboardInputProvider, programData)
         programInterpreter = interpreter
         interpretProgram(interpreter, startLine)
         programInterpreter = null

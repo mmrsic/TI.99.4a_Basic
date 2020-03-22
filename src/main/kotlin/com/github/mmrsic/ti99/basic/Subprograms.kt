@@ -182,6 +182,55 @@ class HcharSubprogram(
 }
 
 /**
+ * The KEY subprogram allows you to transfer one character from the keyboard directly to your program. This eliminates
+ * the need for an [InputStatement] and saves time in getting data from a single key into memory. The character
+ * represented by the key pressed is not displayed on the screen.
+ *
+ * A key-unit of 0 remaps the keyboard in whatever mode was specified in the previous CALL KEY program line.
+ * Key-units of 1 and 2 are used for a split-keyboard scan, when you want to separate the console keyboard into two
+ * smaller duplicate keyboards or when you are using the remote controller firebuttons as input devices.
+ *
+ * Specifying 3,4, or 5 as key-unit maps the keyboard to a particular mode of operation. The keyboard mode you specify
+ * determines the character codes returned by certain keys.
+ * A key-unit of 3 places the computer in the standard TI-99/4 keyboard mode. (Most Command Module software uses this
+ * mode.) In this mode, both upper- and lower-case alphabetical characters are returned by the computer as upper-case
+ * only, and the function keys (Back, Begin, Clear, etc.) return codes 1 through 15. No control characters are active.
+ * A key-unit of 4 remaps the keyboard in the Pascal mode. Here, both upper- and lower-case alphabetical character codes
+ * are returned by the computer, and the function keys return codes ranging from 129 through 143. The control character
+ * codes are 1 through 31.
+ * A key-unit of 5 places the keyboard in the BASIC mode. Both upper- and lower-case alphabetical character codes are
+ * returned by the computer. The function key codes are 1 through 15, and the control key codes are 128 through 159 (and
+ * 187).
+ *
+ * The return-variable must be a numeric variable. The computer will place in return-variable the numeric character code
+ * represented by the key pressed. If the unit used is the console keyboard (unit 0), the character codes are the normal
+ * ASCII codes and may range from 0-127. If you are using the split keyboard (unit 1 and/or unit 2), the character codes
+ * will be 0 through 19.
+ *
+ * The status-variable is a numeric variable which servers as an indicator to let you know what happened at the
+ * keyboard. The computer will return one of the following codes to the status-variable after performing the CALL KEY
+ * routine:
+ * * +1 = a new key was pressed since the last performance of the CALL KEY routine
+ * * -1 = the same key was pressed during the performance of CALL KEY as was pressed during the previous performance
+ * *  0 = no key was pressed
+ *
+ * @param keyUnit indicates which keyboard is the input device - a value between 0 and 5
+ * @param returnVar numeric variable name where to save the key character code
+ * @param statusVar numeric variable name where to save the key character code
+ */
+class KeySubprogram(
+    private val keyUnit: NumericExpr,
+    private val returnVar: NumericVariable,
+    private val statusVar: NumericVariable
+) : Statement, Command {
+    override val name = "KEY"
+    override fun listText() = "CALL $name()"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.acceptKeyboardInput(programLineNumber, keyUnit.value(), returnVar, statusVar)
+    }
+}
+
+/**
  * The SCREEN subprogram enhances the graphic capabilities of the TI computer by allowing you to change the screen
  * color. The standard screen color while a program is running is light green (color-code = 4).
  *
