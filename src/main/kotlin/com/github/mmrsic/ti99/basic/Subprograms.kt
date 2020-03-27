@@ -4,6 +4,8 @@ import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.NumericVariable
 import com.github.mmrsic.ti99.basic.expr.StringExpr
+import com.github.mmrsic.ti99.hw.StickHorizontalDirection
+import com.github.mmrsic.ti99.hw.StickVerticalDirection
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiColor
 import kotlin.math.roundToInt
@@ -178,6 +180,52 @@ class HcharSubprogram(
         val characterCode = charCode.value().toNative().roundToInt()
         val repetition = repetitions.value().toNative().roundToInt()
         machine.screen.hchar(row, column, characterCode, repetition)
+    }
+}
+
+/**
+ * The JOYST subprogram allows you to input information to the computer based on the position of the lever on the Wired
+ * Remote Controllers accessory (available separately).
+ *
+ * The key-unit is a [NumericExpr] which, when evaluated, has a value of 1 through 4. Specifying a key-unit of 3,4, or 5
+ * maps the console keyboard to a particular mode of operation, as explained in [KeySubprogram]. If key-unit has a value
+ * of 3, 4, or 5, the computer will not properly detect input from the remote controllers.
+ *
+ * Numeric variables must be used for xReturn and yReturn. The subprogram assigns an integer value of -4, +4, or 0 to
+ * each of these variables, based on the position of the joystick at that time:
+ * ```
+ *                                              (0,4)
+ *                                  (-4,4)                  (4,4)
+ *                      (-4,0)                  (0,0)                 (4,0)
+ *                                  (-4,-4)                 (4,-4)
+ *                                              (0,-4)
+ * ```
+ *
+ * @param keyUnit 1 = controller 1 - 2 = controller 2 - 3, 4, and 5 = specific modes for console keyboard
+ * @param xReturn filled with a value of -4, 0, or 4, according to the values above, where the first value is the x
+ * return value
+ * @param yReturn filled with a value of -4, 0, or 4, according to the values above, where the second value is the y
+ * return value
+ */
+class JoystSubprogram(private val keyUnit: NumericExpr, val xReturn: NumericVariable, val yReturn: NumericVariable) :
+    Statement, Command {
+    override val name = "JOYST"
+    override fun listText() = "CALL $name(${keyUnit.listText()},${xReturn.listText()},${yReturn.listText()})"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val state = machine.getJoystickState(keyUnit.value())
+        println("CALL JOYST: $state")
+        val x = when (state.horizontalDirection) {
+            StickHorizontalDirection.LEFT -> -4
+            StickHorizontalDirection.RIGHT -> 4
+            StickHorizontalDirection.NONE -> 0
+        }
+        machine.setNumericVariable(xReturn.name, NumericConstant(x))
+        val y = when (state.verticalDirection) {
+            StickVerticalDirection.UP -> 4
+            StickVerticalDirection.DOWN -> -4
+            StickVerticalDirection.NONE -> 0
+        }
+        machine.setNumericVariable(yReturn.name, NumericConstant(y))
     }
 }
 

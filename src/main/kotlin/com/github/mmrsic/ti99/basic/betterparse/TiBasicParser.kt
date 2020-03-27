@@ -31,6 +31,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val breakToken by token("BREAK")
     private val bye by token("\\bBYE\\b")
+    private val joyst by token("CALL\\s+JOYST\\b")
     private val key by token("CALL\\s+KEY\\b")
     private val call by token("CALL")
     private val char by token("CHAR")
@@ -306,6 +307,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         val repetition = t4
         if (repetition != null) HcharSubprogram(t1, t2, t3, repetition) else HcharSubprogram(t1, t2, t3)
     }
+    private val callJoyst: Parser<Statement> by skip(joyst and openParenthesis) and numericExpr and skip(comma) and
+            numericVarRef and skip(comma) and numericVarRef and skip(closeParenthesis) use {
+        JoystSubprogram(t1, t2, t3)
+    }
     private val callKey: Parser<Statement> by skip(key and openParenthesis) and numericExpr and
             skip(comma) and numericVarRef and skip(comma) and numericVarRef and skip(closeParenthesis) use {
         KeySubprogram(t1, t2, t3)
@@ -335,7 +340,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         if (repetition != null) VcharSubprogram(t1, t2, t3, repetition) else VcharSubprogram(t1, t2, t3)
     }
     private val callParser: Parser<Statement> by callChar or callClear or callColor or callGchar or callHchar or
-            callKey or callScreen or callSound or callVchar
+            callJoyst or callKey or callScreen or callSound or callVchar
 
     // PARSER HIERARCHY
 

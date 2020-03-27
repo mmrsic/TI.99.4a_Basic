@@ -481,6 +481,20 @@ class TiBasicModule : TiModule {
         setNumericVariable(returnVar.name, NumericConstant(keyCode.code))
     }
 
+    private val joysticks: MutableMap<Int, Joystick> = mutableMapOf()
+
+    /** Plug-in a given [Joystick] as usable by this [TiBasicModule]. */
+    fun plugInJoystick(joystick: Joystick) {
+        joysticks[joystick.id] = joystick
+        println("Plugged in: $joystick")
+    }
+
+    /** The [Joystick.State] given by a joystick's ID. */
+    fun getJoystickState(id: NumericConstant): Joystick.State {
+        val joystick = joysticks[id.toNative().roundToInt()]
+        return joystick?.currentState() ?: Joystick.DefaultState
+    }
+
     /** Data for a program. */
     private val programData = mutableMapOf<Int, List<Constant>>()
 
