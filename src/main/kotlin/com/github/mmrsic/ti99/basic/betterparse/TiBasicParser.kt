@@ -29,8 +29,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val seg by token("SEG\\$")
     private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
 
+    private val abs by token("\\bABS\\b")
+    private val atn by token("\\bATN\\b")
     private val breakToken by token("BREAK")
     private val bye by token("\\bBYE\\b")
+    private val cos by token("\\bCOS\\b")
     private val joyst by token("CALL\\s+JOYST\\b")
     private val key by token("CALL\\s+KEY\\b")
     private val call by token("CALL")
@@ -42,6 +45,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val display by token("DISPLAY")
     private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
+    private val exp by token("\\bEXP\\b")
     private val forToken by token("FOR")
     private val gchar by token("GCHAR\\b")
     private val gosub by token("GOSUB")
@@ -52,6 +56,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val int by token("INT")
     private val let by token("LET")
     private val list by token("\\bLIST\\b")
+    private val log by token("\\bLOG\\b")
     private val new by token("\\bNEW\\b")
     private val next by token("NEXT")
     private val number by token("""NUM(BER)?""")
@@ -137,13 +142,28 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         StringConcatenation(listOf(a, b))
     }
 
+    private val absFun by skip(abs) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        AbsFunction(this)
+    }
+    private val atnFun by skip(atn) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        AtnFunction(this)
+    }
+    private val cosFun by skip(cos) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        CosFunction(this)
+    }
+    private val expFun by skip(exp) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        ExpFunction(this)
+    }
     private val intFun by skip(int) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         IntFunction(this)
+    }
+    private val logFun by skip(log) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        LogFunction(this)
     }
     private val tabFun by skip(tab) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         TabFunction(this)
     }
-    private val numericFun by intFun
+    private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun
     private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         NumericArrayAccess(t1.text, t2, machine)
     }

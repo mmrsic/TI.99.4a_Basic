@@ -1,5 +1,6 @@
 package com.github.mmrsic.ti99.basic.expr
 
+import com.github.mmrsic.ti99.basic.BadArgument
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -25,15 +26,6 @@ data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("
 }
 
 /**
- * The ASC function gives the ASCII character code which corresponds to the first character of string-expression.
- * The ASC function is the inverse of the [ChrFunction] function
- */
-data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("ASC") {
-    override fun value(): NumericConstant = NumericConstant(toAsciiCode(stringExpr.value().toNative()[0]))
-    override fun listArgs() = stringExpr.listText()
-}
-
-/**
  * The ATN function returns the measure of the angle (in radians) whose tangent is numeric-expression.
  * If you want the equivalent angle in degrees, multiply by 180/PI. The value given by the ATN function is always
  * in the range -PI/2 < ATN(X) < PI/2.
@@ -48,13 +40,23 @@ data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * If the angle is in degrees, multiply the number of degrees by PI/180 to get the equivalent angle in radians.
  */
 data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("COS") {
-    override fun value() = NumericConstant(cos(radianExpr.value().toNative()))
+    companion object {
+        /** Maximum allowed value for argument [radianExpr] according to User's Reference Guide. */
+        private val maxArgValue = 1.5707963266375 * (10.0.pow(10))
+    }
+
+    override fun value(): NumericConstant {
+        val arg = radianExpr.value().toNative()
+        if (abs(arg) >= maxArgValue) throw BadArgument()
+        return NumericConstant(cos(arg))
+    }
+
     override fun listArgs() = radianExpr.listText()
 }
 
 /**
- * The EXP function returns the exponential value (e^x) of numeric-expression.
- * The value of e is 2.718281828459.
+ * The EXP function returns the exponential value (e^x) of numeric-expression. The value of e is 2.718281828459. The
+ * exponential function is the inverse of the natural logarithm function ([LogFunction]). Thus, X = EXP(LOG(X)).
  */
 data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("EXP") {
     override fun value() = NumericConstant(exp(numericExpr.value().toNative()))
@@ -69,22 +71,24 @@ data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("
     override fun listArgs() = numericExpr.listText()
 }
 
-
-/**
- * The LEN function returns the number of characters in string-expression.
- * A space counts as a character.
- */
-data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LEN") {
-    override fun value() = NumericConstant(stringExpr.value().toNative().length)
-    override fun listArgs() = stringExpr.listText()
-}
-
 /**
  * The LOG function returns the natural logarithm of numeric-expression where numeric-expression is greater than zero.
- * The LOG function is the inverse of [ExpFunction].
+ * The LOG function is the inverse of the [ExpFunction]. Thus, X = LOG(EXP(X)).
+ *
+ * The argument of the natural logarithm must be greater than zero, otherwise the message "BAD ARGUMENT" is displayed.
  */
 data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("LOG") {
-    override fun value() = NumericConstant(ln(numericExpr.value().toNative()))
+    companion object {
+        /** Lower bound for [numericExpr] value. */
+        const val lowerBoundValue = 0
+    }
+
+    override fun value(): NumericConstant {
+        val arg = numericExpr.value().toNative()
+        if (arg <= lowerBoundValue) throw BadArgument()
+        return NumericConstant(ln(arg))
+    }
+
     override fun listArgs() = numericExpr.listText()
 }
 

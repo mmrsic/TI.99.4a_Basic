@@ -6,10 +6,13 @@ import com.github.mmrsic.ti99.hw.TiBasicScreen
 sealed class TiBasicException(msg: String) : Exception(msg) {
     /** Check whether this exception represents a warning only, and a program may proceed. */
     open val isWarning: Boolean = false
+
     /** Optional line number of this exception. */
     open val lineNumber: Int? = null
+
     /** Text used when optional [lineNumber] is displayed. */
     open val lineNumberPrefix: String = "IN"
+
     /** Whether [displayOn] will scroll the screen's contents after displaying this exception. */
     open val scrollAfterDisplay: Boolean = true
 
@@ -49,6 +52,7 @@ class BadLineNumberWarning : TiBasicWarning("BAD LINE NUMBER") {
     override val scrollAfterDisplay = false
 }
 
+class BadArgument : TiBasicError("BAD ARGUMENT")
 class BadName : TiBasicError("BAD NAME")
 class BadValue : TiBasicError("BAD VALUE")
 class Breakpoint : TiBasicError("BREAKPOINT") {

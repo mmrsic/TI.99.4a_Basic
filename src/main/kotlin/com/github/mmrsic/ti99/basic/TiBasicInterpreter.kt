@@ -45,6 +45,10 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
             screen.scroll()
             screen.print("* ${e.message}")
             screen.scroll()
+        } catch (e: BadArgument) {
+            screen.scroll()
+            screen.print("* ${e.message}")
+            screen.scroll()
         } catch (e: BadName) {
             screen.print("* ${e.message}")
             screen.scroll()
