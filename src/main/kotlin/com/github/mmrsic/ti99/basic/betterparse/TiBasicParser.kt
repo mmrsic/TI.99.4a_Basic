@@ -89,6 +89,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val step by token("STEP")
     private val stop by token("STOP")
     private val tab by token("TAB")
+    private val tan by token("\\bTAN\\b")
     private val then by token("THEN")
     private val to by token("TO\\b")
     private val trace by token("TRACE")
@@ -168,8 +169,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val sinFun by skip(sin) and singleNumericArg use { SinFunction(this) }
     private val sqrFun by skip(sqr) and singleNumericArg use { SqrFunction(this) }
     private val tabFun by skip(tab) and singleNumericArg use { TabFunction(this) }
+    private val tanFun by skip(tan) and singleNumericArg use { TanFunction(this) }
     private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun or rndFun or sgnFun or sinFun or
-            sqrFun
+            sqrFun or tanFun
     private val numericArrRef by name and singleNumericArg use { NumericArrayAccess(t1.text, t2, machine) }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }

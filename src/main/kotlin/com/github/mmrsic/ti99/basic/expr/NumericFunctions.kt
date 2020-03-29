@@ -11,6 +11,7 @@ import kotlin.math.pow
 import kotlin.math.sign
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.tan
 
 /**
  * A numeric function is a TI Basic function which returns a [NumericExpr].
@@ -74,7 +75,7 @@ data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("
 data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("COS") {
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         val arg = radianExpr.value(lambda).toNative()
-        if (abs(arg) >= maxArgTrigonimicFunction) throw BadArgument()
+        if (abs(arg) >= maxArgTrigonometricFunction) throw BadArgument()
         val result = NumericConstant(cos(arg))
         lambda.invoke(result)
         return result
@@ -196,7 +197,7 @@ data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("
 data class SinFunction(private val radianExpr: NumericExpr) : NumericFunction("SIN") {
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         val arg = radianExpr.value(lambda).toNative()
-        if (abs(arg) >= maxArgTrigonimicFunction) throw BadArgument()
+        if (abs(arg) >= maxArgTrigonometricFunction) throw BadArgument()
         val result = NumericConstant(sin(arg))
         lambda.invoke(result)
         return result
@@ -221,10 +222,29 @@ data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("
     override fun listArgs() = numericExpr.listText()
 }
 
+/**
+ * The TAN function gives the trigonometric tangent of [radianExpr]. If the angle is in degrees, multiply the number of
+ * degrees by PI/180 to get the equivalent angle in radians. You may use (4*ATN(1))/180 for PI/180.
+ *
+ * Note that BAD ARGUMENT is displayed and the program stops running if the value of the radian expression is greater
+ * than or equal to [maxArgTrigonometricFunction].
+ */
+data class TanFunction(private val radianExpr: NumericExpr) : NumericFunction("TAN") {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant {
+        val arg = radianExpr.value(lambda).toNative()
+        if (arg >= maxArgTrigonometricFunction) throw BadArgument()
+        val result = NumericConstant(tan(arg))
+        lambda.invoke(result)
+        return result
+    }
+
+    override fun listArgs() = radianExpr.listText()
+}
+
 
 /** Convert a given character into its corresponding ASCII code. */
 fun toAsciiCode(c: Char) = c.toInt()
 
-/** Maximum allowed value for argument [radianExpr] according to User's Reference Guide. */
-private val maxArgTrigonimicFunction = 1.5707963266375 * (10.0.pow(10))
+/** Maximum allowed value for argument of trigonometric functions (according to User's Reference Guide). */
+private val maxArgTrigonometricFunction = 1.5707963266375 * (10.0.pow(10))
 

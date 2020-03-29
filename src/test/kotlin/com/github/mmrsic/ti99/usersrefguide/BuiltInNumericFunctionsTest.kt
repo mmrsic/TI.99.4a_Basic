@@ -399,4 +399,42 @@ class BuiltInNumericFunctionsTest {
         )
     }
 
+    @Test
+    fun testTangent() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=.7853981633973
+            110 B=45
+            120 C=.01745329251994
+            130 PRINT TAN(A);TAN(B*C)
+            140 PRINT TAN(B*(4*ATN(1))/180)
+            150 END
+            RUN
+            PRINT TAN(1.76E10)
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                5 to "  TI BASIC READY",
+                7 to " >100 A=.7853981633973",
+                8 to " >110 B=45",
+                9 to " >120 C=.01745329251994",
+                10 to " >130 PRINT TAN(A);TAN(B*C)",
+                11 to " >140 PRINT TAN(B*(4*ATN(1))/1",
+                12 to "  80)",
+                13 to " >150 END",
+                14 to " >RUN",
+                15 to "   1.  1.",
+                16 to "   1",
+                18 to "  ** DONE **",
+                20 to " >PRINT TAN(1.76E10)",
+                22 to "  * BAD ARGUMENT",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
