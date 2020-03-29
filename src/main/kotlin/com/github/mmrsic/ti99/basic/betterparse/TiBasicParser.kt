@@ -85,6 +85,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val sgn by token("\\bSGN\\b")
     private val sin by token("\\bSIN\\b")
     private val sound by token("SOUND")
+    private val sqr by token("\\bSQR\\b")
     private val step by token("STEP")
     private val stop by token("STOP")
     private val tab by token("TAB")
@@ -137,15 +138,14 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     // PARSERS //
 
+    private val singleNumericArg by skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis)
     private val positiveIntConst by positiveInt use { text.toInt() }
 
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
     private val segFun by skip(seg) and skip(openParenthesis) and
             parser(::stringExpr) and skip(comma) and parser(::numericExpr) and skip(comma) and parser(::numericExpr) and
             skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
-    private val chrFun by skip(chr) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        ChrFunction(this)
-    }
+    private val chrFun by skip(chr) and singleNumericArg use { ChrFunction(this) }
     private val stringFun by segFun or chrFun
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
@@ -157,38 +157,20 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         StringConcatenation(listOf(a, b))
     }
 
-    private val absFun by skip(abs) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        AbsFunction(this)
-    }
-    private val atnFun by skip(atn) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        AtnFunction(this)
-    }
-    private val cosFun by skip(cos) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        CosFunction(this)
-    }
-    private val expFun by skip(exp) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        ExpFunction(this)
-    }
-    private val intFun by skip(int) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        IntFunction(this)
-    }
-    private val logFun by skip(log) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        LogFunction(this)
-    }
+    private val absFun by skip(abs) and singleNumericArg use { AbsFunction(this) }
+    private val atnFun by skip(atn) and singleNumericArg use { AtnFunction(this) }
+    private val cosFun by skip(cos) and singleNumericArg use { CosFunction(this) }
+    private val expFun by skip(exp) and singleNumericArg use { ExpFunction(this) }
+    private val intFun by skip(int) and singleNumericArg use { IntFunction(this) }
+    private val logFun by skip(log) and singleNumericArg use { LogFunction(this) }
     private val rndFun by rnd asJust RndFunction(machine::nextRandom)
-    private val sgnFun by skip(sgn) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        SgnFunction(this)
-    }
-    private val sinFun by skip(sin) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        SinFunction(this)
-    }
-    private val tabFun by skip(tab) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        TabFunction(this)
-    }
-    private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun or rndFun or sgnFun or sinFun
-    private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
-        NumericArrayAccess(t1.text, t2, machine)
-    }
+    private val sgnFun by skip(sgn) and singleNumericArg use { SgnFunction(this) }
+    private val sinFun by skip(sin) and singleNumericArg use { SinFunction(this) }
+    private val sqrFun by skip(sqr) and singleNumericArg use { SqrFunction(this) }
+    private val tabFun by skip(tab) and singleNumericArg use { TabFunction(this) }
+    private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun or rndFun or sgnFun or sinFun or
+            sqrFun
+    private val numericArrRef by name and singleNumericArg use { NumericArrayAccess(t1.text, t2, machine) }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
     }

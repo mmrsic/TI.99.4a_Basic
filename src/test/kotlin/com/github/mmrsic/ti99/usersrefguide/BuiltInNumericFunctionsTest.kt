@@ -368,4 +368,35 @@ class BuiltInNumericFunctionsTest {
         )
     }
 
+    @Test
+    fun testSquareRoot() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 PRINT SQR(4);4^(1/2)
+            110 PRINT SQR(10)
+            120 END
+            RUN
+            PRINT SQR(-5)
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 PRINT SQR(4);4^(1/2)",
+                12 to " >110 PRINT SQR(10)",
+                13 to " >120 END",
+                14 to " >RUN",
+                15 to "   2  2",
+                16 to "   3.16227766",
+                18 to "  ** DONE **",
+                20 to " >PRINT SQR(-5)",
+                22 to "  * BAD ARGUMENT",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

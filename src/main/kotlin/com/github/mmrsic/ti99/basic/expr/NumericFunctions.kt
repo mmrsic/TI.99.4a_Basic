@@ -211,7 +211,9 @@ data class SinFunction(private val radianExpr: NumericExpr) : NumericFunction("S
  */
 data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("SQR") {
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-        val result = NumericConstant(sqrt(numericExpr.value(lambda).toNative()))
+        val arg = numericExpr.value(lambda).toNative()
+        if (arg < 0) throw BadArgument()
+        val result = NumericConstant(sqrt(arg))
         lambda.invoke(result)
         return result
     }
