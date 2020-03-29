@@ -17,7 +17,6 @@ class SqrFunctionTest {
     fun testTwoPointFiveSevenE5() {
         val argument = NumericConstant(2.57e5)
         val result = SqrFunction(argument).value()
-        assertEquals(506.9516742255, result.toNative(), "SQR($argument)")
         assertEquals(" 506.9516742 ", result.displayValue(), "SQR($argument)")
     }
 

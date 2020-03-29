@@ -9,7 +9,7 @@ class SinFunctionTest {
     fun testPointFiveSomething() {
         val argument = NumericConstant(.5235987755982)
         val result = SinFunction(argument).value()
-        assertEquals(.5, result.toNative(), "SIN($argument)")
+        assertEquals(" .5 ", result.displayValue(), "SIN($argument)")
     }
 
 }

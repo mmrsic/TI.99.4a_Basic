@@ -7,27 +7,37 @@ class AscFunctionTest {
 
     @Test
     fun testCharA() {
-        assertEquals(65, AscFunction(StringConstant("A")).value().toNative().toInt())
+        val result = AscFunction(StringConstant("A")).value()
+        assertEquals(65, result.toNative().toInt())
+        assertEquals(" 65 ", result.displayValue())
     }
 
     @Test
     fun testCharC() {
-        assertEquals(67, AscFunction(StringConstant("C")).value().toNative().toInt())
+        val result = AscFunction(StringConstant("C")).value()
+        assertEquals(67, result.toNative().toInt())
+        assertEquals(" 67 ", result.displayValue())
     }
 
     @Test
     fun testChar1() {
-        assertEquals(49, AscFunction(StringConstant("1")).value().toNative().toInt())
+        val result = AscFunction(StringConstant("1")).value()
+        assertEquals(49, result.toNative().toInt())
+        assertEquals(" 49 ", result.displayValue())
     }
 
     @Test
     fun testStringHello() {
-        assertEquals(72, AscFunction(StringConstant("HELLO")).value().toNative().toInt())
+        val result = AscFunction(StringConstant("HELLO")).value()
+        assertEquals(72, result.toNative().toInt())
+        assertEquals(" 72 ", result.displayValue())
     }
 
     @Test
     fun testStringGutenTag() {
-        assertEquals(71, AscFunction(StringConstant("GUTEN TAG")).value().toNative().toInt())
+        val result = AscFunction(StringConstant("GUTEN TAG")).value()
+        assertEquals(71, result.toNative().toInt())
+        assertEquals(" 71 ", result.displayValue())
     }
 
     @Test

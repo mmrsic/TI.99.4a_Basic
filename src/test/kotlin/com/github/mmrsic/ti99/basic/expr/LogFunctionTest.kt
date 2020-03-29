@@ -9,7 +9,7 @@ class LogFunctionTest {
     fun testThreePointFour() {
         val argument = 3.4
         val result = LogFunction(NumericConstant(argument)).value()
-        assertEquals(1.2237754316, result.toNative(), "LOG($argument)")
+        assertEquals(" 1.223775432 ", result.displayValue(), "LOG($argument)")
     }
 
     @Test
