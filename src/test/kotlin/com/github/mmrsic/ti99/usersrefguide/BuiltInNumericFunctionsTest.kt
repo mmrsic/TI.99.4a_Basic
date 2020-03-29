@@ -297,4 +297,37 @@ class BuiltInNumericFunctionsTest {
         )
     }
 
+    @Test
+    fun testSign() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=-23.7
+            110 B=6
+            120 PRINT SGN(A);SGN(0);SGN(B)
+            130 PRINT SGN(-3*3);SGN(B*2)
+            140 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 A=-23.7",
+                12 to " >110 B=6",
+                13 to " >120 PRINT SGN(A);SGN(0);SGN(",
+                14 to "  B)",
+                15 to " >130 PRINT SGN(-3*3);SGN(B*2)",
+                17 to " >140 END",
+                18 to " >RUN",
+                19 to "  -1  0  1",
+                20 to "  -1  1",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
