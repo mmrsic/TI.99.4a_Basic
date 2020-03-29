@@ -5,8 +5,11 @@ package com.github.mmrsic.ti99.basic.expr
  * It has a value, a display value and a list text.
  */
 interface Expression {
+
     /** Value of this expression as a [Constant]. */
-    fun value(): Constant
+    fun value(lambda: (value: Constant) -> Any = {}): Constant {
+        return value()
+    }
 
     /** [value] of this expression as printed on the TI Basic screen. */
     fun displayValue(): String
@@ -18,7 +21,7 @@ interface Expression {
 /**
  * A constant may be converted to a native value, that is, a Kotlin value.
  */
-interface Constant {
+interface Constant : Expression {
     /** The original constant of this instance. */
     val constant: Any
 
@@ -44,7 +47,7 @@ enum class PrintSeparator : Expression {
     }
 
     override fun listText() = displayValue()
-    override fun value() = StringConstant(displayValue())
+    override fun value(lambda: (value: Constant) -> Any): Constant = StringConstant(displayValue())
 
     companion object {
         /**

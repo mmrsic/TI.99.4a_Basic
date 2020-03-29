@@ -10,30 +10,14 @@ abstract class StringFunction(val name: String) : StringExpr() {
 }
 
 /**
- * The ASC function gives the ASCII character code which corresponds to the first character of string-expression.
- * The ASC function is the inverse of the [ChrFunction] function
- */
-data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("ASC") {
-    override fun value(): NumericConstant = NumericConstant(toAsciiCode(stringExpr.value().toNative()[0]))
-    override fun listArgs() = stringExpr.listText()
-}
-
-/**
  * The CHR$ function returns the character corresponding to the ASCII character code specified by numeric-expression.
  * The CHR$ function is the inverse of the [AscFunction]
  */
 data class ChrFunction(private val numericExpr: NumericExpr) : StringFunction("CHR$") {
-    override fun value() = StringConstant(toChar(numericExpr.value().toNative().toInt()))
-    override fun listArgs(): String = numericExpr.listText()
-}
+    override fun value(lambda: (value: Constant) -> Any): StringConstant =
+        StringConstant(toChar(numericExpr.value().toNative().toInt()))
 
-/**
- * The LEN function returns the number of characters in string-expression.
- * A space counts as a character.
- */
-data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LEN") {
-    override fun value() = NumericConstant(stringExpr.value().toNative().length)
-    override fun listArgs() = stringExpr.listText()
+    override fun listArgs(): String = numericExpr.listText()
 }
 
 /**
@@ -45,7 +29,7 @@ data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LE
 data class SegFunction(private val str: StringExpr, private val pos: NumericExpr, private val len: NumericExpr) :
     StringFunction("SEG$") {
 
-    override fun value(): StringConstant {
+    override fun value(lambda: (value: Constant) -> Any): StringConstant {
         val original = str.value().toNative()
         val kotlinStart = pos.value().toNative().toInt() - 1
         val kotlinEnd = kotlinStart + len.value().toNative().toInt()
@@ -61,7 +45,7 @@ data class SegFunction(private val str: StringExpr, private val pos: NumericExpr
  * of numeric-expression. The STR$ is the inverse of the [ValFunction].
  */
 data class StrFunction(private val numericExpr: NumericExpr) : StringFunction("STR$") {
-    override fun value() = StringConstant(numericExpr.displayValue())
+    override fun value(lambda: (value: Constant) -> Any): StringConstant = StringConstant(numericExpr.displayValue())
     override fun listArgs(): String = numericExpr.listText()
 }
 

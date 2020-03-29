@@ -1,12 +1,40 @@
 package com.github.mmrsic.ti99.hw
 
-import com.github.mmrsic.ti99.basic.*
-import com.github.mmrsic.ti99.basic.expr.*
-import java.util.*
+import com.github.mmrsic.ti99.basic.BadLineNumber
+import com.github.mmrsic.ti99.basic.BadLineNumberWarning
+import com.github.mmrsic.ti99.basic.BadName
+import com.github.mmrsic.ti99.basic.Breakpoint
+import com.github.mmrsic.ti99.basic.CantContinue
+import com.github.mmrsic.ti99.basic.CantDoThat
+import com.github.mmrsic.ti99.basic.NumberTooBig
+import com.github.mmrsic.ti99.basic.ProgramLine
+import com.github.mmrsic.ti99.basic.PseudoRandomGenerator
+import com.github.mmrsic.ti99.basic.SkippedOnContinue
+import com.github.mmrsic.ti99.basic.TiBasicException
+import com.github.mmrsic.ti99.basic.TiBasicProgram
+import com.github.mmrsic.ti99.basic.TiBasicProgramException
+import com.github.mmrsic.ti99.basic.TiBasicProgramInterpreter
+import com.github.mmrsic.ti99.basic.TiBasicWarning
+import com.github.mmrsic.ti99.basic.expr.Constant
+import com.github.mmrsic.ti99.basic.expr.Expression
+import com.github.mmrsic.ti99.basic.expr.NumericArrayAccess
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
+import com.github.mmrsic.ti99.basic.expr.NumericExpr
+import com.github.mmrsic.ti99.basic.expr.NumericVariable
+import com.github.mmrsic.ti99.basic.expr.PrintSeparator
+import com.github.mmrsic.ti99.basic.expr.StringConstant
+import com.github.mmrsic.ti99.basic.expr.StringExpr
+import com.github.mmrsic.ti99.basic.expr.StringVariable
+import com.github.mmrsic.ti99.basic.expr.TabFunction
+import com.github.mmrsic.ti99.basic.expr.toAsciiCode
+import java.util.TreeMap
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+/**
+ * A [TiModule] for TI Basic.
+ */
 class TiBasicModule : TiModule {
 
     /** A dependent of a [TiBasicModule]. */
@@ -51,6 +79,7 @@ class TiBasicModule : TiModule {
 
     private val characterPatterns: MutableMap<Int, String> = TreeMap()
 
+    /** TI Basic screen component as a 32x24 characters grid of 8x8 pixels. */
     val screen = TiBasicScreen { code -> getCharacterPattern(code) }
 
     init {
@@ -378,25 +407,25 @@ class TiBasicModule : TiModule {
     }
 
     /** Print a given list of tokens onto the screen. */
-    fun printTokens(expressions: List<Any>, programLineNumber: Int? = null) {
+    fun printTokens(tokens: List<Expression>, programLineNumber: Int? = null) {
         val minCol = TiBasicScreen.FIRST_PRINT_COLUMN
         val maxCol = TiBasicScreen.LAST_PRINT_COLUMN
         val rightHalfMinCol = (TiBasicScreen.NUM_PRINT_COLUMNS / 2) + minCol
         val currRow = TiBasicScreen.NUM_ROWS
         var currCol = if (currentPrintColumn != null) currentPrintColumn!! else minCol
         currentPrintColumn = null
-        for ((exprIndex, expression) in expressions.withIndex()) {
-            if (exprIndex == expressions.size - 1 && expression == PrintSeparator.NextRecord) continue
-            if (expression is NumericExpr) {
-                expression.visitAllValues { nc ->
-                    if (nc.isOverflow) {
+        for ((tokenIdx, token) in tokens.withIndex()) {
+            if (tokenIdx == tokens.size - 1 && token == PrintSeparator.NextRecord) continue
+            val tokenValue: Expression = if (token is TabFunction || token is PrintSeparator) token else {
+                token.value { intermediateValue ->
+                    if (intermediateValue is NumericConstant && intermediateValue.isOverflow) {
                         screen.scroll()
                         screen.print("* WARNING:")
                         screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
                     }
                 }
             }
-            when (expression) {
+            when (tokenValue) {
                 PrintSeparator.Adjacent -> {
                     // Nothing to do
                 }
@@ -407,14 +436,14 @@ class TiBasicModule : TiModule {
                     screen.scroll(); minCol
                 }
                 is TabFunction -> {
-                    val newCol = minCol - 1 + expression.value().toNative().toInt()
+                    val newCol = minCol - 1 + tokenValue.value().toNative().toInt()
                     if (currCol > newCol) screen.scroll()
                     currCol = newCol
                 }
-                is Expression -> {
-                    val exprString = expression.displayValue()
+                is NumericConstant, is StringConstant -> {
+                    val exprString = tokenValue.displayValue()
                     val exprChars = when {
-                        expression is NumericExpr && currCol + exprString.length == maxCol + 2 -> exprString.dropLast(1)
+                        token is NumericExpr && currCol + exprString.length == maxCol + 2 -> exprString.dropLast(1)
                         else -> exprString
                     }
                     if (currCol > minCol && currCol + exprChars.length > maxCol + 1) {
@@ -430,11 +459,11 @@ class TiBasicModule : TiModule {
                         currCol += leftOver.length - last.length
                     }
                 }
-                else -> println("Ignored in print statement: $expression")
+                else -> println("Ignored in print statement: $token")
             }
         }
         val suppressScroll =
-            listOf(PrintSeparator.Adjacent, PrintSeparator.NextField).contains(expressions.lastOrNull())
+            listOf(PrintSeparator.Adjacent, PrintSeparator.NextField).contains(tokens.lastOrNull())
         if (suppressScroll) currentPrintColumn = currCol else screen.scroll()
     }
 
@@ -502,6 +531,41 @@ class TiBasicModule : TiModule {
     fun storeData(lineNumber: Int, constants: List<Constant>) {
         programData[lineNumber] = constants
         println("Data @$lineNumber: $constants")
+    }
+
+    /** Provider of pseudo-random values. */
+    private var randomProvider = PseudoRandomGenerator(0x6fe5, 0x7ab9).apply {
+        PseudoRandomGenerator.Seed.value = 0x3567
+    }
+
+    /** Randomize the RND function. */
+    fun randomize(seed: NumericConstant?) {
+        if (seed != null) {
+            PseudoRandomGenerator.Seed.value = 0x4000 + seed.toNative().roundToInt()
+            println("Randomized random numbers with seed=$seed")
+        } else {
+            TODO("Randomize without seed not yet implemented")
+        }
+    }
+
+    /** A random value between 0 (inclusive) and 1 (exclusive). */
+    fun nextRandom(): Double {
+        val randoms = mutableMapOf<Int, Int>()
+        for (randTry in 63 downTo 1) {
+            randoms[0] = randomProvider.nextRandom(100)
+            if (randoms[0] != 0) break
+        }
+        if (randoms[0] == 0) {
+            println("Pseudo random algorithm didn't produce a random greater than zero on 63 tries, returning zero")
+            return 0.0
+        }
+        // Generate six additional random values
+        for (randIdx in 1..6) randoms[randIdx] = randomProvider.nextRandom(100)
+        val randomDecimal: String = StringBuilder(".").apply {
+            for (digitsIdx in 0..6) append(randoms[digitsIdx].toString().padStart(2, '0'))
+        }.toString()
+        println("Generated random: $randomDecimal")
+        return randomDecimal.toDouble()
     }
 
     // HELPERS //

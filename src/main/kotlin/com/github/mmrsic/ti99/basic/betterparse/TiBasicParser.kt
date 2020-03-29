@@ -1,6 +1,17 @@
 package com.github.mmrsic.ti99.basic.betterparse
 
-import com.github.h0tk3y.betterParse.combinators.*
+import com.github.h0tk3y.betterParse.combinators.and
+import com.github.h0tk3y.betterParse.combinators.asJust
+import com.github.h0tk3y.betterParse.combinators.leftAssociative
+import com.github.h0tk3y.betterParse.combinators.map
+import com.github.h0tk3y.betterParse.combinators.oneOrMore
+import com.github.h0tk3y.betterParse.combinators.optional
+import com.github.h0tk3y.betterParse.combinators.or
+import com.github.h0tk3y.betterParse.combinators.separated
+import com.github.h0tk3y.betterParse.combinators.separatedTerms
+import com.github.h0tk3y.betterParse.combinators.skip
+import com.github.h0tk3y.betterParse.combinators.use
+import com.github.h0tk3y.betterParse.combinators.zeroOrMore
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.parser.Parser
@@ -62,11 +73,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val number by token("""NUM(BER)?""")
     private val on by token("ON")
     private val print by token("\\bPRINT\\b")
+    private val randomize by token("\\bRANDOMIZE\\b")
     private val read by token("READ")
     private val remark by token("""REM(ARK)?.*""")
     private val restore by token("RESTORE")
     private val resequence by token("""RES(EQUENCE)?""")
     private val returnToken by token("RETURN")
+    private val rnd by token("\\bRND\\b")
     private val run by token("\\bRUN\\b")
     private val screen by token("SCREEN")
     private val sound by token("SOUND")
@@ -160,10 +173,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val logFun by skip(log) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         LogFunction(this)
     }
+    private val rndFun by rnd asJust RndFunction(machine::nextRandom)
     private val tabFun by skip(tab) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         TabFunction(this)
     }
-    private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun
+    private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun or rndFun
     private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         NumericArrayAccess(t1.text, t2, machine)
     }
@@ -307,6 +321,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use { ReadStatement(this) }
     private val restoreStmt by skip(restore) and optional(positiveIntConst) use { RestoreStatement(this) }
+    private val randomizeStmt by skip(randomize) and optional(numericExpr) use { RandomizeStatement(this) }
 
     // CALL SUBPROGRAM PARSERS
 
@@ -369,7 +384,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
             callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
-            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or readStmt or restoreStmt
+            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or readStmt or restoreStmt or
+            randomizeStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))

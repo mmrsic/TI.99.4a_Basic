@@ -3,7 +3,7 @@ package com.github.mmrsic.ti99.basic.expr
 abstract class StringExpr : Expression {
     val maxStringSize = 255
 
-    abstract override fun value(): StringConstant
+    abstract override fun value(lambda: (value: Constant) -> Any): StringConstant
     override fun displayValue(): String {
         val resultCandidate = value().toNative()
         if (resultCandidate.length > maxStringSize) {
@@ -14,7 +14,7 @@ abstract class StringExpr : Expression {
 }
 
 data class StringConstant(override val constant: String) : StringExpr(), Constant {
-    override fun value(): StringConstant = this
+    override fun value(lambda: (value: Constant) -> Any): StringConstant = this
     override fun toNative(): String = constant
     override fun listText(): String = "\"$constant\""
 
@@ -24,12 +24,12 @@ data class StringConstant(override val constant: String) : StringExpr(), Constan
 }
 
 data class StringVariable(val name: String, val calc: (String) -> StringConstant) : StringExpr() {
-    override fun value(): StringConstant = calc.invoke(name)
+    override fun value(lambda: (value: Constant) -> Any): StringConstant = calc.invoke(name)
     override fun listText(): String = name
 }
 
 data class StringConcatenation(val expressions: List<StringExpr>) : StringExpr() {
-    override fun value(): StringConstant =
+    override fun value(lambda: (value: Constant) -> Any): StringConstant =
         StringConstant(expressions.joinToString("") { expr -> expr.value().toNative() })
 
     override fun listText(): String = expressions.joinToString("&") { expr -> expr.listText() }

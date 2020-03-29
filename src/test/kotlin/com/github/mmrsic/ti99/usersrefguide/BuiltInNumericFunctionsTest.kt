@@ -226,4 +226,75 @@ class BuiltInNumericFunctionsTest {
         )
     }
 
+    @Test
+    fun testRandomNumber10() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 FOR I=1 TO 5
+            110 PRINT INT(10*RND)+1
+            120 NEXT I
+            130 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 FOR I=1 TO 5",
+                12 to " >110 PRINT INT(10*RND)+1",
+                13 to " >120 NEXT I",
+                14 to " >130 END",
+                15 to " >RUN",
+                16 to "   6",
+                17 to "   4",
+                18 to "   6",
+                19 to "   4",
+                20 to "   3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testRandomNumber20() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM RANDOM INTEGERS     BETWEEN 1 AND 20,INCLUSIVE
+            110 FOR I=1 TO 5
+            120 C=INT(20*RND)+1
+            130 PRINT C
+            140 NEXT I
+            150 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "  TI BASIC READY",
+                8 to " >100 REM RANDOM INTEGERS",
+                9 to "  BETWEEN 1 AND 20,INCLUSIVE",
+                10 to " >110 FOR I=1 TO 5",
+                11 to " >120 C=INT(20*RND)+1",
+                12 to " >130 PRINT C",
+                13 to " >140 NEXT I",
+                14 to " >150 END",
+                15 to " >RUN",
+                16 to "   11",
+                17 to "   8",
+                18 to "   11",
+                19 to "   8",
+                20 to "   6",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

@@ -360,7 +360,7 @@ class ReadStatement(val variableList: List<Expression>) : Statement {
  * line number in the program, the program will stop running and the message "DATA ERROR IN xx" will be displayed.
  */
 class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStatement {
-    override fun listText(): String = "RESTORE"
+    override fun listText() = if (lineNumber != null) "RESTORE $lineNumber" else "RESTORE"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val interpreter =
             machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
@@ -369,5 +369,17 @@ class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStateme
 
     override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
         TODO("not implemented")
+    }
+}
+
+/**
+ * The RANDOMIZE statement resets the random number generator to an unpredictable sequence. if RANDOMIZE is followed by
+ * a numeric-expression, the same sequence of random numbers is produced each time the statement is executed with that
+ * value for the expression. Different values give different sequences.
+ */
+class RandomizeStatement(private val seed: NumericExpr?) : Statement {
+    override fun listText() = if (seed != null) "RANDOMIZE ${seed.listText()}" else "RANDOMIZE"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.randomize(seed?.value())
     }
 }

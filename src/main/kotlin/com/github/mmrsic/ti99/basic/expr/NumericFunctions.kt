@@ -1,8 +1,16 @@
 package com.github.mmrsic.ti99.basic.expr
 
 import com.github.mmrsic.ti99.basic.BadArgument
-import kotlin.math.*
-import kotlin.random.Random
+import kotlin.math.abs
+import kotlin.math.atan
+import kotlin.math.cos
+import kotlin.math.exp
+import kotlin.math.floor
+import kotlin.math.ln
+import kotlin.math.pow
+import kotlin.math.sign
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * A numeric function is a TI Basic function which returns a [NumericExpr].
@@ -21,8 +29,21 @@ abstract class NumericFunction(val name: String) : NumericExpr() {
  * The result of ABS is always a non-negative number.
  */
 data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("ABS") {
-    override fun value() = NumericConstant(abs(numericExpr.value().toNative()))
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(abs(numericExpr.value().toNative()))
+
     override fun listArgs() = numericExpr.listText()
+}
+
+/**
+ * The ASC function gives the ASCII character code which corresponds to the first character of string-expression.
+ * The ASC function is the inverse of the [ChrFunction] function
+ */
+data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("ASC") {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(toAsciiCode(stringExpr.value().toNative()[0]))
+
+    override fun listArgs() = stringExpr.listText()
 }
 
 /**
@@ -31,7 +52,9 @@ data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * in the range -PI/2 < ATN(X) < PI/2.
  */
 data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("ATN") {
-    override fun value() = NumericConstant(atan(numericExpr.value().toNative()))
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(atan(numericExpr.value().toNative()))
+
     override fun listArgs() = numericExpr.listText()
 }
 
@@ -45,7 +68,7 @@ data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("C
         private val maxArgValue = 1.5707963266375 * (10.0.pow(10))
     }
 
-    override fun value(): NumericConstant {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         val arg = radianExpr.value().toNative()
         if (abs(arg) >= maxArgValue) throw BadArgument()
         return NumericConstant(cos(arg))
@@ -59,7 +82,9 @@ data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("C
  * exponential function is the inverse of the natural logarithm function ([LogFunction]). Thus, X = EXP(LOG(X)).
  */
 data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("EXP") {
-    override fun value() = NumericConstant(exp(numericExpr.value().toNative()))
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(exp(numericExpr.value().toNative()))
+
     override fun listArgs() = numericExpr.listText()
 }
 
@@ -67,8 +92,21 @@ data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * The INT function returns the greatest integer less than or equal to numeric-expression.
  */
 data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("INT") {
-    override fun value() = NumericConstant(floor(numericExpr.value().toNative()).toInt())
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(floor(numericExpr.value().toNative()).toInt())
+
     override fun listArgs() = numericExpr.listText()
+}
+
+/**
+ * The LEN function returns the number of characters in string-expression.
+ * A space counts as a character.
+ */
+data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LEN") {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(stringExpr.value().toNative().length)
+
+    override fun listArgs() = stringExpr.listText()
 }
 
 /**
@@ -83,7 +121,7 @@ data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("
         const val lowerBoundValue = 0
     }
 
-    override fun value(): NumericConstant {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         val arg = numericExpr.value().toNative()
         if (arg <= lowerBoundValue) throw BadArgument()
         return NumericConstant(ln(arg))
@@ -99,7 +137,7 @@ data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class PosFunction(private val str1: StringExpr, private val str2: StringExpr, private val pos: NumericExpr) :
     NumericFunction("POS") {
-    override fun value(): NumericConstant {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         val source = str1.value().toNative()
         val searchString = str2.value().toNative()
         val startIndex = pos.value().toNative().toInt()
@@ -114,9 +152,8 @@ data class PosFunction(private val str1: StringExpr, private val str2: StringExp
  * The number returned is greater than or equal to zero and less than one. The sequence of random numbers returned
  * is the same every time a program is run unless the randomize statement appears in the program.
  */
-class RndFunction : NumericFunction("RND") {
-    private val generator: Random = Random(42)
-    override fun value() = NumericConstant(generator.nextDouble())
+class RndFunction(private val randomGenerator: () -> Double) : NumericFunction("RND") {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant = NumericConstant(randomGenerator.invoke())
     override fun listArgs() = ""
 }
 
@@ -124,7 +161,9 @@ class RndFunction : NumericFunction("RND") {
  * The SGN function returns 1 if numeric-expression is positive, 0 if it is zero, and -1 if it is negative.
  */
 data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("SGN") {
-    override fun value() = NumericConstant(sign(numericExpr.value().toNative()))
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(sign(numericExpr.value().toNative()))
+
     override fun listArgs() = numericExpr.listText()
 }
 
@@ -133,7 +172,9 @@ data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * If the angle is in degrees, multiply the number of degrees by ATN(1)/45 to get the equivalent angle in radians.
  */
 data class SinFunction(private val numericExpr: NumericExpr) : NumericFunction("SIN") {
-    override fun value() = NumericConstant(sin(numericExpr.value().toNative()))
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(sin(numericExpr.value().toNative()))
+
     override fun listArgs() = numericExpr.listText()
 }
 
@@ -142,7 +183,9 @@ data class SinFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * SQR(X) is equivalent to X^(1/2). Numeric-expression may not be a negative number.
  */
 data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("SQR") {
-    override fun value() = NumericConstant(sqrt(numericExpr.value().toNative()))
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant =
+        NumericConstant(sqrt(numericExpr.value().toNative()))
+
     override fun listArgs() = numericExpr.listText()
 }
 
