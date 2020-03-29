@@ -95,7 +95,7 @@ class BuiltInNumericFunctionsTest {
             """
             100 A=1.047197551196
             110 B=60
-            120 C=.0174532925994
+            120 C=.01745329251994
             130 PRINT COS(A);COS(B*C)
             140 PRINT COS(B*(4*ATN(1))/180)
             150 END
@@ -109,7 +109,7 @@ class BuiltInNumericFunctionsTest {
                 5 to "  TI BASIC READY",
                 7 to " >100 A=1.047197551196",
                 8 to " >110 B=60",
-                9 to " >120 C=.0174532925994",
+                9 to " >120 C=.01745329251994",
                 10 to " >130 PRINT COS(A);COS(B*C)",
                 11 to " >140 PRINT COS(B*(4*ATN(1))/1",
                 12 to "  80)",
