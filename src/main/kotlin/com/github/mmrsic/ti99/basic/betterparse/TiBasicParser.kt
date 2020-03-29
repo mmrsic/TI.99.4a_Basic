@@ -83,6 +83,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val run by token("\\bRUN\\b")
     private val screen by token("SCREEN")
     private val sgn by token("\\bSGN\\b")
+    private val sin by token("\\bSIN\\b")
     private val sound by token("SOUND")
     private val step by token("STEP")
     private val stop by token("STOP")
@@ -178,10 +179,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val sgnFun by skip(sgn) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         SgnFunction(this)
     }
+    private val sinFun by skip(sin) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
+        SinFunction(this)
+    }
     private val tabFun by skip(tab) and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         TabFunction(this)
     }
-    private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun or rndFun or sgnFun
+    private val numericFun by absFun or atnFun or cosFun or expFun or intFun or logFun or rndFun or sgnFun or sinFun
     private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis) use {
         NumericArrayAccess(t1.text, t2, machine)
     }

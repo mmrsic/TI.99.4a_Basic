@@ -330,4 +330,42 @@ class BuiltInNumericFunctionsTest {
         )
     }
 
+    @Test
+    fun testSine() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=.5235987755982
+            110 B=30
+            120 C=.01745329251994
+            130 PRINT SIN(A);SIN(B*C)
+            140 PRINT SIN(B*(4*ATN(1))/180)
+            150 END
+            RUN
+            PRINT SIN(1.9E12)
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                5 to "  TI BASIC READY",
+                7 to " >100 A=.5235987755982",
+                8 to " >110 B=30",
+                9 to " >120 C=.01745329251994",
+                10 to " >130 PRINT SIN(A);SIN(B*C)",
+                11 to " >140 PRINT SIN(B*(4*ATN(1))/1",
+                12 to "  80)",
+                13 to " >150 END",
+                14 to " >RUN",
+                15 to "   .5  .5",
+                16 to "   .5",
+                18 to "  ** DONE **",
+                20 to " >PRINT SIN(1.9E12)",
+                22 to "  * BAD ARGUMENT",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

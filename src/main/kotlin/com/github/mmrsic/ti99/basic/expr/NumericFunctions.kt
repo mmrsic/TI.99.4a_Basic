@@ -72,14 +72,9 @@ data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * If the angle is in degrees, multiply the number of degrees by PI/180 to get the equivalent angle in radians.
  */
 data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("COS") {
-    companion object {
-        /** Maximum allowed value for argument [radianExpr] according to User's Reference Guide. */
-        private val maxArgValue = 1.5707963266375 * (10.0.pow(10))
-    }
-
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         val arg = radianExpr.value(lambda).toNative()
-        if (abs(arg) >= maxArgValue) throw BadArgument()
+        if (abs(arg) >= maxArgTrigonimicFunction) throw BadArgument()
         val result = NumericConstant(cos(arg))
         lambda.invoke(result)
         return result
@@ -198,14 +193,16 @@ data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  * The SIN function gives the trigonometric sine of radian-expression.
  * If the angle is in degrees, multiply the number of degrees by ATN(1)/45 to get the equivalent angle in radians.
  */
-data class SinFunction(private val numericExpr: NumericExpr) : NumericFunction("SIN") {
+data class SinFunction(private val radianExpr: NumericExpr) : NumericFunction("SIN") {
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-        val result = NumericConstant(sin(numericExpr.value(lambda).toNative()))
+        val arg = radianExpr.value(lambda).toNative()
+        if (abs(arg) >= maxArgTrigonimicFunction) throw BadArgument()
+        val result = NumericConstant(sin(arg))
         lambda.invoke(result)
         return result
     }
 
-    override fun listArgs() = numericExpr.listText()
+    override fun listArgs() = radianExpr.listText()
 }
 
 /**
@@ -225,3 +222,7 @@ data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("
 
 /** Convert a given character into its corresponding ASCII code. */
 fun toAsciiCode(c: Char) = c.toInt()
+
+/** Maximum allowed value for argument [radianExpr] according to User's Reference Guide. */
+private val maxArgTrigonimicFunction = 1.5707963266375 * (10.0.pow(10))
+
