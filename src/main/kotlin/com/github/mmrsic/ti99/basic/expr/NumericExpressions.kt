@@ -1,7 +1,6 @@
 package com.github.mmrsic.ti99.basic.expr
 
 import com.github.mmrsic.ti99.basic.BadValue
-import com.github.mmrsic.ti99.basic.NumberTooBig
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
 import java.math.BigDecimal
@@ -118,7 +117,7 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
 
     /** Always the native, that is, the [Double] value of this numeric constant. */
     override fun toNative(): Double =
-        if (isOverflow) sign(constant.toDouble()) * NumberRanges.MAX_VALUE else toTiNumber(constant).toDouble()
+        sign(constant.toDouble()) * if (isOverflow) NumberRanges.MAX_VALUE else bigDecimal.toDouble()
 
     override fun displayValue(): String {
         val doubleValue = constant.toDouble()
@@ -201,14 +200,14 @@ class RelationalNumericExpr(val a: NumericExpr, val op: RelationalExpr.Operator,
     TwoOpNumericExpr(a, b) {
 
     override fun opSymbol(): String = op.name
-    override fun executeNatively(aNative: Number, bNative: Number): Number {
+    override fun executeNatively(op1: Number, op2: Number): Number {
         val isTrue: Boolean = when (op) {
-            RelationalExpr.Operator.EQUAL_TO -> aNative == bNative
-            RelationalExpr.Operator.NOT_EQUAL_TO -> aNative != bNative
-            RelationalExpr.Operator.LESS_THAN -> aNative.toDouble() < bNative.toDouble()
-            RelationalExpr.Operator.LESS_THAN_OR_EQUAL_TO -> aNative.toDouble() <= bNative.toDouble()
-            RelationalExpr.Operator.GREATER_THAN -> aNative.toDouble() > bNative.toDouble()
-            RelationalExpr.Operator.GREATER_THAN_OR_EQUAL_TO -> aNative.toDouble() >= bNative.toDouble()
+            RelationalExpr.Operator.EQUAL_TO -> op1 == op2
+            RelationalExpr.Operator.NOT_EQUAL_TO -> op1 != op2
+            RelationalExpr.Operator.LESS_THAN -> op1.toDouble() < op2.toDouble()
+            RelationalExpr.Operator.LESS_THAN_OR_EQUAL_TO -> op1.toDouble() <= op2.toDouble()
+            RelationalExpr.Operator.GREATER_THAN -> op1.toDouble() > op2.toDouble()
+            RelationalExpr.Operator.GREATER_THAN_OR_EQUAL_TO -> op1.toDouble() >= op2.toDouble()
         }
         return if (isTrue) -1 else 0
     }
@@ -249,15 +248,4 @@ data class TabFunction(private val numericExpr: NumericExpr) : NumericFunction("
     }
 
     override fun listArgs() = numericExpr.listText()
-}
-
-// HELPERS //
-
-private fun toTiNumber(original: Number): Number {
-    if (original is Int) return original
-    val rounded = "%.10f".format(Locale.US, original).toDouble()
-    val asInt = original.toInt()
-    if (asInt.compareTo(rounded) == 0) return original
-    if (NumberRanges.isOverflow(rounded)) throw NumberTooBig()
-    return if (NumberRanges.isUnderflow(rounded)) 0 else rounded
 }
