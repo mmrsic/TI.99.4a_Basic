@@ -74,6 +74,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val next by token("NEXT")
     private val number by token("""NUM(BER)?""")
     private val on by token("ON")
+    private val pos by token("\\bPOS\\b")
     private val print by token("\\bPRINT\\b")
     private val randomize by token("\\bRANDOMIZE\\b")
     private val read by token("READ")
@@ -169,14 +170,16 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val intFun by skip(int) and singleNumericArg use { IntFunction(this) }
     private val lenFun by skip(len) and singleStringArg use { LenFunction(this) }
     private val logFun by skip(log) and singleNumericArg use { LogFunction(this) }
+    private val posFun by skip(pos) and skip(openParenthesis) and stringExpr and skip(comma) and stringExpr and
+            skip(comma) and parser(::numericExpr) and skip(closeParenthesis) use { PosFunction(t1, t2, t3) }
     private val rndFun by rnd asJust RndFunction(machine::nextRandom)
     private val sgnFun by skip(sgn) and singleNumericArg use { SgnFunction(this) }
     private val sinFun by skip(sin) and singleNumericArg use { SinFunction(this) }
     private val sqrFun by skip(sqr) and singleNumericArg use { SqrFunction(this) }
     private val tabFun by skip(tab) and singleNumericArg use { TabFunction(this) }
     private val tanFun by skip(tan) and singleNumericArg use { TanFunction(this) }
-    private val numericFun by absFun or ascFun or atnFun or cosFun or expFun or intFun or lenFun or logFun or rndFun or
-            sgnFun or sinFun or sqrFun or tanFun
+    private val numericFun by absFun or ascFun or atnFun or cosFun or expFun or intFun or lenFun or logFun or posFun or
+            rndFun or sgnFun or sinFun or sqrFun or tanFun
     private val numericArrRef by name and singleNumericArg use { NumericArrayAccess(t1.text, t2, machine) }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }

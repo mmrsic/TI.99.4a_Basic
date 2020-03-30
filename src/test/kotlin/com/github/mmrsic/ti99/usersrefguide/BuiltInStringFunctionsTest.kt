@@ -143,4 +143,43 @@ class BuiltInStringFunctionsTest {
         )
     }
 
+    @Test
+    fun testPosition() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 MSG$="HELLO THERE! HOW ARE YOU?"
+            110 PRINT "H";POS(MSG$,"H",1)
+            120 C$="RE"
+            130 PRINT C$;POS(MSG$,C$,1);POS(MSG$,C$,12)
+            140 PRINT "HI";POS(MSG$,"HI",1)
+            150 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                5 to "  TI BASIC READY",
+                7 to " >100 MSG$=\"HELLO THERE! HOW A",
+                8 to "  RE YOU?\"",
+                9 to " >110 PRINT \"H\";POS(MSG$,\"H\",1",
+                10 to "  )",
+                11 to " >120 C$=\"RE\"",
+                12 to " >130 PRINT C$;POS(MSG$,C$,1);",
+                13 to "  POS(MSG$,C$,12)",
+                14 to " >140 PRINT \"HI\";POS(MSG$,\"HI\"",
+                15 to "  ,1)",
+                16 to " >150 END",
+                17 to " >RUN",
+                18 to "  H 1",
+                19 to "  RE 10  19",
+                20 to "  HI 0",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

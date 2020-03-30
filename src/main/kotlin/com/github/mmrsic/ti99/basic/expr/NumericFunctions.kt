@@ -1,6 +1,7 @@
 package com.github.mmrsic.ti99.basic.expr
 
 import com.github.mmrsic.ti99.basic.BadArgument
+import com.github.mmrsic.ti99.basic.BadValue
 import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.cos
@@ -8,6 +9,7 @@ import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.ln
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -150,16 +152,18 @@ data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("
 
 /**
  * The POS function returns the position of the first occurrence of string2 in string1.
- * The search begins at the position specified by numeric-expression. If no match is found, the function returns
- * a value of zero.
+ * The search begins at the position specified by numeric-expression, which is evaluated and rounded, if necessary, to
+ * obtain an integer. If no match is found, the function returns a value of zero. If the value specified for pos is less
+ * than zero, [BadValue] is thrown.
  */
 data class PosFunction(private val str1: StringExpr, private val str2: StringExpr, private val pos: NumericExpr) :
     NumericFunction("POS") {
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         val source = str1.value(lambda).toNative()
         val searchString = str2.value(lambda).toNative()
-        val startIndex = pos.value(lambda).toNative().toInt()
-        val result = NumericConstant(1 + source.indexOf(searchString, startIndex))
+        val startIndex = pos.value(lambda).toNative().roundToInt()
+        if (startIndex < 0) throw BadValue()
+        val result = NumericConstant(1 + source.indexOf(searchString, startIndex - 1))
         lambda.invoke(result)
         return result
     }
