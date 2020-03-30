@@ -1,5 +1,8 @@
 package com.github.mmrsic.ti99.basic.expr
 
+import com.github.mmrsic.ti99.basic.BadValue
+import kotlin.math.roundToInt
+
 abstract class StringFunction(val name: String) : StringExpr() {
     override fun listText(): String {
         return "$name(${listArgs()})"
@@ -11,11 +14,20 @@ abstract class StringFunction(val name: String) : StringExpr() {
 
 /**
  * The CHR$ function returns the character corresponding to the ASCII character code specified by numeric-expression.
- * The CHR$ function is the inverse of the [AscFunction]
+ * The CHR$ function is the inverse of the [AscFunction].
+ * If the [numericExpr] is not an integer, it is rounded to obtain an integer.
+ * If the argument specified is a value between 32 and 127, inclusive, a standard character is given. If the argument
+ * specified is between 128 and 159, inclusive, and a special graphics character has been defined for that value, the
+ * graphics character is given. If you specify an argument which designates an undefined character (i.e. not a standard
+ * character or a defined graphics character), then the character given is whatever is in memory at that time.
+ * @param numericExpr must be between zero and 32767, otherwise [BadValue] is thrown
  */
 data class ChrFunction(private val numericExpr: NumericExpr) : StringFunction("CHR$") {
-    override fun value(lambda: (value: Constant) -> Any): StringConstant =
-        StringConstant(toChar(numericExpr.value().toNative().toInt()))
+    override fun value(lambda: (value: Constant) -> Any): StringConstant {
+        val arg = numericExpr.value().toNative().roundToInt()
+        if (arg !in 0..32767) throw BadValue()
+        return StringConstant(toChar(arg))
+    }
 
     override fun listArgs(): String = numericExpr.listText()
 }

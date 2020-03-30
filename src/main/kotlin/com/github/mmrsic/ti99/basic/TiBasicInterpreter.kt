@@ -3,9 +3,19 @@ package com.github.mmrsic.ti99.basic
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
-import com.github.mmrsic.ti99.basic.expr.*
-import com.github.mmrsic.ti99.hw.*
-import java.util.*
+import com.github.mmrsic.ti99.basic.expr.Addition
+import com.github.mmrsic.ti99.basic.expr.Constant
+import com.github.mmrsic.ti99.basic.expr.Expression
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
+import com.github.mmrsic.ti99.basic.expr.PrintSeparator
+import com.github.mmrsic.ti99.basic.expr.StringConstant
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
+import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiColor
+import com.github.mmrsic.ti99.hw.TiFctnCode
+import com.github.mmrsic.ti99.hw.checkLineNumber
+import java.util.Stack
+import java.util.TreeMap
 
 /**
  * A TI Basic interpreter for a given [TiBasicModule].
@@ -46,6 +56,10 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
             screen.print("* ${e.message}")
             screen.scroll()
         } catch (e: BadArgument) {
+            screen.scroll()
+            screen.print("* ${e.message}")
+            screen.scroll()
+        } catch (e: BadValue) {
             screen.scroll()
             screen.print("* ${e.message}")
             screen.scroll()
