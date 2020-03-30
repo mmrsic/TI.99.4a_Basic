@@ -1,6 +1,7 @@
 package com.github.mmrsic.ti99.basic.expr
 
 import com.github.mmrsic.ti99.basic.BadValue
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 abstract class StringFunction(val name: String) : StringExpr() {
@@ -42,10 +43,14 @@ data class SegFunction(private val str: StringExpr, private val pos: NumericExpr
     StringFunction("SEG$") {
 
     override fun value(lambda: (value: Constant) -> Any): StringConstant {
-        val original = str.value().toNative()
-        val kotlinStart = pos.value().toNative().toInt() - 1
-        val kotlinEnd = kotlinStart + len.value().toNative().toInt()
-        return StringConstant(original.substring(kotlinStart, kotlinEnd))
+        val nativeString = str.value().toNative()
+        val nativeStart = pos.value().toNative().roundToInt() - 1
+        if (nativeStart < 0) throw BadValue()
+        if (nativeStart >= nativeString.length) return StringConstant.EMPTY
+        val nativeLength = min(nativeString.length - nativeStart, len.value().toNative().roundToInt())
+        val nativeEnd = nativeStart + nativeLength
+        if (nativeEnd < nativeStart) throw BadValue()
+        return StringConstant(nativeString.substring(nativeStart, nativeEnd))
     }
 
     override fun listArgs(): String = "$str,$pos,$len"

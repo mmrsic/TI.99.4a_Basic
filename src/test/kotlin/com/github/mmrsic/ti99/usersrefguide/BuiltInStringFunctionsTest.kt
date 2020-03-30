@@ -182,4 +182,70 @@ class BuiltInStringFunctionsTest {
         )
     }
 
+    @Test
+    fun testStringSegment1() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 MSG$="HELLO THERE! HOW ARE YOU?"
+            110 REM SUBSTRING BEGINS IN POSITION 14 AND HAS A LENGTH OF 12.
+            120 PRINT SEG$(MSG$,14,12)
+            130 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                10 to "  TI BASIC READY",
+                12 to " >100 MSG$=\"HELLO THERE! HOW A",
+                13 to "  RE YOU?\"",
+                14 to " >110 REM SUBSTRING BEGINS IN",
+                15 to "  POSITION 14 AND HAS A LENGTH",
+                16 to "   OF 12.",
+                17 to " >120 PRINT SEG$(MSG$,14,12)",
+                18 to " >130 END",
+                19 to " >RUN",
+                20 to "  HOW ARE YOU?",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testStringSegment2() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 MSG$="I AM A COMPUTER."
+            110 PRINT SEG$(MSG$,20,1)
+            120 PRINT SEG$(MSG$,10,0)
+            130 PRINT SEG$(MSG$,8,20)
+            140 END
+            RUN
+            PRINT SEG$(MSG$,-1,10)
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "  TI BASIC READY",
+                8 to " >100 MSG$=\"I AM A COMPUTER.\"",
+                9 to " >110 PRINT SEG$(MSG$,20,1)",
+                10 to " >120 PRINT SEG$(MSG$,10,0)",
+                11 to " >130 PRINT SEG$(MSG$,8,20)",
+                12 to " >140 END",
+                13 to " >RUN",
+                16 to "  COMPUTER.",
+                18 to "  ** DONE **",
+                20 to " >PRINT SEG$(MSG$,-1,10)",
+                22 to "  * BAD VALUE",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
