@@ -245,6 +245,26 @@ data class TanFunction(private val radianExpr: NumericExpr) : NumericFunction("T
     override fun listArgs() = radianExpr.listText()
 }
 
+/**
+ * The VAL function is the inverse of the [StrFunction]. If the string specified by [stringExpr] is a valid
+ * representation of a numeric constant, then the value function converts the string to a numeric constant.
+ * If the string specified is not a valid representation of a number or if the string is of zero length, [BadArgument]
+ * is thrown. If you specify a string which is longer than 254 characters, [BadArgument] is thrown.
+ */
+data class ValFunction(private val stringExpr: StringExpr) : NumericFunction("VAL") {
+    override fun value(lambda: (value: Constant) -> Any): NumericConstant {
+        val arg = stringExpr.value(lambda).toNative()
+        if (arg.isEmpty() || arg.length > 254) throw BadArgument()
+        try {
+            return NumericConstant(arg.toDouble())
+        } catch (e: Exception) {
+            throw BadArgument()
+        }
+    }
+
+    override fun listArgs() = stringExpr.listText()
+}
+
 
 /** Convert a given character into its corresponding ASCII code. */
 fun toAsciiCode(c: Char) = c.toInt()

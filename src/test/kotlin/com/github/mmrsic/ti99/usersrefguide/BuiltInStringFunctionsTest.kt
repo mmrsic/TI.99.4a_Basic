@@ -248,4 +248,75 @@ class BuiltInStringFunctionsTest {
         )
     }
 
+    @Test
+    fun testStringNumber() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 A=-26.3
+            110 PRINT STR$(A);" ";A
+            120 PRINT 15.7;STR$(15.7)
+            130 PRINT STR$(VAL("34.8"))
+            140 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                10 to "  TI BASIC READY",
+                12 to " >100 A=-26.3",
+                13 to " >110 PRINT STR$(A);\" \";A",
+                14 to " >120 PRINT 15.7;STR$(15.7)",
+                15 to " >130 PRINT STR$(VAL(\"34.8\"))",
+                16 to " >140 END",
+                17 to " >RUN",
+                18 to "  -26.3 -26.3",
+                19 to "   15.7 15.7",
+                20 to "  34.8",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testValue() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 P$="23.6"
+            110 N$="-4.7"
+            120 PRINT VAL(P$);VAL(N$)
+            130 PRINT VAL("52"&".5")
+            140 PRINT VAL(N$&"E"&"12")
+            150 PRINT STR$(VAL(P$))
+            160 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                7 to "  TI BASIC READY",
+                9 to " >100 P$=\"23.6\"",
+                10 to " >110 N$=\"-4.7\"",
+                11 to " >120 PRINT VAL(P$);VAL(N$)",
+                12 to " >130 PRINT VAL(\"52\"&\".5\")",
+                13 to " >140 PRINT VAL(N$&\"E\"&\"12\")",
+                14 to " >150 PRINT STR$(VAL(P$))",
+                15 to " >160 END",
+                16 to " >RUN",
+                17 to "   23.6 -4.7",
+                18 to "   52.5",
+                19 to "  -4.7E+12",
+                20 to "  23.6",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

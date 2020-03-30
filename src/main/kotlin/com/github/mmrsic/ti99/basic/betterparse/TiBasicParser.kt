@@ -38,6 +38,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     private val chr by token("CHR\\$")
     private val seg by token("SEG\\$")
+    private val str by token("STR\\$")
     private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
 
     private val abs by token("\\bABS\\b")
@@ -98,6 +99,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val trace by token("TRACE")
     private val unbreak by token("UNBREAK")
     private val untrace by token("UNTRACE")
+    private val valToken by token("\\bVAL\\b")
     private val vchar by token("VCHAR")
 
     private val minus by token("-")
@@ -147,11 +149,12 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val positiveIntConst by positiveInt use { text.toInt() }
 
     private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
+    private val chrFun by skip(chr) and singleNumericArg use { ChrFunction(this) }
     private val segFun by skip(seg) and skip(openParenthesis) and
             parser(::stringExpr) and skip(comma) and parser(::numericExpr) and skip(comma) and parser(::numericExpr) and
             skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
-    private val chrFun by skip(chr) and singleNumericArg use { ChrFunction(this) }
-    private val stringFun by segFun or chrFun
+    private val strFun by skip(str) and singleNumericArg use { StrFunction(this) }
+    private val stringFun by chrFun or segFun or strFun
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
     }
@@ -178,8 +181,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val sqrFun by skip(sqr) and singleNumericArg use { SqrFunction(this) }
     private val tabFun by skip(tab) and singleNumericArg use { TabFunction(this) }
     private val tanFun by skip(tan) and singleNumericArg use { TanFunction(this) }
+    private val valFun by skip(valToken) and singleStringArg use { ValFunction(this) }
     private val numericFun by absFun or ascFun or atnFun or cosFun or expFun or intFun or lenFun or logFun or posFun or
-            rndFun or sgnFun or sinFun or sqrFun or tanFun
+            rndFun or sgnFun or sinFun or sqrFun or tanFun or valFun
     private val numericArrRef by name and singleNumericArg use { NumericArrayAccess(t1.text, t2, machine) }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }

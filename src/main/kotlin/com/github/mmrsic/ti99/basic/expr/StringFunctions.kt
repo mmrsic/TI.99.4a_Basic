@@ -62,10 +62,12 @@ data class SegFunction(private val str: StringExpr, private val pos: NumericExpr
  * of numeric-expression. The STR$ is the inverse of the [ValFunction].
  */
 data class StrFunction(private val numericExpr: NumericExpr) : StringFunction("STR$") {
-    override fun value(lambda: (value: Constant) -> Any): StringConstant = StringConstant(numericExpr.displayValue())
+    override fun value(lambda: (value: Constant) -> Any): StringConstant {
+        return StringConstant(numericExpr.displayValue().trim())
+    }
+
     override fun listArgs(): String = numericExpr.listText()
 }
-
 
 /** Convert a given ASCII code into a string containing the character associated with the code. */
 fun toChar(asciiCode: Int): String {
