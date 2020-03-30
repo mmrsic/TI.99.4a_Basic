@@ -66,6 +66,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val ifToken by token("IF")
     private val input by token("INPUT")
     private val int by token("INT")
+    private val len by token("\\bLEN\\b")
     private val let by token("LET")
     private val list by token("\\bLIST\\b")
     private val log by token("\\bLOG\\b")
@@ -166,6 +167,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val cosFun by skip(cos) and singleNumericArg use { CosFunction(this) }
     private val expFun by skip(exp) and singleNumericArg use { ExpFunction(this) }
     private val intFun by skip(int) and singleNumericArg use { IntFunction(this) }
+    private val lenFun by skip(len) and singleStringArg use { LenFunction(this) }
     private val logFun by skip(log) and singleNumericArg use { LogFunction(this) }
     private val rndFun by rnd asJust RndFunction(machine::nextRandom)
     private val sgnFun by skip(sgn) and singleNumericArg use { SgnFunction(this) }
@@ -173,8 +175,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val sqrFun by skip(sqr) and singleNumericArg use { SqrFunction(this) }
     private val tabFun by skip(tab) and singleNumericArg use { TabFunction(this) }
     private val tanFun by skip(tan) and singleNumericArg use { TanFunction(this) }
-    private val numericFun by absFun or ascFun or atnFun or cosFun or expFun or intFun or logFun or rndFun or sgnFun or
-            sinFun or sqrFun or tanFun
+    private val numericFun by absFun or ascFun or atnFun or cosFun or expFun or intFun or lenFun or logFun or rndFun or
+            sgnFun or sinFun or sqrFun or tanFun
     private val numericArrRef by name and singleNumericArg use { NumericArrayAccess(t1.text, t2, machine) }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }

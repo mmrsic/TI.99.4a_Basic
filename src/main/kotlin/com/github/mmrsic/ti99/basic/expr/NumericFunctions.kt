@@ -113,7 +113,7 @@ data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("
 
 /**
  * The LEN function returns the number of characters in string-expression.
- * A space counts as a character.
+ * A space counts as a character. The length of a null string is zero.
  */
 data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LEN") {
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {

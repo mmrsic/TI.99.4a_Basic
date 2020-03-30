@@ -100,4 +100,47 @@ class BuiltInStringFunctionsTest {
         )
     }
 
+    @Test
+    fun testLength() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 NAME$="CATHY"
+            110 CITY$="NEW YORK"
+            120 MSG$="HELLO "&"THERE!"
+            130 PRINT NAME$;LEN(NAME$)
+            140 PRINT CITY$;LEN(CITY$)
+            150 PRINT MSG$;LEN(MSG$)
+            160 PRINT LEN(NAME$&CITY$)
+            170 PRINT LEN("HI!")
+            180 STOP
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                4 to "  TI BASIC READY",
+                6 to " >100 NAME$=\"CATHY\"",
+                7 to " >110 CITY$=\"NEW YORK\"",
+                8 to " >120 MSG$=\"HELLO \"&\"THERE!\"",
+                9 to " >130 PRINT NAME$;LEN(NAME$)",
+                10 to " >140 PRINT CITY$;LEN(CITY$)",
+                11 to " >150 PRINT MSG$;LEN(MSG$)",
+                12 to " >160 PRINT LEN(NAME$&CITY$)",
+                13 to " >170 PRINT LEN(\"HI!\")",
+                14 to " >180 STOP",
+                15 to " >RUN",
+                16 to "  CATHY 5",
+                17 to "  NEW YORK 8",
+                18 to "  HELLO THERE! 12",
+                19 to "   13",
+                20 to "   3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
