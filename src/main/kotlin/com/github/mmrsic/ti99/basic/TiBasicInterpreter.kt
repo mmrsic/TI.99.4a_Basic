@@ -216,7 +216,10 @@ class TiBasicProgramInterpreter(
         }
         variableNames.forEachIndexed { varIdx, varNameExpr ->
             val trimmedPart = inputParts[varIdx].trim()
-            val unquotedPart = if (trimmedPart.first() == '"') trimmedPart.drop(1).dropLast(1) else trimmedPart
+            val unquotedPart = if (trimmedPart.isNotEmpty() && trimmedPart.first() == '"')
+                trimmedPart.drop(1).dropLast(1)
+            else
+                trimmedPart
             try {
                 machine.setVariable(varNameExpr, unquotedPart.replace("\"\"", "\""))
             } catch (e: NumberFormatException) {

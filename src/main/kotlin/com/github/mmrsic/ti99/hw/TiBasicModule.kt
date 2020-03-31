@@ -217,14 +217,31 @@ class TiBasicModule : TiModule {
         userFunctions[functionName] = UserFunction(parameterName, definition)
     }
 
-    private fun evaluateUserFunction(name: String, parameterValue: Expression?, programLineNumber: Int?): Constant {
+    /** Evaluate a user function for a given user function name and an optional parameter. */
+    fun evaluateUserFunction(name: String, parameterExpr: Expression?, programLineNumber: Int?): Constant {
         val userFunction = userFunctions[name] ?: throw IllegalArgumentException("No such user function: $name")
-        if (userFunction.parameterName != null && parameterValue == null) {
+        if (userFunction.parameterName != null && parameterExpr == null) {
             throw IllegalArgumentException("User function $name requires a parameter")
-        } else if (userFunction.parameterName == null && parameterValue != null) {
-            throw IllegalArgumentException("User function $name has no parameter: $parameterValue")
+        } else if (userFunction.parameterName == null && parameterExpr != null) {
+            throw IllegalArgumentException("User function $name has no parameter: $parameterExpr")
         }
-        return evaluateRuntimeExpression(userFunction.definition, programLineNumber)
+
+        var hiddenValue: Constant? = null
+        if (parameterExpr is NumericExpr) {
+            hiddenValue = getNumericVariableValue(userFunction.parameterName!!)
+            setNumericVariable(userFunction.parameterName, parameterExpr)
+        } else if (parameterExpr is StringExpr) {
+            hiddenValue = getStringVariableValue(userFunction.parameterName!!)
+            setStringVariable(userFunction.parameterName, parameterExpr)
+        }
+        println("Evaluating $userFunction for parameter value $parameterExpr [hidden value=$hiddenValue]")
+        val result = evaluateRuntimeExpression(userFunction.definition, programLineNumber)
+        if (hiddenValue is NumericExpr) {
+            setNumericVariable(userFunction.parameterName!!, hiddenValue)
+        } else if (hiddenValue is StringExpr) {
+            setStringVariable(userFunction.parameterName!!, hiddenValue)
+        }
+        return result
     }
 
     /** Initialize the [screen] of this module to the command interpreter mode after entering the */

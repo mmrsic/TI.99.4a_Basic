@@ -156,10 +156,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
     private val strFun by skip(str) and singleNumericArg use { StrFunction(this) }
     private val stringFun by chrFun or segFun or strFun
+    private val stringArrVarRef by stringVarName and (singleNumericArg or singleStringArg) use {
+        StringArrayAccess(t1.text, t2, machine)
+    }
     private val stringVarRef by stringVarName use {
         StringVariable(text) { varName -> machine.getStringVariableValue(varName) }
     }
-    private val stringTerm: Parser<StringExpr> by stringConst or stringVarRef or stringFun or
+    private val stringTerm: Parser<StringExpr> by stringConst or stringArrVarRef or stringVarRef or stringFun or
             (skip(openParenthesis) and parser(::stringExpr) and skip(closeParenthesis))
 
     private val stringExpr by leftAssociative(stringTerm, stringOperator) { a, _, b ->
@@ -313,7 +316,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             optional(skip(elseToken) and positiveIntConst) use {
         IfStatement(t1, t2, t3)
     }
-    private val varRef = numericArrRef or numericVarRef or stringVarRef
+    private val varRef = numericArrRef or numericVarRef or stringArrVarRef or stringVarRef
     private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and
             separatedTerms(varRef, comma) use {
         val prompt: StringExpr? = t1

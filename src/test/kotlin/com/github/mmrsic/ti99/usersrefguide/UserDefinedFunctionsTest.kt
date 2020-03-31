@@ -2,6 +2,7 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
@@ -74,6 +75,57 @@ class UserDefinedFunctionsTest {
                 18 to "   3  0",
                 19 to "   4  4",
                 20 to "   5  10",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testPrintNameBackwards() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+                    return when (ctx.prompt) {
+                        "NAME? " -> "ROBOT\r".asSequence()
+                        else -> throw IllegalArgumentException("Unable to provide input for ${ctx.prompt}")
+                    }
+                }
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM TAKE A NAME AND     PRINT IT BACKWARDS
+            110 DEF BACK$(X)=SEG$(NAME$,X,1)
+            120 INPUT "NAME? ":NAME$
+            130 FOR I=LEN(NAME$) TO 1 STEP -1
+            140 BNAME$=BNAME$&BACK$(I)
+            150 NEXT I
+            160 PRINT NAME$:BNAME$
+            170 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                4 to "  TI BASIC READY",
+                6 to " >100 REM TAKE A NAME AND",
+                7 to "  PRINT IT BACKWARDS",
+                8 to " >110 DEF BACK$(X)=SEG$(NAME$,",
+                9 to "  X,1)",
+                10 to " >120 INPUT \"NAME? \":NAME$",
+                11 to " >130 FOR I=LEN(NAME$) TO 1 ST",
+                12 to "  EP -1",
+                13 to " >140 BNAME$=BNAME$&BACK$(I)",
+                14 to " >150 NEXT I",
+                15 to " >160 PRINT NAME$:BNAME$",
+                16 to " >170 END",
+                17 to " >RUN",
+                18 to "  NAME? ROBOT",
+                19 to "  ROBOT",
+                20 to "  TOBOR",
                 22 to "  ** DONE **",
                 24 to " >"
             ), machine.screen

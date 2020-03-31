@@ -1,5 +1,7 @@
 package com.github.mmrsic.ti99.basic.expr
 
+import com.github.mmrsic.ti99.hw.TiBasicModule
+
 abstract class StringExpr : Expression {
     val maxStringSize = 255
 
@@ -26,6 +28,18 @@ data class StringConstant(override val constant: String) : StringExpr(), Constan
 data class StringVariable(val name: String, val calc: (String) -> StringConstant) : StringExpr() {
     override fun value(lambda: (value: Constant) -> Any): StringConstant = calc.invoke(name)
     override fun listText(): String = name
+}
+
+data class StringArrayAccess(
+    val name: String, val arrayIndex: Expression, override val basicModule: TiBasicModule
+) : StringExpr(), TiBasicModule.Dependent {
+    override fun value(lambda: (value: Constant) -> Any): StringConstant {
+        val result = basicModule.evaluateUserFunction(name, arrayIndex, null)
+        if (result !is StringConstant) throw IllegalArgumentException("Non-string user-function: $name")
+        return result
+    }
+
+    override fun listText() = "$name(${arrayIndex.listText()})"
 }
 
 data class StringConcatenation(val expressions: List<StringExpr>) : StringExpr() {

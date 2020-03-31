@@ -162,8 +162,7 @@ data class NumericVariable(val name: String, val calc: (String) -> NumericConsta
 }
 
 class NumericArrayAccess(
-    val baseName: String,
-    val arrayIndex: NumericExpr, machine: TiBasicModule
+    val baseName: String, val arrayIndex: NumericExpr, machine: TiBasicModule
 ) : NumericExpr(), TiBasicModule.Dependent {
 
     override val basicModule = machine
