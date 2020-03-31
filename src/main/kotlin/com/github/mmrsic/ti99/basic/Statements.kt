@@ -26,6 +26,12 @@ interface LineNumberDependentStatement : Statement {
     fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
 }
 
+/**
+ * The BREAK statement without a line number causes the program to stop when it is encountered. The line at which the
+ * program stops is called a breakpoint.
+ * @param lineNumberList the line-number-list is optional when BREAK is used as a statement - when present, it causes
+ * the program to stop immediately before the specified lines are executed
+ */
 class BreakStatement(private val lineNumberList: List<Int>? = null) : Statement, SkippedOnContinue {
     override fun listText() = if (lineNumberList != null) "BREAK $lineNumberList" else "BREAK"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
@@ -62,8 +68,10 @@ class PrintStatement(val printList: List<Expression>) : Statement, Command {
 /**
  * The LET statement allows you to assign values to variables in your program. The computer evaluates the expression
  * to the right of the equals sign and puts its value into the variable specified to the left of the equals sign.
+ * @param varName name of the variable for which to assign the [expr]
  */
 abstract class LetStatement(val varName: String) : Statement {
+    /** The right-hand-side expression of this LET statement. */
     abstract val expr: Expression
     override fun listText(): String = "$varName=${expr.listText().trim()}" // TODO: Add optional LET
 }
@@ -118,6 +126,7 @@ class StopStatement : Statement {
  * The REMark statement allows you to explain and document your program by inserting comments in the program
  * itself. When the computer encounters a remark statement while running your program, it takes no action but
  * proceeds to the next statement.
+ * @param text text of the REMark statement
  */
 class RemarkStatement(val text: String) : Statement {
     override fun listText(): String = "REM $text"
@@ -143,7 +152,7 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
     }
 
     override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
-        lineNumber = lineNumbersMapping[lineNumber]!!
+        lineNumber = lineNumbersMapping.getValue(lineNumber)
     }
 }
 

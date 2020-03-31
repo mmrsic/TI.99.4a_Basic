@@ -37,4 +37,47 @@ class UserDefinedFunctionsTest {
         )
     }
 
+    @Test
+    fun testEvaluateCurrentVariableValue() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM EVALUATE Y=X*(X-3)
+            110 DEF Y=X*(X-3)
+            120 PRINT " X  Y"
+            130 FOR X=-2 TO 5
+            140 PRINT X;Y
+            150 NEXT X
+            160 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                2 to "  TI BASIC READY",
+                4 to " >100 REM EVALUATE Y=X*(X-3)",
+                5 to " >110 DEF Y=X*(X-3)",
+                6 to " >120 PRINT \" X  Y\"",
+                7 to " >130 FOR X=-2 TO 5",
+                8 to " >140 PRINT X;Y",
+                9 to " >150 NEXT X",
+                10 to " >160 END",
+                11 to " >RUN",
+                12 to "   X  Y",
+                13 to "  -2  10",
+                14 to "  -1  4",
+                15 to "   0  0",
+                16 to "   1 -2",
+                17 to "   2 -2",
+                18 to "   3  0",
+                19 to "   4  4",
+                20 to "   5  10",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
