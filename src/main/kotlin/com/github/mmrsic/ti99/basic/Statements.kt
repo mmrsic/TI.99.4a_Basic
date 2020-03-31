@@ -383,3 +383,25 @@ class RandomizeStatement(private val seed: NumericExpr?) : Statement {
         machine.randomize(seed?.value())
     }
 }
+
+/**
+ * The DEFine statement allows you to define your own functions. [functionName] may be any valid variable name. If you
+ * specify a [parameterName], it may be any valid variable name. Note that if the [definition] you specify evaluates to
+ * a string result, the function name you use must be a string variable name (i.e. the last character must be a dollar
+ * sign, $).
+ */
+class DefineFunctionStatement(
+    private val functionName: String,
+    private val parameterName: String?,
+    private val definition: Expression
+) : Statement {
+
+    override fun listText(): String {
+        val arg = if (parameterName != null) "($parameterName)" else ""
+        return "DEF $functionName$arg=${definition.listText()}"
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.defineUserFunction(functionName, parameterName, definition)
+    }
+}

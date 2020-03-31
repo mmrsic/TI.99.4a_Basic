@@ -55,6 +55,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val color by token("COLOR")
     private val continueToken by token("""CON(TINUE)?""")
     private val data by token("DATA")
+    private val def by token("\\bDEF\\b")
     private val display by token("DISPLAY")
     private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
@@ -276,6 +277,14 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val assignStringStmt by skip(optional(let)) and stringVarRef and skip(assign) and stringExpr use {
         LetStringStatement(t1.name, t2)
     }
+    private val defNumericFunStmt by skip(def) and numericVarRef and optional(singleNumericArg or singleStringArg) and
+            skip(equals) and numericExpr use {
+        DefineFunctionStatement(t1.name, t2?.listText(), t3)
+    }
+    private val defStringFunStmt by skip(def) and stringVarRef and optional(singleNumericArg or singleStringArg) and
+            skip(equals) and stringExpr use {
+        DefineFunctionStatement(t1.name, t2?.listText(), t3)
+    }
     private val endStmt by end asJust EndStatement()
     private val stopStmt by stop asJust StopStatement()
     private val forToStepStmt by skip(forToken) and assignNumberStmt and skip(to) and numericExpr and
@@ -389,7 +398,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
             callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
             inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or readStmt or restoreStmt or
-            randomizeStmt
+            randomizeStmt or defNumericFunStmt or defStringFunStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))

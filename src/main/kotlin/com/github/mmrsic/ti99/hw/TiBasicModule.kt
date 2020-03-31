@@ -168,6 +168,7 @@ class TiBasicModule : TiModule {
     /** The current value of a numeric value given by its name. */
     fun getNumericVariableValue(name: String): NumericConstant {
         if (name.length > 15) throw BadName()
+        if (userFunctions.containsKey(name)) return userFunctions[name]!!.definition.value() as NumericConstant
         if (!numericVariables.containsKey(name)) numericVariables[name] = NumericConstant.ZERO
         return numericVariables[name]!!
     }
@@ -201,6 +202,29 @@ class TiBasicModule : TiModule {
     fun getArrayVariableName(baseName: String, arrayIndex: NumericExpr): String {
         val index = arrayIndex.value().toNative().roundToInt()
         return "$baseName-$index"
+    }
+
+    /** Helper class to represent user defined functions. */
+    private data class UserFunction(val parameterName: String?, val definition: Expression)
+
+    /** All user functions currently defined within this [TiBasicModule]. */
+    private val userFunctions: MutableMap<String, UserFunction> = mutableMapOf()
+
+    /** Define a user function for given function name, optional parameter name, and function definition. */
+    fun defineUserFunction(functionName: String, parameterName: String?, definition: Expression) {
+        if (functionName.last() == '$' != definition is StringExpr)
+            throw IllegalArgumentException("Function name '$functionName' must match definition type: $definition")
+        userFunctions[functionName] = UserFunction(parameterName, definition)
+    }
+
+    private fun evaluateUserFunction(name: String, parameterValue: Expression?, programLineNumber: Int?): Constant {
+        val userFunction = userFunctions[name] ?: throw IllegalArgumentException("No such user function: $name")
+        if (userFunction.parameterName != null && parameterValue == null) {
+            throw IllegalArgumentException("User function $name requires a parameter")
+        } else if (userFunction.parameterName == null && parameterValue != null) {
+            throw IllegalArgumentException("User function $name has no parameter: $parameterValue")
+        }
+        return evaluateRuntimeExpression(userFunction.definition, programLineNumber)
     }
 
     /** Initialize the [screen] of this module to the command interpreter mode after entering the */
@@ -416,14 +440,9 @@ class TiBasicModule : TiModule {
         currentPrintColumn = null
         for ((tokenIdx, token) in tokens.withIndex()) {
             if (tokenIdx == tokens.size - 1 && token == PrintSeparator.NextRecord) continue
-            val tokenValue: Expression = if (token is TabFunction || token is PrintSeparator) token else {
-                token.value { intermediateValue ->
-                    if (intermediateValue is NumericConstant && intermediateValue.isOverflow) {
-                        screen.scroll()
-                        screen.print("* WARNING:")
-                        screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
-                    }
-                }
+            val tokenValue: Expression = when (token) {
+                is TabFunction, is PrintSeparator -> token
+                else -> evaluateRuntimeExpression(token, programLineNumber)
             }
             when (tokenValue) {
                 PrintSeparator.Adjacent -> {
@@ -466,6 +485,16 @@ class TiBasicModule : TiModule {
             listOf(PrintSeparator.Adjacent, PrintSeparator.NextField).contains(tokens.lastOrNull())
         if (suppressScroll) currentPrintColumn = currCol else screen.scroll()
     }
+
+    /** Evaluate a given [Expression], optionally from within a given program line number. */
+    private fun evaluateRuntimeExpression(expression: Expression, programLineNumber: Int?) =
+        expression.value { intermediateValue ->
+            if (intermediateValue is NumericConstant && intermediateValue.isOverflow) {
+                screen.scroll()
+                screen.print("* WARNING:")
+                screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
+            }
+        }
 
     /** Current [KeyboardInputProvider] used by this module. */
     private var keyboardInputProvider: KeyboardInputProvider = object : KeyboardInputProvider {
