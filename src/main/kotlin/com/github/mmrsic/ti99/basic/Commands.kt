@@ -88,18 +88,12 @@ class RunCommand(val line: Int?) : Command {
  */
 class ByeCommand : Command {
     override val name: String = "BYE"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.leave()
-    }
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.leave()
 }
 
 class StoreProgramLineCommand(private val programLine: ProgramLine) : Command {
     override val name = "-- IMPLICIT STORE --"
-
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.store(programLine)
-    }
-
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.store(programLine)
     override fun requiresEmptyLineAfterExecution() = false
 }
 
