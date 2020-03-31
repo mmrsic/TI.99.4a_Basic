@@ -192,6 +192,12 @@ class TiBasicModule : TiModule {
 
     /** The array variable value for a given variable name and index expression. */
     fun getNumericArrayVariableValue(name: String, index: NumericExpr): NumericConstant {
+        if (name.isEmpty() || name.last() == '$') throw IllegalArgumentException("Illegal name: '$name'")
+        if (userFunctions.containsKey(name)) {
+            val result = evaluateUserFunction(name, index, null)
+            if (result !is NumericConstant) throw IllegalArgumentException("Not a numeric user defined function: $name = $result")
+            return result
+        }
         return getNumericVariableValue(getArrayVariableName(name, index))
     }
 

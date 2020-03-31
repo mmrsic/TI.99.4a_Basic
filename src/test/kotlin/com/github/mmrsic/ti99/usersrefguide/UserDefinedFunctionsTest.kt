@@ -132,4 +132,38 @@ class UserDefinedFunctionsTest {
         )
     }
 
+    @Test
+    fun testParameterHidesVariable() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 DEF FUNC(A)=A*(A+B-5)
+            110 A=6.9
+            120 B=13
+            130 PRINT "B= ";B:"FUNC(3)= ";FUNC(3):"A= ";A
+            140 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                9 to "  TI BASIC READY",
+                11 to " >100 DEF FUNC(A)=A*(A+B-5)",
+                12 to " >110 A=6.9",
+                13 to " >120 B=13",
+                14 to " >130 PRINT \"B= \";B:\"FUNC(3)=",
+                15 to "  \";FUNC(3):\"A= \";A",
+                16 to " >140 END",
+                17 to " >RUN",
+                18 to "  B=  13",
+                19 to "  FUNC(3)=  33",
+                20 to "  A=  6.9",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
