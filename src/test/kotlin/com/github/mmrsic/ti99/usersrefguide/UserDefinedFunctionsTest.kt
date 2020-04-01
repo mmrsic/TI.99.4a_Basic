@@ -220,4 +220,35 @@ class UserDefinedFunctionsTest {
         )
     }
 
+    @Test
+    fun testRecursiveFunction() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 DEF GX(X)=GX(2)*X
+            110 PRINT GX(3)
+            120 END
+            RUN
+            100 DEF GX(A)=A(3)^2
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                10 to "  TI BASIC READY",
+                12 to " >100 DEF GX(X)=GX(2)*X",
+                13 to " >110 PRINT GX(3)",
+                14 to " >120 END",
+                15 to " >RUN",
+                17 to "  * MEMORY FULL IN 110",
+                19 to " >100 DEF GX(A)=A(3)^2",
+                20 to " >RUN",
+                22 to "  * NAME CONFLICT IN 100",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

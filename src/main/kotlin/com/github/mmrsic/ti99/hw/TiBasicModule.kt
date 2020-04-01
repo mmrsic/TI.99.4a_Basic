@@ -1,20 +1,6 @@
 package com.github.mmrsic.ti99.hw
 
-import com.github.mmrsic.ti99.basic.BadLineNumber
-import com.github.mmrsic.ti99.basic.BadLineNumberWarning
-import com.github.mmrsic.ti99.basic.BadName
-import com.github.mmrsic.ti99.basic.Breakpoint
-import com.github.mmrsic.ti99.basic.CantContinue
-import com.github.mmrsic.ti99.basic.CantDoThat
-import com.github.mmrsic.ti99.basic.NumberTooBig
-import com.github.mmrsic.ti99.basic.ProgramLine
-import com.github.mmrsic.ti99.basic.PseudoRandomGenerator
-import com.github.mmrsic.ti99.basic.SkippedOnContinue
-import com.github.mmrsic.ti99.basic.TiBasicException
-import com.github.mmrsic.ti99.basic.TiBasicProgram
-import com.github.mmrsic.ti99.basic.TiBasicProgramException
-import com.github.mmrsic.ti99.basic.TiBasicProgramInterpreter
-import com.github.mmrsic.ti99.basic.TiBasicWarning
+import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.Expression
 import com.github.mmrsic.ti99.basic.expr.NumericArrayAccess
@@ -216,6 +202,9 @@ class TiBasicModule : TiModule {
     /** All user functions currently defined within this [TiBasicModule]. */
     private val userFunctions: MutableMap<String, UserFunction> = mutableMapOf()
 
+    /** All user functions currently being executed. */
+    private val executedUserFunctions: MutableSet<String> = mutableSetOf()
+
     /** Define a user function for given function name, optional parameter name, and function definition. */
     fun defineUserFunction(functionName: String, parameterName: String?, definition: Expression) {
         if (functionName.last() == '$' != definition is StringExpr)
@@ -232,6 +221,8 @@ class TiBasicModule : TiModule {
             throw IllegalArgumentException("User function $name has no parameter: $parameterExpr")
         }
 
+        if (executedUserFunctions.contains(name)) throw MemoryFull()
+        executedUserFunctions.add(name)
         var hiddenValue: Constant? = null
         if (parameterExpr is NumericExpr) {
             hiddenValue = getNumericVariableValue(userFunction.parameterName!!)
@@ -247,6 +238,7 @@ class TiBasicModule : TiModule {
         } else if (hiddenValue is StringExpr) {
             setStringVariable(userFunction.parameterName!!, hiddenValue)
         }
+        executedUserFunctions.remove(name)
         return result
     }
 

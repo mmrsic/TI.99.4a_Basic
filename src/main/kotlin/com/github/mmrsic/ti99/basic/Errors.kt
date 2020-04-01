@@ -68,6 +68,7 @@ class InputError : TiBasicWarning("INPUT ERROR") {
     override val scrollAfterDisplay = false
 }
 
+class MemoryFull : TiBasicError("MEMORY FULL")
 class NumberTooBig : TiBasicWarning("NUMBER TOO BIG") {
     override val scrollAfterDisplay = false
 }
