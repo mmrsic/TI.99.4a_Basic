@@ -166,4 +166,58 @@ class UserDefinedFunctionsTest {
         )
     }
 
+    @Test
+    fun testDefStatementNotExecuted() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+                    return when (ctx.prompt) {
+                        "X=? " -> ".1\r".asSequence()
+                        else -> throw IllegalArgumentException("Unable to provide input for ${ctx.prompt}")
+                    }
+                }
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM FIND F'(X) USING    NUMERICAL APPROXIMATION
+            110 INPUT "X=? ":X
+            120 IF ABS(X)>.01 THEN 150
+            130 H=.00001
+            140 GOTO 180
+            150 H=.001*ABS(X)
+            160 DEF F(Z)=3*Z^3-2*Z+1
+            170 DEF DER(X)=(F(X+H)-F(X-H))/(2*H)
+            180 PRINT "F'(";STR$(X);")= ";DER(X)
+            190 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                3 to "  TI BASIC READY",
+                5 to " >100 REM FIND F'(X) USING",
+                6 to "  NUMERICAL APPROXIMATION",
+                7 to " >110 INPUT \"X=? \":X",
+                8 to " >120 IF ABS(X)>.01 THEN 150",
+                9 to " >130 H=.00001",
+                10 to " >140 GOTO 180",
+                11 to " >150 H=.001*ABS(X)",
+                12 to " >160 DEF F(Z)=3*Z^3-2*Z+1",
+                13 to " >170 DEF DER(X)=(F(X+H)-F(X-H",
+                14 to "  ))/(2*H)",
+                15 to " >180 PRINT \"F'(\";STR$(X);\")=",
+                16 to "  \";DER(X)",
+                17 to " >190 END",
+                18 to " >RUN",
+                19 to "  X=? .1",
+                20 to "  F'(.1)= -1.90999997",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
