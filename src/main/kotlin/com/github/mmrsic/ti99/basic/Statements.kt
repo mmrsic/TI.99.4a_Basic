@@ -403,14 +403,18 @@ class DefineFunctionStatement(
     private val functionName: String,
     private val parameterName: String?,
     private val definition: Expression
-) : Statement {
+) : Statement, TiBasicModule.ExecutedOnStore {
 
     override fun listText(): String {
         val arg = if (parameterName != null) "($parameterName)" else ""
         return "DEF $functionName$arg=${definition.listText()}"
     }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+    override fun onStore(lineNumber: Int, machine: TiBasicModule) {
         machine.defineUserFunction(functionName, parameterName, definition)
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        // Nothing to do
     }
 }
