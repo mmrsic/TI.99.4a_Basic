@@ -221,7 +221,10 @@ class TiBasicModule : TiModule {
             throw IllegalArgumentException("User function $name has no parameter: $parameterExpr")
         }
 
-        if (executedUserFunctions.contains(name)) throw MemoryFull()
+        if (executedUserFunctions.contains(name)) {
+            println("User function recursion: $name")
+            throw MemoryFull()
+        }
         executedUserFunctions.add(name)
         var hiddenValue: Constant? = null
         if (parameterExpr is NumericExpr) {
@@ -240,6 +243,18 @@ class TiBasicModule : TiModule {
         }
         executedUserFunctions.remove(name)
         return result
+    }
+
+    /**
+     * Check whether a already defined user function given by its name has a parameter name conflicting with the
+     * variables used in its definition.
+     * @return true if the specified function name bears a name conflict, false otherwise
+     */
+    fun hasUserFunctionParameterNameConflict(functionName: String): Boolean {
+        val userFunctionToCheck =
+            userFunctions[functionName] ?: throw IllegalArgumentException("No such user function: $functionName")
+        val arg = userFunctionToCheck.parameterName
+        return userFunctionToCheck.definition.listText().contains(Regex("\\b$arg\\("))
     }
 
     /** Initialize the [screen] of this module to the command interpreter mode after entering the */
@@ -313,6 +328,7 @@ class TiBasicModule : TiModule {
     fun endProgramRun() {
         programInterpreter = null
         resetCharacters()
+        executedUserFunctions.clear()
     }
 
     /**
@@ -629,6 +645,7 @@ class TiBasicModule : TiModule {
             screen.print("** DONE **")
             screen.scroll()
         } catch (e: TiBasicException) {
+            executedUserFunctions.clear()
             if (e is TiBasicProgramException && e.delegate is Breakpoint) {
                 breakpoints.remove(e.lineNumber)
                 continueLine = e.lineNumber

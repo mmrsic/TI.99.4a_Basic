@@ -415,6 +415,6 @@ class DefineFunctionStatement(
     }
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        // Nothing to do
+        if (machine.hasUserFunctionParameterNameConflict(functionName)) throw NameConflict()
     }
 }
