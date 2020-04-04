@@ -251,4 +251,54 @@ class UserDefinedFunctionsTest {
         )
     }
 
+    @Test
+    fun testNameConflictWhenMissingArgument() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 DEF SQUARE(X)=X*X
+            110 PRINT SQUARE
+            120 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                15 to "  TI BASIC READY",
+                17 to " >100 DEF SQUARE(X)=X*X",
+                18 to " >110 PRINT SQUARE",
+                19 to " >120 END",
+                20 to " >RUN",
+                22 to "  * NAME CONFLICT IN 110",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testNameConflictWhenSuperfluousArgument() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 DEF PI=3.1416
+            110 PRINT PI(2)
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                16 to "  TI BASIC READY",
+                18 to " >100 DEF PI=3.1416",
+                19 to " >110 PRINT PI(2)",
+                20 to " >RUN",
+                22 to "  * NAME CONFLICT IN 110",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

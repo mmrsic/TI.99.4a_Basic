@@ -154,7 +154,7 @@ class TiBasicModule : TiModule {
     /** The current value of a numeric value given by its name. */
     fun getNumericVariableValue(name: String): NumericConstant {
         if (name.length > 15) throw BadName()
-        if (userFunctions.containsKey(name)) return userFunctions[name]!!.definition.value() as NumericConstant
+        if (userFunctions.containsKey(name)) return evaluateUserFunction(name, null, null) as NumericConstant
         if (!numericVariables.containsKey(name)) numericVariables[name] = NumericConstant.ZERO
         return numericVariables[name]!!
     }
@@ -216,9 +216,11 @@ class TiBasicModule : TiModule {
     fun evaluateUserFunction(name: String, parameterExpr: Expression?, programLineNumber: Int?): Constant {
         val userFunction = userFunctions[name] ?: throw IllegalArgumentException("No such user function: $name")
         if (userFunction.parameterName != null && parameterExpr == null) {
-            throw IllegalArgumentException("User function $name requires a parameter")
+            println("User function $name requires a parameter")
+            throw NameConflict()
         } else if (userFunction.parameterName == null && parameterExpr != null) {
-            throw IllegalArgumentException("User function $name has no parameter: $parameterExpr")
+            println("User function $name has no parameter: $parameterExpr")
+            throw NameConflict()
         }
 
         if (executedUserFunctions.contains(name)) {
