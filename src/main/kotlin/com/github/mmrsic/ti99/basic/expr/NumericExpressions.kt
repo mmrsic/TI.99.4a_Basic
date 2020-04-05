@@ -161,14 +161,21 @@ data class NumericVariable(val name: String, val calc: (String) -> NumericConsta
     override fun value(lambda: (value: Constant) -> Any): NumericConstant = calc.invoke(name)
 }
 
-class NumericArrayAccess(
-    val baseName: String, val arrayIndex: NumericExpr, machine: TiBasicModule
-) : NumericExpr(), TiBasicModule.Dependent {
-
+class NumericArrayAccess(val baseName: String, val arrayIndexList: List<NumericExpr>, machine: TiBasicModule) :
+    NumericExpr(), TiBasicModule.Dependent {
     override val basicModule = machine
-    override fun listText() = "$baseName(${arrayIndex.listText()})"
+    override fun listText(): String {
+        return StringBuilder().apply {
+            append(baseName).append('(')
+            for (arrayIndex in arrayIndexList) {
+                append(arrayIndex.listText())
+            }
+            append(')')
+        }.toString()
+    }
+
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-        return basicModule.getNumericArrayVariableValue(baseName, arrayIndex)
+        return basicModule.getNumericArrayVariableValue(baseName, arrayIndexList)
     }
 }
 

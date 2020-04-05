@@ -67,4 +67,59 @@ class ArraysTest {
         )
     }
 
+    @Test
+    fun testMultiplicationTable() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM MULTIPLICATION TABLE
+            110 CALL CLEAR
+            120 CALL CHAR(96,"FF")
+            130 CALL CHAR(97,"8080808080808080")
+            140 CALL CHAR(98,"FF80808080808080")
+            150 FOR A=1 TO 5
+            160 FOR B=1 TO 5
+            170 M(A,B)=A*B
+            180 NEXT B
+            190 NEXT A
+            200 FOR A=1 TO 5
+            210 FOR B=1 TO 5
+            220 PRINT M(A,B);
+            230 IF B<>1 THEN 250 
+            240 PRINT CHR$(97);" ";
+            250 NEXT B
+            260 PRINT 
+            270 REM THE FOLLOWING       STATEMENTS PRINT THE LINES  DEFINING THE TABLE
+            280 IF A<>1 THEN 330
+            290 PRINT
+            300 CALL HCHAR(23,3,96,3)
+            310 CALL HCHAR(23,6,98)
+            320 CALL HCHAR(23,7,96,16)
+            330 NEXT A
+            340 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                15 to "   1 a  2  3  4  5",
+                16 to "  ```b````````````````",
+                17 to "   2 a  4  6  8  10",
+                18 to "   3 a  6  9  12  15",
+                19 to "   4 a  8  12  16  20",
+                20 to "   5 a  10  15  20  25",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun test() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpret("M(A,B)=0", machine)
+    }
 }

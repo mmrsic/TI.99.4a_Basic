@@ -188,7 +188,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val valFun by skip(valToken) and singleStringArg use { ValFunction(this) }
     private val numericFun by absFun or ascFun or atnFun or cosFun or expFun or intFun or lenFun or logFun or posFun or
             rndFun or sgnFun or sinFun or sqrFun or tanFun or valFun
-    private val numericArrRef by name and singleNumericArg use { NumericArrayAccess(t1.text, t2, machine) }
+    private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and
+            optional(skip(comma) and parser(::numericExpr) and optional(skip(comma) and parser(::numericExpr))) and
+            skip(closeParenthesis) use {
+        val baseName = t1.text
+        val indexList = mutableListOf(t2)
+        if (t3 != null) {
+            val additionalIndexToken = t3!!
+            indexList.add(additionalIndexToken.t1)
+            if (additionalIndexToken.t2 != null) indexList.add(additionalIndexToken.t2!!)
+        }
+        NumericArrayAccess(baseName, indexList, machine)
+    }
     private val numericVarRef by name use {
         NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
     }
@@ -274,7 +285,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         printArgs.addAll(t4.map { PrintSeparator.fromString(it)!! })
         PrintStatement(printArgs)
     }
-    private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and (numericExpr) use {
+    private val assignNumberArrayElementStmt by skip(optional(let)) and name and skip(openParenthesis) and
+            numericExpr and optional(skip(comma) and numericExpr and optional(skip(comma) and numericExpr)) and
+            skip(closeParenthesis) and skip(assign) and numericExpr use {
+        val subscripts = mutableListOf(t2)
+        val optionalAdditionalSubscriptToken = t3
+        if (optionalAdditionalSubscriptToken != null) {
+            subscripts.add(optionalAdditionalSubscriptToken.t1)
+            if (optionalAdditionalSubscriptToken.t2 != null) subscripts.add(optionalAdditionalSubscriptToken.t2!!)
+        }
+        LetNumberArrayElementStatement(t1.text, subscripts.toList(), t4)
+    }
+    private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and numericExpr use {
         LetNumberStatement(t1.name, t2)
     }
     private val assignStringStmt by skip(optional(let)) and stringVarRef and skip(assign) and stringExpr use {
@@ -398,10 +420,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
             breakCmd or continueCmd or unbreakCmd or traceCmd or untraceCmd or
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
-    private val stmtParser by printStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
-            callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or
-            inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or readStmt or restoreStmt or
-            randomizeStmt or defNumericFunStmt or defStringFunStmt
+    private val stmtParser by printStmt or assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or
+            endStmt or remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or
+            stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or
+            readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))

@@ -34,7 +34,7 @@ data class StringArrayAccess(
     val name: String, val arrayIndex: Expression, override val basicModule: TiBasicModule
 ) : StringExpr(), TiBasicModule.Dependent {
     override fun value(lambda: (value: Constant) -> Any): StringConstant {
-        val result = basicModule.evaluateUserFunction(name, arrayIndex, null)
+        val result = basicModule.evaluateUserFunction(name, listOf(arrayIndex), null)
         if (result !is StringConstant) throw IllegalArgumentException("Non-string user-function: $name")
         return result
     }

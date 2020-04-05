@@ -80,9 +80,16 @@ abstract class LetStatement(val varName: String) : Statement {
  * [LetStatement] where a [NumericExpr] is assigned to a numeric variable.
  * The rules governing underflow and overflow for the evaluation of numeric expressions are used in the LET statement.
  */
-class LetNumberStatement(varName: String, override val expr: NumericExpr) : LetStatement(varName) {
+open class LetNumberStatement(varName: String, override val expr: NumericExpr) : LetStatement(varName) {
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         machine.setNumericVariable(varName, expr)
+    }
+}
+
+class LetNumberArrayElementStatement(baseVarName: String, val subscripts: List<NumericExpr>, expr: NumericExpr) :
+    LetNumberStatement(baseVarName, expr) {
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.setNumericArrayVariable(varName, subscripts, expr.value())
     }
 }
 

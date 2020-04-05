@@ -125,7 +125,7 @@ class TiBasicModule : TiModule {
         val memoryVarName = when (varNameExpr) {
             is NumericVariable -> varNameExpr.name
             is StringVariable -> varNameExpr.name
-            is NumericArrayAccess -> getArrayVariableName(varNameExpr.baseName, varNameExpr.arrayIndex)
+            is NumericArrayAccess -> getArrayVariableName(varNameExpr.baseName, varNameExpr.arrayIndexList)
             else -> throw IllegalArgumentException("Unknown variable expression: $varNameExpr")
         }
         setVariable(memoryVarName, stringValue.replace("\"\"", "\""))
@@ -154,7 +154,7 @@ class TiBasicModule : TiModule {
     /** The current value of a numeric value given by its name. */
     fun getNumericVariableValue(name: String): NumericConstant {
         if (name.length > 15) throw BadName()
-        if (userFunctions.containsKey(name)) return evaluateUserFunction(name, null, null) as NumericConstant
+        if (userFunctions.containsKey(name)) return evaluateUserFunction(name, listOf(), null) as NumericConstant
         if (!numericVariables.containsKey(name)) numericVariables[name] = NumericConstant.ZERO
         return numericVariables[name]!!
     }
@@ -177,23 +177,36 @@ class TiBasicModule : TiModule {
     }
 
     /** The array variable value for a given variable name and index expression. */
-    fun getNumericArrayVariableValue(name: String, index: NumericExpr): NumericConstant {
+    fun getNumericArrayVariableValue(name: String, indexList: List<NumericExpr>): NumericConstant {
         if (name.isEmpty() || name.last() == '$') throw IllegalArgumentException("Illegal name: '$name'")
         if (userFunctions.containsKey(name)) {
-            val result = evaluateUserFunction(name, index, null)
+            val result = evaluateUserFunction(name, indexList, null)
             if (result !is NumericConstant) throw IllegalArgumentException("Not a numeric user defined function: $name = $result")
             return result
         }
-        return getNumericVariableValue(getArrayVariableName(name, index))
+        return getNumericVariableValue(getArrayVariableName(name, indexList))
     }
 
-    fun setNumericArrayVariable(name: String, index: NumericExpr, value: NumericConstant) {
-        setNumericVariable(getArrayVariableName(name, index), value)
+    /**
+     * Set the value of a numeric array variable to a given numeric constant.
+     * @param name Base name of the array to set, that is the A of the A(1,2)=value
+     * @param indices all the indices of the array, that is, the (1,2) of A(1,2)=value
+     * @param value the new value of the numeric array variable, that is, the value of A(1,2)=value
+     */
+    fun setNumericArrayVariable(name: String, indices: List<NumericExpr>, value: NumericConstant) {
+        setNumericVariable(getArrayVariableName(name, indices), value)
     }
 
-    fun getArrayVariableName(baseName: String, arrayIndex: NumericExpr): String {
-        val index = arrayIndex.value().toNative().roundToInt()
-        return "$baseName-$index"
+    /** The name of an array variable for given base name and index expressions. */
+    fun getArrayVariableName(baseName: String, indexExpressions: List<NumericExpr>): String {
+        if (indexExpressions.isEmpty()) throw IllegalArgumentException("Array index must not be empty")
+        return StringBuilder().apply {
+            append(baseName)
+            for (indexExpr in indexExpressions) {
+                val index = indexExpr.value().toNative().roundToInt()
+                append("-$index")
+            }
+        }.toString()
     }
 
     /** Helper class to represent user defined functions. */
@@ -213,13 +226,13 @@ class TiBasicModule : TiModule {
     }
 
     /** Evaluate a user function for a given user function name and an optional parameter. */
-    fun evaluateUserFunction(name: String, parameterExpr: Expression?, programLineNumber: Int?): Constant {
+    fun evaluateUserFunction(name: String, parameterList: List<Expression>, programLineNumber: Int?): Constant {
         val userFunction = userFunctions[name] ?: throw IllegalArgumentException("No such user function: $name")
-        if (userFunction.parameterName != null && parameterExpr == null) {
+        if (userFunction.parameterName != null && parameterList.isEmpty()) {
             println("User function $name requires a parameter")
             throw NameConflict()
-        } else if (userFunction.parameterName == null && parameterExpr != null) {
-            println("User function $name has no parameter: $parameterExpr")
+        } else if (userFunction.parameterName == null && parameterList.isNotEmpty()) {
+            println("User function $name has no parameter: $parameterList")
             throw NameConflict()
         }
 
@@ -228,20 +241,21 @@ class TiBasicModule : TiModule {
             throw MemoryFull()
         }
         executedUserFunctions.add(name)
-        var hiddenValue: Constant? = null
-        if (parameterExpr is NumericExpr) {
-            hiddenValue = getNumericVariableValue(userFunction.parameterName!!)
-            setNumericVariable(userFunction.parameterName, parameterExpr)
-        } else if (parameterExpr is StringExpr) {
-            hiddenValue = getStringVariableValue(userFunction.parameterName!!)
-            setStringVariable(userFunction.parameterName, parameterExpr)
+        val hiddenValues: MutableList<Constant> = mutableListOf()
+        for (parameterExpr in parameterList) {
+            if (parameterExpr is NumericExpr) {
+                hiddenValues.add(getNumericVariableValue(userFunction.parameterName!!))
+                setNumericVariable(userFunction.parameterName, parameterExpr)
+            } else if (parameterExpr is StringExpr) {
+                hiddenValues.add(getStringVariableValue(userFunction.parameterName!!))
+                setStringVariable(userFunction.parameterName, parameterExpr)
+            }
         }
-        println("Evaluating $userFunction for parameter value $parameterExpr [hidden value=$hiddenValue]")
+        println("Evaluating $userFunction for parameter value $parameterList [hidden values=$hiddenValues]")
         val result = evaluateRuntimeExpression(userFunction.definition, programLineNumber)
-        if (hiddenValue is NumericExpr) {
-            setNumericVariable(userFunction.parameterName!!, hiddenValue)
-        } else if (hiddenValue is StringExpr) {
-            setStringVariable(userFunction.parameterName!!, hiddenValue)
+        for (hiddenValue in hiddenValues) {
+            if (hiddenValue is NumericExpr) setNumericVariable(userFunction.parameterName!!, hiddenValue)
+            else if (hiddenValue is StringExpr) setStringVariable(userFunction.parameterName!!, hiddenValue)
         }
         executedUserFunctions.remove(name)
         return result
