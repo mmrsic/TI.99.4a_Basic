@@ -522,7 +522,7 @@ class TiBasicModule : TiModule {
                         currCol = minCol
                         val last = leftOver
                         leftOver = screen.hchar(currRow, currCol, last, maxCol)
-                        currCol += leftOver.length - last.length
+                        currCol += last.length
                     }
                 }
                 else -> println("Ignored in print statement: $token")
