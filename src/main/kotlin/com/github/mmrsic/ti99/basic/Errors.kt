@@ -55,6 +55,7 @@ class BadLineNumberWarning : TiBasicWarning("BAD LINE NUMBER") {
 class BadArgument : TiBasicError("BAD ARGUMENT")
 class BadName : TiBasicError("BAD NAME")
 class BadValue : TiBasicError("BAD VALUE")
+class BadSubscript : TiBasicError("BAD SUBSCRIPT")
 class Breakpoint : TiBasicError("BREAKPOINT") {
     override val lineNumberPrefix = "AT"
     override val scrollAfterDisplay = false

@@ -141,6 +141,24 @@ class RemarkStatement(val text: String) : Statement {
 }
 
 /**
+ * The OPTION BASE statement allows you to set the [lowerLimit] of array subscripts at one instead of the default zero.
+ * If you include it in your program, you must give it a lower line number than any [DimStatement] or any reference to
+ * an element in any array. You may have only one OPTION BASE statement in a program, and it applies to all array
+ * subscripts.
+ * @param lowerLimit either 0 or 1
+ */
+class OptionBaseStatement(val lowerLimit: Int) : Statement {
+    init {
+        if (lowerLimit !in 0..1) throw IncorrectStatement()
+    }
+
+    override fun listText() = "OPTION BASE $lowerLimit"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.setArrayLowerLimit(lowerLimit)
+    }
+}
+
+/**
  * The GOTO statement allows you to transfer control backward or forward within a program. Whenever the computer
  * reaches a GOTO statement, it will always jump to the statement with the specified line-number. This is called an
  * unconditional branch.

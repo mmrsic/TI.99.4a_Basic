@@ -105,6 +105,7 @@ class TiBasicModule : TiModule {
     fun resetVariables() {
         numericVariables.clear()
         stringVariables.clear()
+        arrayLowerLimit = 0
     }
 
     /** Either [setStringVariable] or [setNumericVariable] depending on the variable name. */
@@ -204,9 +205,18 @@ class TiBasicModule : TiModule {
             append(baseName)
             for (indexExpr in indexExpressions) {
                 val index = indexExpr.value().toNative().roundToInt()
+                if (index == 0 && arrayLowerLimit > 0) throw BadSubscript()
                 append("-$index")
             }
         }.toString()
+    }
+
+    private var arrayLowerLimit: Int = 0
+
+    /** Set the lower limit of all array subscripts of this TI Basic module to either zero or one. */
+    fun setArrayLowerLimit(lowerLimit: Int) {
+        if (lowerLimit !in 0..1) throw IllegalArgumentException("Illegal lower limit for array subscripts: $lowerLimit")
+        arrayLowerLimit = lowerLimit
     }
 
     /** Helper class to represent user defined functions. */
@@ -332,9 +342,7 @@ class TiBasicModule : TiModule {
     /** Run the [program] of this module, optionally starting at a given line number. */
     fun runProgram(startLine: Int? = null) {
         val programToRun = program
-        if (startLine != null && programToRun != null && !programToRun.hasLineNumber(startLine)) {
-            throw BadLineNumber()
-        }
+        if (startLine != null && programToRun != null && !programToRun.hasLineNumber(startLine)) throw BadLineNumber()
         resetCharacters()
         resetVariables()
         interpretProgram(startLine)

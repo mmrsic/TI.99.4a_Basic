@@ -216,4 +216,40 @@ class ArraysTest {
         )
     }
 
+    @Test
+    fun testOptionBase() {
+        val machine = TiBasicModule()
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 OPTION BASE 1
+            110 DIM X(5,5,5)
+            120 X(1,0,1)=3
+            130 PRINT X(1,0,1)
+            140 END
+            RUN
+            100
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                7 to "  TI BASIC READY",
+                9 to " >100 OPTION BASE 1",
+                10 to " >110 DIM X(5,5,5)",
+                11 to " >120 X(1,0,1)=3",
+                12 to " >130 PRINT X(1,0,1)",
+                13 to " >140 END",
+                14 to " >RUN",
+                16 to "  * BAD SUBSCRIPT IN 120",
+                18 to " >100",
+                19 to " >RUN",
+                20 to "   3",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

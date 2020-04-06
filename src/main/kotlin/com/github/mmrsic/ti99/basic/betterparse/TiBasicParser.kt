@@ -77,6 +77,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val next by token("NEXT")
     private val number by token("""NUM(BER)?""")
     private val on by token("ON")
+    private val optionBase by token("OPTION\\s+BASE")
     private val pos by token("\\bPOS\\b")
     private val print by token("\\bPRINT\\b")
     private val randomize by token("\\bRANDOMIZE\\b")
@@ -324,6 +325,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             else -> throw IllegalArgumentException("Illegal REMARK: $text")
         }
     }
+    private val optionBaseStmt by skip(optionBase) and positiveIntConst use { OptionBaseStatement(this) }
     private val gotoStmt by skip(goto) and (positiveIntConst) map { lineNum -> GoToStatement(lineNum) }
     private val onGotoStmt by skip(on) and numericExpr and skip(goto) and separatedTerms(positiveIntConst, comma) use {
         OnGotoStatement(t1, t2)
@@ -439,12 +441,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stmtParser by printStmt or assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or
             endStmt or remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or
             stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or
-            readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt
+            readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or
+            optionBaseStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))
     }
-    private val removeProgramLineParser by positiveInt use { RemoveProgramLineCommand(Integer.parseInt(text)) }
+    private val removeProgramLineParser by positiveIntConst use { RemoveProgramLineCommand(this) }
 
     override val rootParser by cmdParser or stmtParser or programLineParser or removeProgramLineParser
 }
