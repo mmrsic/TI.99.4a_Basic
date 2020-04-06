@@ -132,7 +132,7 @@ class CodeScreen {
     /** Put a given list of ASCII codes into a given row starting at a given column of that row. */
     internal fun putAll(row: Int, column: Int, codes: List<Int>) {
         for ((colOffset, code) in codes.withIndex()) {
-            codeTable[Pair(row, column + colOffset)] = code
+            setCode(row, column + colOffset, code)
         }
     }
 
@@ -145,7 +145,7 @@ class CodeScreen {
         for ((index, code) in codes.withIndex()) {
             val row = startRow + index / numColumns
             val col = startCol + index % numColumns
-            codeTable[Pair(row, col)] = code % 256
+            setCode(row, col, code % 256)
         }
     }
 
@@ -158,7 +158,7 @@ class CodeScreen {
         for ((index, code) in codes.withIndex()) {
             val col = startCol + index / numRows
             val row = startRow + index % numRows
-            codeTable[Pair(row, col)] = code % 256
+            setCode(row, col, code % 256)
         }
     }
 
@@ -171,15 +171,20 @@ class CodeScreen {
         codeTable.clear()
         for (oldEntry in old.entries) {
             val oldKey = oldEntry.key
-            if (oldKey.first > 1) {
-                val newKey = Pair(oldKey.first - 1, oldKey.second)
-                codeTable[newKey] = oldEntry.value
-            }
+            if (oldKey.first > 1) setCode(oldKey.first - 1, oldKey.second, oldEntry.value)
         }
     }
 
     /** Clear the code table, that is, set the [defaultChrCode] onto each cell of the screen. */
     fun clear() = codeTable.clear()
+
+    // HELPERS //
+
+    private fun setCode(row: Int, column: Int, value: Int) {
+        if (row !in 1..TiBasicScreen.NUM_ROWS) throw IllegalArgumentException("Illegal row: $row")
+        if (column !in 1..TiBasicScreen.NUM_COLUMNS) throw IllegalArgumentException("Illegal column: $column")
+        codeTable[Pair(row, column)] = value
+    }
 
 }
 

@@ -2,6 +2,7 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
@@ -158,4 +159,61 @@ class ArraysTest {
             ), machine.screen
         )
     }
+
+    @Test
+    fun testDemoOfDimAndSubscripts() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext) = "14\r".asSequence()
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 REM DEMO OF DIM AND SUBSCRIPTS
+            110 S=100
+            120 OPTION BASE 1
+            130 DIM T(25)
+            140 FOR I=1 TO 25
+            150 READ T(I)
+            160 A=S+T(I)
+            170 PRINT A;
+            180 NEXT I
+            190 PRINT ::
+            200 PRINT T(14)
+            210 INPUT "ENTER A NUMBER BETWEEN 1 AND 23:":N
+            220 PRINT T(N+2)
+            230 DATA 12,13,43,45,65,76,78,98,56,34,23,21,100,333,222,111,444,666,543,234,89,765,90,101,345
+            240 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to " >200 PRINT T(14)",
+                2 to " >210 INPUT \"ENTER A NUMBER BE",
+                3 to "  TWEEN 1 AND 23:\":N",
+                4 to " >220 PRINT T(N+2)",
+                5 to " >230 DATA 12,13,43,45,65,76,7",
+                6 to "  8,98,56,34,23,21,100,333,222",
+                7 to "  ,111,444,666,543,234,89,765,",
+                8 to "  90,101,345",
+                9 to " >240 END",
+                10 to " >RUN",
+                11 to "   112  113  143  145  165",
+                12 to "   176  178  198  156  134",
+                13 to "   123  121  200  433  322", // Note: It's 433, not 443 as stated in the example
+                14 to "   211  544  766  643  334",
+                15 to "   189  865  190  201  445",
+                17 to "   333",
+                18 to "  ENTER A NUMBER BETWEEN 1 AND",
+                19 to "   23:14",
+                20 to "   111",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }
