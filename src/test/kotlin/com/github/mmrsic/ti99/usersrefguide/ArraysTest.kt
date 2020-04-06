@@ -117,9 +117,45 @@ class ArraysTest {
     }
 
     @Test
-    fun test() {
+    fun testDimension() {
         val machine = TiBasicModule()
         val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpret("M(A,B)=0", machine)
+        interpreter.interpretAll(
+            """
+            100 DIM X(15)
+            110 FOR I=1 TO 15
+            120 READ X(I)
+            130 NEXT I
+            140 REM PRINT LOOP
+            150 FOR I=15 TO 1 STEP -1
+            160 PRINT X(I);
+            170 NEXT I
+            180 DATA 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+            190 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                6 to "  TI BASIC READY",
+                8 to " >100 DIM X(15)",
+                9 to " >110 FOR I=1 TO 15",
+                10 to " >120 READ X(I)",
+                11 to " >130 NEXT I",
+                12 to " >140 REM PRINT LOOP",
+                13 to " >150 FOR I=15 TO 1 STEP -1",
+                14 to " >160 PRINT X(I);",
+                15 to " >170 NEXT I",
+                16 to " >180 DATA 1,2,3,4,5,6,7,8,9,1",
+                17 to "  0,11,12,13,14,15",
+                18 to " >190 END",
+                19 to " >RUN",
+                20 to "   15  14  13  12  11  10  9",
+                21 to "   8  7  6  5  4  3  2  1",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
     }
 }

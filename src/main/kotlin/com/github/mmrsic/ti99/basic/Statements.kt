@@ -327,6 +327,42 @@ class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Expressi
 }
 
 /**
+ * The DIMension statement reserves space for both numeric and string arrays. You can explicitly dimension an array only
+ * once in your program. If you dimension an array, the DIM statement must appear in the program before any other
+ * reference to the array.
+ */
+class DimStatement(val arrayDeclarations: List<ArrayDimensions>) : Statement {
+    init {
+        if (arrayDeclarations.isEmpty()) throw IllegalArgumentException("Array declarations must not be empty")
+    }
+
+    override fun listText(): String {
+        return StringBuilder().apply {
+            append("DIM ")
+            for (arrayDeclaration in arrayDeclarations) {
+                if (arrayDeclaration !== arrayDeclarations[0]) append(',')
+                append(arrayDeclaration)
+            }
+        }.toString()
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        // Nothing to do
+    }
+
+    /** Declaration of an TI Basic array with one to three dimensions. */
+    data class ArrayDimensions(val name: String, val firstDim: Int, val secondDim: Int?, val thirdDim: Int?) {
+        override fun toString(): String {
+            return StringBuilder("$name($firstDim").apply {
+                if (secondDim != null) append(secondDim)
+                if (thirdDim != null) append(thirdDim)
+                append(')')
+            }.toString()
+        }
+    }
+}
+
+/**
  * The DATA statement allows you to store data inside your program. Data in the data-lists are obtained via
  * [ReadStatement]s when the program is run.
  * When a program reaches a DATA statement, it proceeds to the next statement with no other effect.

@@ -56,6 +56,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val continueToken by token("""CON(TINUE)?""")
     private val data by token("DATA")
     private val def by token("\\bDEF\\b")
+    private val dim by token("DIM")
     private val display by token("DISPLAY")
     private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
@@ -164,7 +165,6 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val stringTerm: Parser<StringExpr> by stringConst or stringArrVarRef or stringVarRef or stringFun or
             (skip(openParenthesis) and parser(::stringExpr) and skip(closeParenthesis))
-
     private val stringExpr by leftAssociative(stringTerm, stringOperator) { a, _, b ->
         StringConcatenation(listOf(a, b))
     }
@@ -345,6 +345,22 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         val varNameList: List<Expression> = t2
         InputStatement(prompt, varNameList)
     }
+    private val dimStmt: Parser<Statement> by skip(dim) and separatedTerms(
+        name and skip(openParenthesis) and positiveIntConst and
+                optional(skip(comma) and positiveIntConst and optional(skip(comma) and positiveIntConst)) and
+                skip(closeParenthesis)
+        , comma, acceptZero = false
+    ) use {
+        val declarations = mutableListOf<DimStatement.ArrayDimensions>()
+        for (declaration in this) {
+            declarations.add(
+                DimStatement.ArrayDimensions(
+                    declaration.t1.text, declaration.t2, declaration.t3?.t1, declaration.t3?.t2
+                )
+            )
+        }
+        DimStatement(declarations)
+    }
     private val emptyDataString: Parser<Constant> by doubleComma asJust StringConstant.EMPTY
     private val dataString: Parser<Constant> = name use { StringConstant(this.text) }
     private val dataContent = (numericConst as Parser<Constant> or stringConst or emptyDataString or dataString)
@@ -423,7 +439,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stmtParser by printStmt or assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or
             endStmt or remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or
             stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or
-            readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt
+            readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))
