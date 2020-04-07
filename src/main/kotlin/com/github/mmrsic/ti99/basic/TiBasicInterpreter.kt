@@ -172,6 +172,7 @@ class TiBasicProgramInterpreter(
 
     /** GO to a subprogram given by its line number. */
     fun gosub(subLineNumber: Int, currLineNumber: Int) {
+        if (subLineNumber == currLineNumber) throw MemoryFull()
         val program = machine.program ?: throw IllegalArgumentException("Can't execute GOSUB without program")
         val gosub = Gosub(subLineNumber, program.nextLineNumber(currLineNumber))
         gosubStack.push(gosub)
@@ -182,7 +183,8 @@ class TiBasicProgramInterpreter(
     /** Return from the currently executing subprogram. */
     fun returnFromGosub() {
         val gosub = gosubStack.pop()
-        if (gosub.returnLineNumber != null) jumpTo(gosub.returnLineNumber) else machine.endProgramRun()
+        if (gosub.returnLineNumber == null) throw CantDoThat()
+        jumpTo(gosub.returnLineNumber)
         println("Returned from $gosub")
     }
 

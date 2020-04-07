@@ -7,6 +7,7 @@ class PseudoRandomGenerator(val factor: Int, val summand: Int) {
 
     /** The seed used in [nextRandom]. */
     object Seed {
+        /** Current value of this [Seed]. */
         var value: Int = 0
     }
 

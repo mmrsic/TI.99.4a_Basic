@@ -204,6 +204,12 @@ class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int
     }
 }
 
+/**
+ * The GOSUB statement is used with the [ReturnStatement] to allow you to transfer the program to a subroutine, complete
+ * the steps in the subroutine, and return to the next program line following the GOSUB statement.
+ * The space between GO and SUB is optional.
+ * @param subprogramLineNumber program line number where to start the subroutine
+ */
 class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStatement {
     override fun listText() = "GOSUB $subprogramLineNumber"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
@@ -217,6 +223,11 @@ class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStateme
     }
 }
 
+/**
+ * The RETURN statement is used with the [GosubStatement] to provide a branch and return structure for TI BASIC.
+ * Whenever the computer encouters a RETURN statement, it takes the program back to the program line immediately
+ * following the GOSUB statement that transferred the computer to that particular subroutine in the first place.
+ */
 class ReturnStatement : Statement {
     override fun listText() = "RETURN"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
