@@ -126,7 +126,7 @@ class TiBasicProgramInterpreter(
             }
             if (jumpToLineNumber != null) {
                 checkLineNumber(jumpToLineNumber!!)
-                if (!program.hasLineNumber(jumpToLineNumber!!)) throw BadLineNumber()
+                if (!program.hasLineNumber(jumpToLineNumber!!)) throw TiBasicProgramException(pc, BadLineNumber())
             }
             machine.programLineExecutionComplete(pc)
             pc = jumpToLineNumber ?: program.nextLineNumber(pc)

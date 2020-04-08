@@ -331,6 +331,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         OnGotoStatement(t1, t2)
     }
     private val gosubStmt by skip(gosub) and positiveIntConst map { programLine -> GosubStatement(programLine) }
+    private val onGosubStmt by skip(on) and numericExpr and skip(gosub) and
+            separatedTerms(positiveIntConst, comma) use {
+        OnGosubStatement(t1, t2)
+    }
     private val returnStmt by returnToken asJust ReturnStatement()
     private val breakStmt by skip(breakToken) and separated(positiveIntConst, comma, true) use { BreakStatement(terms) }
     private val unbreakStmt by skip(unbreak) and separated(positiveIntConst, comma, true) use {
@@ -440,8 +444,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
     private val stmtParser by printStmt or assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or
             endStmt or remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or
-            stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or returnStmt or dataStmt or
-            readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or
+            stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or
+            dataStmt or readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or
             optionBaseStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {

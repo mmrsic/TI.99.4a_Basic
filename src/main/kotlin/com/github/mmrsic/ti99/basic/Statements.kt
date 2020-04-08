@@ -187,9 +187,7 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
  */
 class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int>) : LineNumberDependentStatement {
 
-    override fun listText(): String {
-        return "ON ${numericExpr.listText()} GOTO $lineNumberList"
-    }
+    override fun listText() = "ON ${numericExpr.listText()} GOTO $lineNumberList"
 
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val interpreter =
@@ -199,9 +197,7 @@ class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int
         interpreter.jumpTo(lineNumberList[lineNumberIdx - 1])
     }
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
-        TODO("not implemented")
-    }
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) = TODO("not implemented")
 }
 
 /**
@@ -221,6 +217,36 @@ class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStateme
     override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
         TODO("not implemented")
     }
+}
+
+/**
+ * The ON-GOSUB statement is used with the [ReturnStatement] to tell the computer to perform one of several subroutines,
+ * depending on the value of a [numericExpr], and then go back to the main program sequence.
+ *
+ * @param numericExpr evaluated and converted to an integer, rounded if necessary - must be between 1 and the number of
+ * elements provided in [lineNumberList]
+ * @param lineNumberList program line numbers for subroutines containing a [ReturnStatement]
+ * @throws BadValue if [numericExpr] is less than 1 or greater than the number if line numbers
+ * @throws BadLineNumber if the chosen line number from the specified list is no valid program line number
+ */
+class OnGosubStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int>) : LineNumberDependentStatement {
+
+    init {
+        if (lineNumberList.isEmpty()) throw IllegalArgumentException("Line number must not be empty")
+    }
+
+    override fun listText() = "ON ${numericExpr.listText()} GOSUB $lineNumberList"
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        val interpreter =
+            machine.programInterpreter ?: throw IllegalArgumentException("ON GOSUB must not be used without program")
+        val lineNumberIdx = numericExpr.value().toNative().roundToInt()
+        if (lineNumberIdx !in 1..lineNumberList.size) throw BadValue()
+        val currLineNumber = programLineNumber
+            ?: throw IllegalArgumentException("ON GOSUB must not be used without current program line number")
+        interpreter.gosub(lineNumberList[lineNumberIdx - 1], currLineNumber)
+    }
+
+    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) = TODO("not implemented")
 }
 
 /**

@@ -2,6 +2,7 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
@@ -159,6 +160,157 @@ class SubroutinesTest {
                 19 to "  X= 2",
                 20 to "  I= 3",
                 22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
+    @Test
+    fun testOnGosub() {
+        val machine = TiBasicModule().apply {
+            setKeyboardInputProvider(object : KeyboardInputProvider {
+                override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+                    return when (ctx.prompt) {
+                        "CODE=?" -> when (ctx.programLineCalls) {
+                            1 -> "4\r".asSequence()
+                            2 -> "2\r".asSequence()
+                            3 -> "3\r".asSequence()
+                            4 -> "1\r".asSequence()
+                            else -> "9\r".asSequence()
+                        }
+                        "HOURS=?" -> when (ctx.programLineCalls) {
+                            1 -> "40\r".asSequence()
+                            2 -> "37\r".asSequence()
+                            3 -> "35.75\r".asSequence()
+                            4 -> "40\r".asSequence()
+                            else -> "0\r".asSequence()
+                        }
+                        else -> throw IllegalArgumentException("Unknown prompt: ${ctx.prompt}")
+                    }
+                }
+            })
+        }
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 INPUT "CODE=?":CODE
+            110 IF CODE=9 THEN 290
+            120 INPUT "HOURS=?":HOURS
+            130 ON CODE GOSUB 170,200,230,260
+            140 PAY=RATE*HOURS+BASEPAY
+            150 PRINT "PAY IS $";PAY
+            160 GOTO 100
+            170 RATE=3.10
+            180 BASEPAY=5
+            190 RETURN
+            200 RATE=4.25
+            210 BASEPAY=25
+            220 RETURN
+            230 RATE=10
+            240 BASEPAY=50
+            250 RETURN
+            260 RATE=25
+            270 BASEPAY=100
+            280 RETURN
+            290 END
+            RUN
+            """.trimIndent(), machine
+        )
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to " >240 BASEPAY=50",
+                2 to " >250 RETURN",
+                3 to " >260 RATE=25",
+                4 to " >270 BASEPAY=100",
+                5 to " >280 RETURN",
+                6 to " >290 END",
+                7 to " >RUN",
+                8 to "  CODE=?4",
+                9 to "  HOURS=?40",
+                10 to "  PAY IS $ 1100",
+                11 to "  CODE=?2",
+                12 to "  HOURS=?37",
+                13 to "  PAY IS $ 182.25",
+                14 to "  CODE=?3",
+                15 to "  HOURS=?35.75",
+                16 to "  PAY IS $ 407.5",
+                17 to "  CODE=?1",
+                18 to "  HOURS=?40",
+                19 to "  PAY IS $ 129",
+                20 to "  CODE=?9",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+
+        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+                return when (ctx.prompt) {
+                    "CODE=?" -> "5\r".asSequence()
+                    "HOURS=?" -> "40\r".asSequence()
+                    else -> throw IllegalArgumentException("Unknown prompt: ${ctx.prompt}")
+                }
+            }
+        })
+        interpreter.interpret("RUN", machine)
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to " >RUN",
+                2 to "  CODE=?4",
+                3 to "  HOURS=?40",
+                4 to "  PAY IS $ 1100",
+                5 to "  CODE=?2",
+                6 to "  HOURS=?37",
+                7 to "  PAY IS $ 182.25",
+                8 to "  CODE=?3",
+                9 to "  HOURS=?35.75",
+                10 to "  PAY IS $ 407.5",
+                11 to "  CODE=?1",
+                12 to "  HOURS=?40",
+                13 to "  PAY IS $ 129",
+                14 to "  CODE=?9",
+                16 to "  ** DONE **",
+                18 to " >RUN",
+                19 to "  CODE=?5",
+                20 to "  HOURS=?40",
+                22 to "  * BAD VALUE IN 130",
+                24 to " >"
+            ), machine.screen
+        )
+
+        machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+                return when (ctx.prompt) {
+                    "CODE=?" -> "4\r".asSequence()
+                    else -> "40\r".asSequence()
+                }
+            }
+        })
+        interpreter.interpretAll(
+            """
+            130 ON CODE GOSUB 170,200,230,600
+            RUN
+            """.trimIndent(), machine
+        )
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to "  HOURS=?35.75",
+                2 to "  PAY IS $ 407.5",
+                3 to "  CODE=?1",
+                4 to "  HOURS=?40",
+                5 to "  PAY IS $ 129",
+                6 to "  CODE=?9",
+                8 to "  ** DONE **",
+                10 to " >RUN",
+                11 to "  CODE=?5",
+                12 to "  HOURS=?40",
+                14 to "  * BAD VALUE IN 130",
+                16 to " >130 ON CODE GOSUB 170,200,23",
+                17 to "  0,600",
+                18 to " >RUN",
+                19 to "  CODE=?4",
+                20 to "  HOURS=?40",
+                22 to "  * BAD LINE NUMBER IN 130",
                 24 to " >"
             ), machine.screen
         )
