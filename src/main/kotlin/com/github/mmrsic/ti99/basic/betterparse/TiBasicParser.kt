@@ -14,7 +14,9 @@ import com.github.h0tk3y.betterParse.combinators.use
 import com.github.h0tk3y.betterParse.combinators.zeroOrMore
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
+import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import com.github.h0tk3y.betterParse.parser.Parser
+import com.github.h0tk3y.betterParse.utils.Tuple2
 import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
@@ -42,8 +44,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val stringVarName by token("[$nameStartChars][$nameChars]*$stringVarSuffix")
 
     private val abs by token("\\bABS\\b")
-    private val atn by token("\\bATN\\b")
+    private val append by token("APPEND")
     private val asc by token("\\bASC\\b")
+    private val atn by token("\\bATN\\b")
     private val breakToken by token("BREAK")
     private val bye by token("\\bBYE\\b")
     private val cos by token("\\bCOS\\b")
@@ -52,15 +55,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val call by token("CALL")
     private val char by token("CHAR")
     private val clear by token("CLEAR")
+    private val close by token("CLOSE")
     private val color by token("COLOR")
     private val continueToken by token("""CON(TINUE)?""")
     private val data by token("DATA")
     private val def by token("\\bDEF\\b")
+    private val delete by token("DELETE\\b")
     private val dim by token("DIM")
     private val display by token("DISPLAY")
     private val elseToken by token("ELSE")
     private val end by token("\\bEND\\b")
     private val exp by token("\\bEXP\\b")
+    private val fixed by token("FIXED")
     private val forToken by token("FOR")
     private val gchar by token("GCHAR\\b")
     private val gosub by token("GOSUB")
@@ -68,6 +74,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val hchar by token("HCHAR")
     private val ifToken by token("IF")
     private val input by token("INPUT")
+    private val internal by token("INTERNAL")
     private val int by token("INT")
     private val len by token("\\bLEN\\b")
     private val let by token("LET")
@@ -77,11 +84,15 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val next by token("NEXT")
     private val number by token("""NUM(BER)?""")
     private val on by token("ON")
+    private val open by token("OPEN")
     private val optionBase by token("OPTION\\s+BASE")
+    private val output by token("OUTPUT")
+    private val permanent by token("PERMANENT")
     private val pos by token("\\bPOS\\b")
     private val print by token("\\bPRINT\\b")
     private val randomize by token("\\bRANDOMIZE\\b")
     private val read by token("READ")
+    private val relative by token("RELATIVE")
     private val remark by token("""REM(ARK)?.*""")
     private val restore by token("RESTORE")
     private val resequence by token("""RES(EQUENCE)?""")
@@ -89,6 +100,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val rnd by token("\\bRND\\b")
     private val run by token("\\bRUN\\b")
     private val screen by token("SCREEN")
+    private val sequential by token("SEQUENTIAL")
     private val sgn by token("\\bSGN\\b")
     private val sin by token("\\bSIN\\b")
     private val sound by token("SOUND")
@@ -102,7 +114,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val trace by token("TRACE")
     private val unbreak by token("UNBREAK")
     private val untrace by token("UNTRACE")
+    private val update by token("UPDATE")
     private val valToken by token("\\bVAL\\b")
+    private val variable by token("VARIABLE\\b")
     private val vchar by token("VCHAR")
 
     private val minus by token("-")
@@ -382,6 +396,26 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use { ReadStatement(this) }
     private val restoreStmt by skip(restore) and optional(positiveIntConst) use { RestoreStatement(this) }
     private val randomizeStmt by skip(randomize) and optional(numericExpr) use { RandomizeStatement(this) }
+    private val fileOrganization by sequential or relative
+    private val fileType by display or internal
+    private val fileMode by input or output or update or append
+    private val fileRecordType by variable or fixed
+    private val fileLife by permanent
+    private val fileOpenOption by fileOrganization or fileType or fileMode or fileRecordType or fileLife
+    private val openStmt by skip(open) and skip(numberSign) and numericExpr and skip(colon) and stringExpr and
+            optional(
+                skip(comma) and separatedTerms(
+                    fileOpenOption and optional(positiveIntConst),
+                    comma,
+                    acceptZero = false
+                )
+            ) use {
+        val options = createFileOptions(t3)
+        OpenStatement(t1, t2, options)
+    }
+    private val closeStmt by skip(close) and skip(numberSign) and numericExpr and optional(skip(colon) and delete) use {
+        CloseStatement(t1, t2 != null)
+    }
 
     // CALL SUBPROGRAM PARSERS
 
@@ -446,7 +480,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             endStmt or remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or
             stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or
             dataStmt or readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or
-            optionBaseStmt
+            optionBaseStmt or openStmt or closeStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))
@@ -455,4 +489,36 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
     override val rootParser by cmdParser or stmtParser or programLineParser or removeProgramLineParser
 }
+
+private class ParsedFileOpenOptions : FileOpenOptions {
+    override var organization: FileOrganization = FileOrganization(FileOrganization.Type.SEQUENTIAL, 0)
+    override var fileType: FileType = FileType.DISPLAY
+    override var mode: OpenMode = OpenMode.UPDATE
+    override var recordType: RecordType = RecordType(RecordType.LengthType.VARIABLE, 128)
+}
+
+private fun createFileOptions(fileOptions: List<Tuple2<TokenMatch, Int?>>?): FileOpenOptions {
+    val result = ParsedFileOpenOptions()
+    fileOptions?.forEach { optionDescription ->
+        val optionName = optionDescription.t1.text
+        val optionNumber = optionDescription.t2
+        when (optionName) {
+            "SEQUENTIAL" -> result.organization = FileOrganization(FileOrganization.Type.SEQUENTIAL, optionNumber)
+            "RELATIVE" -> result.organization = FileOrganization(FileOrganization.Type.RELATIVE, optionNumber)
+            "DISPLAY" -> result.fileType = FileType.DISPLAY
+            "INTERNAL" -> result.fileType = FileType.INTERNAL
+            "INPUT" -> result.mode = OpenMode.INPUT
+            "OUTPUT" -> result.mode = OpenMode.OUTPUT
+            "UPDATE" -> result.mode = OpenMode.UPDATE
+            "APPEND" -> result.mode = OpenMode.APPEND
+            "FIXED" -> result.recordType = RecordType(RecordType.LengthType.FIXED, optionNumber)
+            "VARIABLE" -> result.recordType = RecordType(RecordType.LengthType.VARIABLE, optionNumber)
+            "PERMANENT" -> "Do nothing"
+            else -> throw IllegalArgumentException("Illegal option name: $optionName")
+        }
+    }
+    return result
+}
+
+
 

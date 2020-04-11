@@ -64,6 +64,7 @@ class Breakpoint : TiBasicError("BREAKPOINT") {
 class CantContinue : TiBasicError("CAN'T CONTINUE")
 class CantDoThat : TiBasicError("CAN'T DO THAT")
 class DataError : TiBasicError("DATA ERROR")
+class FileError : TiBasicError("FILE ERROR")
 class IncorrectStatement : TiBasicError("INCORRECT STATEMENT")
 class InputError : TiBasicWarning("INPUT ERROR") {
     override val scrollAfterDisplay = false

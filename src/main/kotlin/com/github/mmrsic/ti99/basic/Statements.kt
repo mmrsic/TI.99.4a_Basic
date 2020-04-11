@@ -516,3 +516,62 @@ class DefineFunctionStatement(
         if (machine.hasUserFunctionParameterNameConflict(functionName)) throw NameConflict()
     }
 }
+
+/**
+ * The OPEN statement prepares a Basic program to use data files stored on accessory devices. It provides the necessary
+ * link between a [fileNumber] used in your program and the particular accessory device on which the file is located.
+ * If you define a file as [FileOrganization.Type.RELATIVE], you must use [RecordType.LengthType.FIXED] records. If
+ * records are fixed, each record is padded on the right side: Spaces for DISPLAY format and binary zeros for INTERNAL
+ * format.
+ *
+ * @param fileNumber a value between 0 and 255 inclusive - since file number 0 refers to the keyboard and screen of the
+ * computer and is always accessible, you cannot open or close it in your program statements - each open file in the
+ * program must have a different number
+ * @param fileName a file name refers to a device or to a file located on a device, depending on the capability of the
+ * accessory - each accessory has a predefined name which the computer recognizes, for example, the valid file names for
+ * the two audio cassette recorders are "CS1" and "CS2"
+ * @param fileOrganization used to indicate, which logical structure a file has - DEFAULT is SEQUENTIAL
+ * @param fileType designates the format of the data stored on the file: DISPLAY or INTERNAL - default is DISPLAY
+ * @param openMode instructs the computer to process the file in the [OpenMode.INPUT], [OpenMode.OUTPUT],
+ * [OpenMode.UPDATE], or [OpenMode.APPEND] mode - default is [OpenMode.UPDATE]
+ * @param recordType specifies whether the records on the file are all the same length or vary in length - may include a
+ * numeric expression specifying the maximum length of a record - each accessory device has its own maximum record
+ * length, so be sure to check the manuals which accompany them - if omitted, a record length depending upon the device
+ * is used: SEQUENTIAL for VARIABLE-length files, RELATIVE for FIXED-length files
+ */
+class OpenStatement(val fileNumber: NumericExpr, val fileName: StringExpr, val options: FileOpenOptions) : Statement {
+
+    override fun listText(): String {
+        TODO("not implemented")
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.openFile(fileNumber, fileName, options)
+    }
+
+}
+
+/**
+ * The CLOSE statement "closes" or discontinues the association between a file and a program. After the CLOSE statement
+ * is performed, the "closed" file is not available to your program unless you OPEN it again. Also, the computer will
+ * no longer associate the closed file with the [fileNumber] you specified in the program. You can then assign that
+ * particular [fileNumber] to any file you wish.
+ * If you attempt to CLOSE a file that you have not opened previously in your program, the computer will terminate your
+ * program with the FILE ERROR message.
+ * @param fileNumber any number previously used in the [OpenStatement]
+ * @param delete if you use the DELETE option in the CLOSE statement, the action performed depends in the device used
+ */
+class CloseStatement(val fileNumber: NumericExpr, val delete: Boolean = false) : Statement {
+
+    override fun listText(): String {
+        return StringBuilder("CLOSE").apply {
+            append("# ").append(fileNumber.value().toNative().roundToInt())
+            if (delete) append(":DELETE")
+        }.toString()
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.closeFile(fileNumber, delete)
+    }
+
+}

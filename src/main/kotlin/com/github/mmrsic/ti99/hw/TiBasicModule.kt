@@ -617,6 +617,31 @@ class TiBasicModule : TiModule {
         println("Data @$lineNumber: $constants")
     }
 
+    /** All currently opened files managed by this [TiBasicModule]. */
+    private val openFiles: MutableMap<Int, TiBasicFile> = mutableMapOf()
+
+    /** Open a file and associate it with a given file number. */
+    fun openFile(fileNumber: NumericExpr, fileName: StringExpr, options: FileOpenOptions) {
+        val number = fileNumber.value().toNative().roundToInt()
+        val name = fileName.value()
+        openFiles[number] = chooseAccessoryDevice(name).open(name, options)
+    }
+
+    /** Close and optionally delete a file given by its file number. */
+    fun closeFile(fileNumber: NumericExpr, delete: Boolean) {
+        val number = fileNumber.value().toNative().roundToInt()
+        val file = openFiles[number] ?: throw FileError()
+        file.close()
+        if (delete) file.delete()
+    }
+
+    private fun chooseAccessoryDevice(deviceAndFileName: StringConstant): AccessoryDevice {
+        if (deviceAndFileName.displayValue().startsWith("CS")) {
+            return AccessoryDeviceCassetteRecorder(this)
+        }
+        return object : AccessoryDevice {}
+    }
+
     /** Provider of pseudo-random values. */
     private var randomProvider = PseudoRandomGenerator(0x6fe5, 0x7ab9).apply {
         PseudoRandomGenerator.Seed.value = 0x3567
@@ -697,6 +722,7 @@ class TiBasicModule : TiModule {
             else -> "0000000000000000"
         }
     }
+
 }
 
 /** Check whether a given line number is in the allowed range. */
