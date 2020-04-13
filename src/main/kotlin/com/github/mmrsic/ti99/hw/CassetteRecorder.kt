@@ -1,43 +1,74 @@
 package com.github.mmrsic.ti99.hw
 
 import com.github.mmrsic.ti99.basic.AccessoryDevice
+import com.github.mmrsic.ti99.basic.FileError
 import com.github.mmrsic.ti99.basic.FileOpenOptions
 import com.github.mmrsic.ti99.basic.FileOrganization
 import com.github.mmrsic.ti99.basic.FileType
 import com.github.mmrsic.ti99.basic.OpenMode
 import com.github.mmrsic.ti99.basic.RecordType
 import com.github.mmrsic.ti99.basic.TiBasicFile
+import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
+import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.Expression
 import com.github.mmrsic.ti99.basic.expr.PrintSeparator
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 
 /**
  * Cassette Recorder [AccessoryDevice], connected to a [TiBasicModule].
+ * @param id ID of the cassette recorder - must be either "CS1" or "CS2"
  */
-class AccessoryDeviceCassetteRecorder(private val machine: TiBasicModule) : AccessoryDevice {
+class AccessoryDeviceCassetteRecorder(val id: String, private val machine: TiBasicModule) : AccessoryDevice {
+
     private val allowedDeviceNames = listOf("CS1", "CS2")
     private val allowedOrganizations = listOf(FileOrganization.Type.SEQUENTIAL)
     private val allowedTypes = listOf(FileType.INTERNAL, FileType.DISPLAY)
     private val allowedModes = listOf(OpenMode.INPUT, OpenMode.OUTPUT)
     private val allowedLengthTypes = listOf(RecordType.LengthType.FIXED)
 
-    override fun open(name: StringConstant, options: FileOpenOptions): TiBasicFile {
-        val nativeName = name.toNative()
-        checkDeviceName(nativeName)
+    init {
+        if (id !in allowedDeviceNames) throw  IllegalArgumentException("Illegal cassette recorder ID: $id")
+    }
+
+    override fun open(name: String, options: FileOpenOptions): TiBasicFile {
+        checkDeviceName(name)
         checkOrganization(options.organization.type)
         checkFileType(options.fileType)
         checkMode(options.mode)
         checkRecordType(options.recordType)
 
         machine.printTokens(listOf(PrintSeparator.NextRecord))
-        printMessage(nativeName, "REWIND CASSETTE TAPE")
-        printMessage(nativeName, "PRESS CASSETTE ${modeToButton(options.mode)}")
+        printMessage(name, "REWIND CASSETTE TAPE")
+        printMessage(name, "PRESS CASSETTE ${modeToButton(options.mode)}")
 
-        return TiBasicFileCassetteRecorder(nativeName, machine)
+        if (tape == null) insertTape("")
+        val result = tape!!
+        result.open(options)
+        return result
     }
 
+    /** Currently inserted tape. */
+    private var tape: TiBasicFileCassetteRecorder? = null
+
+    /**
+     * Insert a cassette tape with its data given as String into this [AccessoryDeviceCassetteRecorder]. Any previously
+     * inserted tape will be removed.
+     */
+    fun insertTape(tapeDisplayData: String) {
+        tape = TiBasicFileCassetteRecorder(id, tapeDisplayData, machine)
+        println("$id: Inserted tape: $tapeDisplayData")
+    }
+
+    /** Remove any previously inserted tape from this [AccessoryDeviceCassetteRecorder]. */
+    fun removeTape() {
+        tape = null
+        println("$id: Removed tape")
+    }
+
+    // HELPERS //
+
     private fun checkDeviceName(nativeCassetteRecorderName: String) {
-        if (nativeCassetteRecorderName !in allowedDeviceNames)
+        if (nativeCassetteRecorderName != id)
             throw IllegalArgumentException("Illegal device name: $nativeCassetteRecorderName")
     }
 
@@ -67,14 +98,33 @@ class AccessoryDeviceCassetteRecorder(private val machine: TiBasicModule) : Acce
  * A [TiBasicFile] on a [AccessoryDeviceCassetteRecorder].
  * @param id either "CS1" or "CS2", as the device also represents the "file"
  */
-class TiBasicFileCassetteRecorder(val id: String, private val machine: TiBasicModule) : TiBasicFile {
+class TiBasicFileCassetteRecorder(val id: String, displayData: String = "", private val machine: TiBasicModule) :
+    TiBasicFile {
+
+    private var options: FileOpenOptions? = null
+
+    private val data: List<Constant> = TiBasicParser(machine).parseConstantsOnly(displayData)
+    private var dataIndex = 0
+
+    override fun open(options: FileOpenOptions) {
+        this.options = options
+    }
+
+    override fun getNextString(): String {
+        if (dataIndex !in data.indices) throw FileError()
+        val result = data[dataIndex++]
+        println("$id's next string: $result")
+        return result.toNative().toString()
+    }
 
     override fun close() {
         machine.printTokens(listOf(PrintSeparator.NextRecord))
         machine.printTokens(printTokensForRecorderAction(id, "PRESS CASSETTE STOP"))
+        options = null
     }
 
     override fun delete() = println("Delete is ignored for Cassette Recorder")
+
 }
 
 /**

@@ -3,6 +3,7 @@ package com.github.mmrsic.ti99.basic.expr
 import com.github.mmrsic.ti99.basic.BadValue
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
+import com.github.mmrsic.ti99.hw.Variable
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
@@ -156,13 +157,13 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
     }
 }
 
-data class NumericVariable(val name: String, val calc: (String) -> NumericConstant) : NumericExpr() {
+data class NumericVariable(override val name: String, val calc: (String) -> NumericConstant) : NumericExpr(), Variable {
     override fun listText(): String = name
     override fun value(lambda: (value: Constant) -> Any): NumericConstant = calc.invoke(name)
 }
 
 class NumericArrayAccess(val baseName: String, val arrayIndexList: List<NumericExpr>, machine: TiBasicModule) :
-    NumericExpr(), TiBasicModule.Dependent {
+    NumericExpr(), Variable, TiBasicModule.Dependent {
     override val basicModule = machine
     override fun listText(): String {
         return StringBuilder().apply {
@@ -177,6 +178,15 @@ class NumericArrayAccess(val baseName: String, val arrayIndexList: List<NumericE
     override fun value(lambda: (value: Constant) -> Any): NumericConstant {
         return basicModule.getNumericArrayVariableValue(baseName, arrayIndexList)
     }
+
+    override val name: String
+        get() {
+            return StringBuilder(baseName).apply {
+                for (arrayIdxExpr in arrayIndexList) {
+                    append("-" + arrayIdxExpr.value().toNative().roundToInt())
+                }
+            }.toString()
+        }
 }
 
 object RelationalExpr {

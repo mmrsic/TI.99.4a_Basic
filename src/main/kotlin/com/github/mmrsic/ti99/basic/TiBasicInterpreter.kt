@@ -5,7 +5,6 @@ import com.github.h0tk3y.betterParse.parser.ParseException
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.basic.expr.Addition
 import com.github.mmrsic.ti99.basic.expr.Constant
-import com.github.mmrsic.ti99.basic.expr.Expression
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.PrintSeparator
 import com.github.mmrsic.ti99.basic.expr.StringConstant
@@ -13,18 +12,23 @@ import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiColor
 import com.github.mmrsic.ti99.hw.TiFctnCode
+import com.github.mmrsic.ti99.hw.Variable
 import com.github.mmrsic.ti99.hw.checkLineNumber
 import java.util.Stack
 import java.util.TreeMap
 
 /**
  * A TI Basic interpreter for a given [TiBasicModule].
+ * @param machine the TI Basic module this interpreter is operating on
  */
-abstract class TiBasicInterpreter(val machine: TiBasicModule)
+abstract class TiBasicInterpreter(protected val machine: TiBasicModule)
 
+/** A [TiBasicInterpreter] for the command line of a given [machine]. */
 class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter(machine) {
+
     private val parser = TiBasicParser(machine)
 
+    /** Interpret a given [inputLine] as a single command. */
     fun interpret(inputLine: String, machine: TiBasicModule) {
         val screen = machine.screen
         screen.print(inputLine)
@@ -80,12 +84,14 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
         return
     }
 
+    /** Interpret given [inputLines] as a list of commands. */
     fun interpretAll(inputLines: List<String>, machine: TiBasicModule) {
         for (inputLine in inputLines) {
             interpret(inputLine, machine)
         }
     }
 
+    /** Interpret given [inputLines] as a list of commands separated with \n. */
     fun interpretAll(inputLines: String, machine: TiBasicModule) {
         val inputList = inputLines.split("\n")
         interpretAll(inputList, machine)
@@ -101,6 +107,7 @@ class TiBasicProgramInterpreter(
 ) : TiBasicInterpreter(machine) {
 
     companion object {
+        /** Background color used while interpreting a program. */
         val RUN_BACKGROUND_COLOR = TiColor.LightGreen
     }
 
@@ -196,7 +203,7 @@ class TiBasicProgramInterpreter(
     }
 
     /** Accept user input from [keyboardInputProvider] into a given variable. */
-    fun acceptUserInput(variableNames: List<Expression>, inputLineNumber: Int, prompt: String): String {
+    fun acceptUserInput(variableNames: List<Variable>, inputLineNumber: Int, prompt: String): String {
         val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
         acceptUserInputCtx.addCall(inputLineNumber, prompt)
         machine.printTokens(listOf(StringConstant(acceptUserInputCtx.prompt), PrintSeparator.Adjacent))
@@ -280,7 +287,7 @@ class TiBasicProgramInterpreter(
     }
 
     /** Access some program data stored with [TiBasicModule.storeData]. */
-    fun readData(variableNames: List<Expression>) {
+    fun readData(variableNames: List<Variable>) {
         for (varNameExpr in variableNames) {
             val varValue = programData.next().constant.toString()
             try {

@@ -3,14 +3,12 @@ package com.github.mmrsic.ti99.hw
 import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.Expression
-import com.github.mmrsic.ti99.basic.expr.NumericArrayAccess
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.NumericVariable
 import com.github.mmrsic.ti99.basic.expr.PrintSeparator
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.basic.expr.StringExpr
-import com.github.mmrsic.ti99.basic.expr.StringVariable
 import com.github.mmrsic.ti99.basic.expr.TabFunction
 import com.github.mmrsic.ti99.basic.expr.toAsciiCode
 import java.util.TreeMap
@@ -122,13 +120,8 @@ class TiBasicModule : TiModule {
      * Set a variable given as an [Expression] to a given string value. According to the resulting variable's name
      * the string value may be interpreted as numeric value.
      */
-    fun setVariable(varNameExpr: Expression, stringValue: String) {
-        val memoryVarName = when (varNameExpr) {
-            is NumericVariable -> varNameExpr.name
-            is StringVariable -> varNameExpr.name
-            is NumericArrayAccess -> getArrayVariableName(varNameExpr.baseName, varNameExpr.arrayIndexList)
-            else -> throw IllegalArgumentException("Unknown variable expression: $varNameExpr")
-        }
+    fun setVariable(variableName: Variable, stringValue: String) {
+        val memoryVarName = variableName.name
         setVariable(memoryVarName, stringValue.replace("\"\"", "\""))
     }
 
@@ -566,7 +559,7 @@ class TiBasicModule : TiModule {
      * @param programLineNumber program line number used for programmatically provided user input
      * @param prompt screen text presented to the user when asking for input
      */
-    fun acceptUserInput(variableNames: List<Expression>, programLineNumber: Int, prompt: String = "? ") {
+    fun acceptUserInput(variableNames: List<Variable>, programLineNumber: Int, prompt: String = "? ") {
         val interpreter = programInterpreter
             ?: throw IllegalArgumentException("User input is possible only while a program is running")
         interpreter.acceptUserInput(variableNames, programLineNumber, prompt)
@@ -623,7 +616,7 @@ class TiBasicModule : TiModule {
     /** Open a file and associate it with a given file number. */
     fun openFile(fileNumber: NumericExpr, fileName: StringExpr, options: FileOpenOptions) {
         val number = fileNumber.value().toNative().roundToInt()
-        val name = fileName.value()
+        val name = fileName.value().toNative()
         openFiles[number] = chooseAccessoryDevice(name).open(name, options)
     }
 
@@ -635,11 +628,36 @@ class TiBasicModule : TiModule {
         if (delete) file.delete()
     }
 
-    private fun chooseAccessoryDevice(deviceAndFileName: StringConstant): AccessoryDevice {
-        if (deviceAndFileName.displayValue().startsWith("CS")) {
-            return AccessoryDeviceCassetteRecorder(this)
+    /** Read data from a file associated to a [fileNumber] into variables given by their [variableNames]. */
+    fun readFromFile(fileNumber: NumericExpr, variableNames: List<String>) {
+        val number = fileNumber.value().toNative().roundToInt()
+        val file = openFiles[number] ?: throw IllegalArgumentException("No such file number: $number")
+        for (variableName in variableNames) setVariable(variableName, file.getNextString())
+    }
+
+    private val attachedAccessoryDevices: MutableMap<String, AccessoryDevice> = mutableMapOf()
+
+    /** Attach a cassette tape to this [TiBasicModule]. */
+    fun attachCassetteTape(cassetteRecorderId: String, tapeDisplayData: String) {
+        val recorder = chooseCassetteRecorder(cassetteRecorderId)
+        recorder.insertTape(tapeDisplayData)
+    }
+
+    private fun chooseAccessoryDevice(deviceAndFileName: String): AccessoryDevice {
+        if (attachedAccessoryDevices.containsKey(deviceAndFileName)) {
+            return attachedAccessoryDevices.getValue(deviceAndFileName)
+        }
+        if (deviceAndFileName.startsWith("CS")) {
+            val result = AccessoryDeviceCassetteRecorder(deviceAndFileName, this)
+            attachedAccessoryDevices[deviceAndFileName] = result
+            return result
         }
         return object : AccessoryDevice {}
+    }
+
+    private fun chooseCassetteRecorder(id: String): AccessoryDeviceCassetteRecorder {
+        attachedAccessoryDevices.putIfAbsent(id, AccessoryDeviceCassetteRecorder(id, this))
+        return attachedAccessoryDevices.getValue(id) as AccessoryDeviceCassetteRecorder
     }
 
     /** Provider of pseudo-random values. */
@@ -735,4 +753,10 @@ fun isCorrectLineNumber(lineNumber: Int) = lineNumber in 1..32767
  */
 fun checkLineNumber(lineNumber: Int) {
     if (!isCorrectLineNumber(lineNumber)) throw BadLineNumber()
+}
+
+/** Any (numeric or string) variable. */
+interface Variable {
+    /** Name of the variable. */
+    val name: String
 }

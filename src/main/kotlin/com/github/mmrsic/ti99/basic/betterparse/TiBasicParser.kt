@@ -16,15 +16,33 @@ import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import com.github.h0tk3y.betterParse.parser.Parser
+import com.github.h0tk3y.betterParse.parser.parse
 import com.github.h0tk3y.betterParse.utils.Tuple2
 import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.Variable
 
 /**
  * [Grammar] for TI Basic.
  */
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
+
+    /** Parse a given input string as a list of [Constant]s. Any other tokens are ignored. */
+    fun parseConstantsOnly(input: String): List<Constant> {
+        val tokenMatches = tokenizer.tokenize(input)
+        val result = mutableListOf<Constant>()
+        for (tokenMatch in tokenMatches) {
+            println("Token match: $tokenMatch")
+            when (tokenMatch.type.name) {
+                "positiveInt" -> result.add(numericConst.parse(sequenceOf(tokenMatch)))
+                "quoted" -> result.add(StringConstant(tokenMatch.text.trim('"')))
+                // TODO: Add additional token type names for missing constants
+            }
+        }
+        return result.toList()
+    }
+
     /** Characters that may start a TI Basic variable. */
     private val nameStartChars = "A-Za-z@\\[\\]\\\\_"
 
@@ -358,11 +376,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             optional(skip(elseToken) and positiveIntConst) use {
         IfStatement(t1, t2, t3)
     }
-    private val varRef = numericArrRef or numericVarRef or stringArrVarRef or stringVarRef
+    private val varRef by numericArrRef or numericVarRef or stringArrVarRef or stringVarRef
     private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and
             separatedTerms(varRef, comma) use {
         val prompt: StringExpr? = t1
-        val varNameList: List<Expression> = t2
+        val varNameList: List<Variable> = t2.map { it as Variable }
         InputStatement(prompt, varNameList)
     }
     private val dimStmt: Parser<Statement> by skip(dim) and separatedTerms(
@@ -393,7 +411,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
         }
         DataStatement(data)
     }
-    private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use { ReadStatement(this) }
+    private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use {
+        ReadStatement(this.map { it as Variable })
+    }
     private val restoreStmt by skip(restore) and optional(positiveIntConst) use { RestoreStatement(this) }
     private val randomizeStmt by skip(randomize) and optional(numericExpr) use { RandomizeStatement(this) }
     private val fileOrganization by sequential or relative
@@ -415,6 +435,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     }
     private val closeStmt by skip(close) and skip(numberSign) and numericExpr and optional(skip(colon) and delete) use {
         CloseStatement(t1, t2 != null)
+    }
+    private val inputFileStmt by skip(input) and skip(numberSign) and numericExpr and skip(colon) and
+            separatedTerms(varRef, comma) use {
+        InputFromFileStatement(t1, t2.map { it as Variable })
     }
 
     // CALL SUBPROGRAM PARSERS
@@ -480,7 +504,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
             endStmt or remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or
             stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or
             dataStmt or readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or
-            optionBaseStmt or openStmt or closeStmt
+            optionBaseStmt or openStmt or closeStmt or inputFileStmt
 
     private val programLineParser by positiveIntConst and stmtParser use {
         StoreProgramLineCommand(ProgramLine(t1, listOf(t2)))

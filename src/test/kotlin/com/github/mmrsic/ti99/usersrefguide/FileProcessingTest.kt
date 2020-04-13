@@ -242,4 +242,46 @@ class FileProcessingTest {
         )
     }
 
+    @Test
+    fun testInputNumericAndStringVariables() {
+        val machine = TiBasicModule()
+        machine.attachCassetteTape("CS1", "1,2,\"3\",\"FOUR\",5,6,\"7\",99,99,\"99\",\"99\",99,99,\"99\"")
+
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 OPEN #13:"CS1",SEQUENTIAL,DISPLAY,INPUT,FIXED
+            110 INPUT #13:A,B,C$,D$,X,Y,Z$
+            120 IF A=99 THEN 150
+            130 PRINT A;B:C$:D$:X;Y:Z$
+            140 GOTO 110
+            150 CLOSE #13
+            160 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        TestHelperScreen.assertPrintContents(
+            mapOf(
+                1 to " >140 GOTO 110",
+                2 to " >150 CLOSE #13",
+                3 to " >160 END",
+                4 to " >RUN",
+                7 to "  * REWIND CASSETTE TAPE   CS1",
+                8 to "    THEN PRESS ENTER",
+                10 to "  * PRESS CASSETTE PLAY    CS1",
+                11 to "    THEN PRESS ENTER",
+                12 to "   1  2",
+                13 to "  3",
+                14 to "  FOUR",
+                15 to "   5  6",
+                16 to "  7",
+                19 to "  * PRESS CASSETTE STOP    CS1",
+                20 to "    THEN PRESS ENTER",
+                22 to "  ** DONE **",
+                24 to " >"
+            ), machine.screen
+        )
+    }
+
 }

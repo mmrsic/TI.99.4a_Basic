@@ -5,6 +5,7 @@ import com.github.mmrsic.ti99.basic.expr.Expression
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.Variable
 import kotlin.math.roundToInt
 
 /**
@@ -364,7 +365,7 @@ class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line
  * @param promptExpr optional [StringExpr] that indicates on the screen the values you should enter at that time
  * @param varNameList contains those variable names which are assigned values when the INPUT statement is performed
  */
-class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Expression>) : Statement {
+class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Variable>) : Statement {
 
     override fun listText() = when (promptExpr) {
         null -> "INPUT ${varNameList.joinToString(",")}"
@@ -445,7 +446,7 @@ class DataStatement(val dataList: List<Constant>) : Statement, TiBasicModule.Exe
  * specifies those variables that are to have values assigned.
  * @param variableList may include numeric variables and/or string variables
  */
-class ReadStatement(val variableList: List<Expression>) : Statement {
+class ReadStatement(val variableList: List<Variable>) : Statement {
     override fun listText() = "READ $variableList"
     override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
         val interpreter =
@@ -574,4 +575,18 @@ class CloseStatement(val fileNumber: NumericExpr, val delete: Boolean = false) :
         machine.closeFile(fileNumber, delete)
     }
 
+}
+
+/**
+ * This form of the INPUT statement allows you to read data from an accessory device. It can be used only with files
+ * opened in INPUT or UPDATE mode.
+ */
+class InputFromFileStatement(val fileNumber: NumericExpr, val variableList: List<Variable>) : Statement {
+    override fun listText(): String {
+        TODO("not implemented")
+    }
+
+    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+        machine.readFromFile(fileNumber, variableList.map { variable -> variable.name })
+    }
 }

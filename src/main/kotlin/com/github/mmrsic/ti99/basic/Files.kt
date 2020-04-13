@@ -6,7 +6,53 @@ import com.github.mmrsic.ti99.basic.OpenMode.APPEND
 import com.github.mmrsic.ti99.basic.OpenMode.INPUT
 import com.github.mmrsic.ti99.basic.OpenMode.OUTPUT
 import com.github.mmrsic.ti99.basic.OpenMode.UPDATE
-import com.github.mmrsic.ti99.basic.expr.StringConstant
+
+/**
+ * An accessory device is able to manage files, accessible from TI Basic.
+ */
+interface AccessoryDevice {
+
+    /** Open a file on this device, that is, make it accessible by TI Basic. */
+    fun open(name: String, options: FileOpenOptions): TiBasicFile {
+        return object : TiBasicFile {
+
+            override fun open(options: FileOpenOptions) {
+                TODO("not implemented")
+            }
+
+            override fun getNextString(): String {
+                TODO("not implemented")
+            }
+
+            override fun close() {
+                TODO("not implemented")
+            }
+
+            override fun delete() {
+                TODO("not implemented")
+            }
+        }
+    }
+
+}
+
+/**
+ * Represents a single file on an [AccessoryDevice].
+ */
+interface TiBasicFile {
+
+    /** Open this file for access with a given set of [FileOpenOptions]. */
+    fun open(options: FileOpenOptions)
+
+    /** Get the next datum as a string */
+    fun getNextString(): String
+
+    /** Close this file previously opened with [AccessoryDevice.open]. */
+    fun close()
+
+    /** Delete this file. */
+    fun delete()
+}
 
 /**
  * Options used when a file is opened.
@@ -99,36 +145,4 @@ data class RecordType(val lengthType: LengthType, val length: Int?) : FileOpenOp
         /** Variable record length, that is, each record of the file may have a different length. */
         VARIABLE;
     }
-}
-
-/**
- * An accessory device is able to manage files, accessible from TI Basic.
- */
-interface AccessoryDevice {
-
-    /** Open a file on this device, that is, make it accessible by TI Basic. */
-    fun open(name: StringConstant, options: FileOpenOptions): TiBasicFile {
-        return object : TiBasicFile {
-            override fun close() {
-                TODO("not implemented")
-            }
-
-            override fun delete() {
-                TODO("not implemented")
-            }
-        }
-    }
-
-}
-
-/**
- * Represents a single file on an [AccessoryDevice].
- */
-interface TiBasicFile {
-
-    /** Close this file previously opened with [AccessoryDevice.open]. */
-    fun close()
-
-    /** Delete this file. */
-    fun delete()
 }
