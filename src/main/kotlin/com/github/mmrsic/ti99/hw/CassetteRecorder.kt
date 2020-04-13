@@ -103,7 +103,7 @@ class TiBasicFileCassetteRecorder(val id: String, displayData: String = "", priv
 
     private var options: FileOpenOptions? = null
 
-    private val data: List<Constant> = TiBasicParser(machine).parseConstantsOnly(displayData)
+    private val data: List<Constant> = TiBasicParser(machine).parseConstantsList(displayData)
     private var dataIndex = 0
 
     override fun open(options: FileOpenOptions) {
@@ -113,7 +113,6 @@ class TiBasicFileCassetteRecorder(val id: String, displayData: String = "", priv
     override fun getNextString(): String {
         if (dataIndex !in data.indices) throw FileError()
         val result = data[dataIndex++]
-        println("$id's next string: $result")
         return result.toNative().toString()
     }
 

@@ -4,6 +4,7 @@ import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
+import kotlin.test.assertEquals
 
 /**
  * Test cases for examples found in User's Reference Guide on pages II-118 through II-136.
@@ -282,6 +283,51 @@ class FileProcessingTest {
                 24 to " >"
             ), machine.screen
         )
+    }
+
+    @Test
+    fun testInputNumericVariablesWithSingleFixedRecordTest() {
+        val machine = TiBasicModule()
+        machine.attachCassetteTape("CS1", "22,77,56,92")
+
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 OPEN #13:"CS1",SEQUENTIAL,DISPLAY,INPUT,FIXED 64
+            110 INPUT #13:A,B,C,D
+            290 CLOSE #13
+            300 END
+            RUN
+            """.trimIndent(), machine
+        )
+
+        assertEquals(22.0, machine.getNumericVariableValue("A").toNative())
+        assertEquals(77.0, machine.getNumericVariableValue("B").toNative())
+        assertEquals(56.0, machine.getNumericVariableValue("C").toNative())
+        assertEquals(92.0, machine.getNumericVariableValue("D").toNative())
+    }
+
+    @Test
+    fun testInputNumericVariablesWithMultipleFixedRecordsTest() {
+        val machine = TiBasicModule()
+        machine.attachCassetteTape("CS1", "22,33.5,405,92,-22,11023,99,100")
+
+        val interpreter = TiBasicCommandLineInterpreter(machine)
+        interpreter.interpretAll(
+            """
+            100 OPEN #13:"CS1",SEQUENTIAL,DISPLAY,INPUT,FIXED 64
+            110 INPUT #13:A,B,C,D,E,F,G
+            400 END
+            RUN
+            """.trimIndent(), machine
+        )
+        assertEquals(22.0, machine.getNumericVariableValue("A").toNative())
+        assertEquals(33.5, machine.getNumericVariableValue("B").toNative())
+        assertEquals(405.0, machine.getNumericVariableValue("C").toNative())
+        assertEquals(92.0, machine.getNumericVariableValue("D").toNative())
+        assertEquals(-22.0, machine.getNumericVariableValue("E").toNative())
+        assertEquals(11023.0, machine.getNumericVariableValue("F").toNative())
+        assertEquals(99.0, machine.getNumericVariableValue("G").toNative())
     }
 
 }

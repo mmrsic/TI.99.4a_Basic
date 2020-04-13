@@ -16,7 +16,7 @@ import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import com.github.h0tk3y.betterParse.parser.Parser
-import com.github.h0tk3y.betterParse.parser.parse
+import com.github.h0tk3y.betterParse.parser.parseToEnd
 import com.github.h0tk3y.betterParse.utils.Tuple2
 import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.*
@@ -27,21 +27,6 @@ import com.github.mmrsic.ti99.hw.Variable
  * [Grammar] for TI Basic.
  */
 class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecutable>() {
-
-    /** Parse a given input string as a list of [Constant]s. Any other tokens are ignored. */
-    fun parseConstantsOnly(input: String): List<Constant> {
-        val tokenMatches = tokenizer.tokenize(input)
-        val result = mutableListOf<Constant>()
-        for (tokenMatch in tokenMatches) {
-            println("Token match: $tokenMatch")
-            when (tokenMatch.type.name) {
-                "positiveInt" -> result.add(numericConst.parse(sequenceOf(tokenMatch)))
-                "quoted" -> result.add(StringConstant(tokenMatch.text.trim('"')))
-                // TODO: Add additional token type names for missing constants
-            }
-        }
-        return result.toList()
-    }
 
     /** Characters that may start a TI Basic variable. */
     private val nameStartChars = "A-Za-z@\\[\\]\\\\_"
@@ -512,6 +497,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     private val removeProgramLineParser by positiveIntConst use { RemoveProgramLineCommand(this) }
 
     override val rootParser by cmdParser or stmtParser or programLineParser or removeProgramLineParser
+
+    // SPECIAL PARSERS
+
+    /** [Parser] for a comma-separaed list of [Constant]s. */
+    private val constListParser: Parser<List<Constant>>
+            by separatedTerms(numericConst or stringConst, comma, acceptZero = true)
+
+    /** Parse a given String as a list of comma-separated [Constant]s. */
+    fun parseConstantsList(input: String): List<Constant> {
+        return constListParser.parseToEnd(tokenizer.tokenize(input))
+    }
 }
 
 private class ParsedFileOpenOptions : FileOpenOptions {
