@@ -501,6 +501,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
     // SPECIAL PARSERS
 
     /** [Parser] for a comma-separaed list of [Constant]s. */
+    private val unquoted by token("[^,]") use { StringConstant(this.text) }
     private val constListParser: Parser<List<Constant>>
             by separatedTerms(numericConst or stringConst, comma, acceptZero = true)
 
@@ -533,7 +534,7 @@ private fun createFileOptions(fileOptions: List<Tuple2<TokenMatch, Int?>>?): Fil
             "APPEND" -> result.mode = OpenMode.APPEND
             "FIXED" -> result.recordType = RecordType(RecordType.LengthType.FIXED, optionNumber)
             "VARIABLE" -> result.recordType = RecordType(RecordType.LengthType.VARIABLE, optionNumber)
-            "PERMANENT" -> "Do nothing"
+            "PERMANENT" -> println("Ignored: $optionName")
             else -> throw IllegalArgumentException("Illegal option name: $optionName")
         }
     }
