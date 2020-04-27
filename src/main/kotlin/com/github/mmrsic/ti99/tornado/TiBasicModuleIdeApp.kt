@@ -1,13 +1,19 @@
 package com.github.mmrsic.ti99.tornado
 
+import com.github.mmrsic.ti99.basic.Breakpoint
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
+import com.github.mmrsic.ti99.basic.expr.toAsciiCode
+import com.github.mmrsic.ti99.hw.KeyboardConverter
+import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.Screen
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiBasicScreen
+import com.github.mmrsic.ti99.hw.TiCode
 import javafx.animation.AnimationTimer
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
+import javafx.scene.control.TextInputDialog
 import javafx.scene.paint.Color
 import tornadofx.App
 import tornadofx.Controller
@@ -22,9 +28,10 @@ import tornadofx.item
 import tornadofx.singleAssign
 import tornadofx.textarea
 
-
+/** [App] for TI Basic IDE. */
 class TiBasicModuleIde : App(TiBasicModuleView::class)
 
+/** [View] for TI Basic module. This is the parent for all views of the application. */
 class TiBasicModuleView : View("TI Basic Module") {
 
     override val root = borderpane {
@@ -33,6 +40,7 @@ class TiBasicModuleView : View("TI Basic Module") {
     }
 }
 
+/** [View] for screen of TI Basic module as presented on a TI 99/4a. */
 class TiBasicScreenView : View("TI Basic Screen") {
 
     private val moduleCtrl = find(TiBasicModuleController::class)
@@ -44,17 +52,29 @@ class TiBasicScreenView : View("TI Basic Screen") {
         }
     }
 
+    private companion object {
+        private const val MIN_WIDTH = TiBasicScreen.PIXEL_WIDTH
+        private const val MIN_HEIGHT = TiBasicScreen.PIXEL_HEIGHT
+    }
+
+    /** Root pane of this view. */
     override val root = anchorpane {
         canvas = canvas {
-            minWidth = TiBasicScreen.PIXEL_WIDTH.toDouble()
-            minHeight = TiBasicScreen.PIXEL_HEIGHT.toDouble()
+            minWidth = MIN_WIDTH.toDouble()
+            minHeight = MIN_HEIGHT.toDouble()
             width = minWidth
             height = minHeight
             graphicsContext2D.fillText("TI Basic Screen", 70.0, 80.0)
         }
-    }.apply {
+    }
+
+    override fun onDock() {
+        super.onDock()
+        setWindowMinSize(MIN_WIDTH, MIN_HEIGHT)
         updateCanvasTimer.start()
     }
+
+    // HELPERS //
 
     private fun updateCanvas() {
         val gc = canvas.graphicsContext2D
@@ -79,6 +99,7 @@ class TiBasicScreenView : View("TI Basic Screen") {
     }
 }
 
+/** [View] for TI Basic program currently held in memory. */
 class TiBasicProgramView : View("TI Basic Program") {
 
     private val moduleCtrl = find(TiBasicModuleController::class)
@@ -102,6 +123,28 @@ class TiBasicModuleController : Controller() {
     val screenProperty = SimpleObjectProperty(module.screen)
 
     init {
+        module.setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+                val dlg = TextInputDialog()
+                dlg.title = "TI Basic"
+                dlg.headerText = "INPUT statement (program line=${ctx.programLine})"
+                dlg.contentText = ctx.prompt
+                val userInput = dlg.showAndWait()
+                return ((if (userInput.isEmpty) "" else userInput.get()) + "\r").asSequence()
+            }
+
+            override fun currentlyPressedKeyCode(ctx: KeyboardInputProvider.CallKeyContext): TiCode? {
+                val dlg = TextInputDialog()
+                dlg.title = "TI Basic"
+                dlg.headerText = "CALL KEY statement (program line=${ctx.programLineNumber})"
+                dlg.contentText = "Which key do you want to signal to the program? (Type 'break' for a breakpoint)"
+                val userInput = dlg.showAndWait()
+                if (userInput.isEmpty) return null
+                if (userInput.get() == "break") throw Breakpoint()
+                return KeyboardConverter.map[toAsciiCode(userInput.get()[0])]
+            }
+        })
+
         subscribe<ExecuteCommandsRequest> { event ->
             TiBasicCommandLineInterpreter(module).interpretAll(event.commands, module)
         }
