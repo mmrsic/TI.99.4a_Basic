@@ -671,7 +671,7 @@ class TiBasicModule : TiModule {
             PseudoRandomGenerator.Seed.value = 0x4000 + seed.toNative().roundToInt()
             println("Randomized random numbers with seed=$seed")
         } else {
-            TODO("Randomize without seed not yet implemented")
+            println("TODO: Randomize without seed not yet implemented") // TODO: Implement Randomize further
         }
     }
 
