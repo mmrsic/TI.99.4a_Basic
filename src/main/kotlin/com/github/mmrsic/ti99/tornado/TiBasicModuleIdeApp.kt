@@ -11,9 +11,9 @@ import com.github.mmrsic.ti99.hw.TiBasicScreen
 import com.github.mmrsic.ti99.hw.TiCode
 import javafx.animation.AnimationTimer
 import javafx.beans.property.SimpleObjectProperty
-import javafx.scene.canvas.Canvas
-import javafx.scene.canvas.GraphicsContext
 import javafx.scene.control.TextInputDialog
+import javafx.scene.image.ImageView
+import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
 import tornadofx.App
 import tornadofx.Controller
@@ -22,8 +22,8 @@ import tornadofx.View
 import tornadofx.action
 import tornadofx.anchorpane
 import tornadofx.borderpane
-import tornadofx.canvas
 import tornadofx.contextmenu
+import tornadofx.imageview
 import tornadofx.item
 import tornadofx.singleAssign
 import tornadofx.textarea
@@ -34,6 +34,7 @@ class TiBasicModuleIde : App(TiBasicModuleView::class)
 /** [View] for TI Basic module. This is the parent for all views of the application. */
 class TiBasicModuleView : View("TI Basic Module") {
 
+    /** Root node of this [TiBasicModuleView]. */
     override val root = borderpane {
         center(TiBasicScreenView::class)
         right(TiBasicProgramView::class)
@@ -45,7 +46,7 @@ class TiBasicScreenView : View("TI Basic Screen") {
 
     private val moduleCtrl = find(TiBasicModuleController::class)
 
-    private var canvas by singleAssign<Canvas>()
+    private var screenImage by singleAssign<ImageView>()
     private var updateCanvasTimer = object : AnimationTimer() {
         override fun handle(l: Long) {
             updateCanvas()
@@ -57,33 +58,34 @@ class TiBasicScreenView : View("TI Basic Screen") {
         private const val MIN_HEIGHT = TiBasicScreen.PIXEL_HEIGHT
     }
 
+    private val screenPixels = WritableImage(MIN_WIDTH, MIN_HEIGHT)
+
     /** Root pane of this view. */
     override val root = anchorpane {
-        canvas = canvas {
+        screenImage = imageview {
+            image = screenPixels
             minWidth = MIN_WIDTH.toDouble()
             minHeight = MIN_HEIGHT.toDouble()
-            width = minWidth
-            height = minHeight
-            graphicsContext2D.fillText("TI Basic Screen", 70.0, 80.0)
+            prefWidth = minWidth * 2
+            prefHeight = minHeight * 2
         }
     }
 
     override fun onDock() {
         super.onDock()
         setWindowMinSize(MIN_WIDTH, MIN_HEIGHT)
+        screenImage.fitWidthProperty().bind(root.widthProperty())
+        screenImage.fitHeightProperty().bind(root.heightProperty())
         updateCanvasTimer.start()
     }
 
     // HELPERS //
 
     private fun updateCanvas() {
-        val gc = canvas.graphicsContext2D
-        gc.fill = Color.CYAN
-        gc.fillRect(.0, .0, canvas.width, canvas.height)
-        displayScreen(moduleCtrl.screenProperty.get(), gc)
+        displayScreen(moduleCtrl.screenProperty.get())
     }
 
-    private fun displayScreen(screen: Screen, gc: GraphicsContext) {
+    private fun displayScreen(screen: Screen) {
         screen.patterns.forEachCellDo { row, col, pattern ->
             val fgColor = Color.BLACK // TODO: Introduce character code color map
             val bgColor = Color.CYAN // TODO: Introduce character code color map
@@ -93,7 +95,7 @@ class TiBasicScreenView : View("TI Basic Screen") {
                 val x = 8 * (col - 1) + patternIdx % 8
                 val y = 8 * (row - 1) + patternIdx / 8
                 val color = if (patternDigit == '1') fgColor else bgColor
-                gc.pixelWriter.setColor(x, y, color)
+                screenPixels.pixelWriter.setColor(x, y, color)
             }
         }
     }
@@ -102,8 +104,7 @@ class TiBasicScreenView : View("TI Basic Screen") {
 /** [View] for TI Basic program currently held in memory. */
 class TiBasicProgramView : View("TI Basic Program") {
 
-    private val moduleCtrl = find(TiBasicModuleController::class)
-
+    /** Root node of his [TiBasicProgramView]. */
     override val root = textarea {
         prefWidth = 256.0
         shortcut("Ctrl+r") {
@@ -117,6 +118,7 @@ class TiBasicProgramView : View("TI Basic Program") {
     }
 }
 
+/** [Controller] for a single [TiBasicModule]. */
 class TiBasicModuleController : Controller() {
     private val module = TiBasicModule()
     val moduleProperty = SimpleObjectProperty(module)
@@ -151,6 +153,7 @@ class TiBasicModuleController : Controller() {
     }
 }
 
+/** [FXEvent] signalling the request to execute TI Basic commands. */
 class ExecuteCommandsRequest(val commands: String) : FXEvent()
 
 // HELPERS //
