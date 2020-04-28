@@ -13,6 +13,7 @@ import javafx.animation.AnimationTimer
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TextInputDialog
 import javafx.scene.image.ImageView
+import javafx.scene.image.PixelWriter
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
 import tornadofx.App
@@ -20,12 +21,12 @@ import tornadofx.Controller
 import tornadofx.FXEvent
 import tornadofx.View
 import tornadofx.action
-import tornadofx.anchorpane
 import tornadofx.borderpane
 import tornadofx.contextmenu
 import tornadofx.imageview
 import tornadofx.item
 import tornadofx.singleAssign
+import tornadofx.stackpane
 import tornadofx.textarea
 
 /** [App] for TI Basic IDE. */
@@ -44,48 +45,43 @@ class TiBasicModuleView : View("TI Basic Module") {
 /** [View] for screen of TI Basic module as presented on a TI 99/4a. */
 class TiBasicScreenView : View("TI Basic Screen") {
 
-    private val moduleCtrl = find(TiBasicModuleController::class)
-
-    private var screenImage by singleAssign<ImageView>()
-    private var updateCanvasTimer = object : AnimationTimer() {
-        override fun handle(l: Long) {
-            updateCanvas()
-        }
-    }
-
     private companion object {
         private const val MIN_WIDTH = TiBasicScreen.PIXEL_WIDTH
         private const val MIN_HEIGHT = TiBasicScreen.PIXEL_HEIGHT
+        private const val PREF_WIDTH = MIN_WIDTH * 2
+        private const val PREF_HEIGHT = MIN_HEIGHT * 2
     }
 
+    private val moduleCtrl = find(TiBasicModuleController::class)
+    private var screenImage by singleAssign<ImageView>()
     private val screenPixels = WritableImage(MIN_WIDTH, MIN_HEIGHT)
+    private val updateScreenTimer = object : AnimationTimer() {
+        override fun handle(l: Long) = displayScreen(moduleCtrl.screenProperty.get(), screenPixels.pixelWriter)
+    }
 
     /** Root pane of this view. */
-    override val root = anchorpane {
+    override val root = stackpane {
         screenImage = imageview {
             image = screenPixels
             minWidth = MIN_WIDTH.toDouble()
             minHeight = MIN_HEIGHT.toDouble()
-            prefWidth = minWidth * 2
-            prefHeight = minHeight * 2
+            prefWidth = PREF_WIDTH.toDouble()
+            prefHeight = PREF_HEIGHT.toDouble()
         }
     }
 
     override fun onDock() {
         super.onDock()
-        setWindowMinSize(MIN_WIDTH, MIN_HEIGHT)
+
+        setWindowMinSize(MIN_WIDTH.toDouble(), MIN_HEIGHT.toDouble())
         screenImage.fitWidthProperty().bind(root.widthProperty())
         screenImage.fitHeightProperty().bind(root.heightProperty())
-        updateCanvasTimer.start()
+        updateScreenTimer.start()
     }
 
     // HELPERS //
 
-    private fun updateCanvas() {
-        displayScreen(moduleCtrl.screenProperty.get())
-    }
-
-    private fun displayScreen(screen: Screen) {
+    private fun displayScreen(screen: Screen, pixelWriter: PixelWriter) {
         screen.patterns.forEachCellDo { row, col, pattern ->
             val fgColor = Color.BLACK // TODO: Introduce character code color map
             val bgColor = Color.CYAN // TODO: Introduce character code color map
@@ -95,7 +91,7 @@ class TiBasicScreenView : View("TI Basic Screen") {
                 val x = 8 * (col - 1) + patternIdx % 8
                 val y = 8 * (row - 1) + patternIdx / 8
                 val color = if (patternDigit == '1') fgColor else bgColor
-                screenPixels.pixelWriter.setColor(x, y, color)
+                pixelWriter.setColor(x, y, color)
             }
         }
     }
