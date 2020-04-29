@@ -793,7 +793,7 @@ class TiBasicModule : TiModule {
             toAsciiCode('$') -> "0038545038145438"
             toAsciiCode('%') -> "0060640810204C0C"
             toAsciiCode('&') -> "0020505020544834"
-            toAsciiCode('\'') -> "0000402010080400"
+            toAsciiCode('\'') -> "0008081000000000"
             toAsciiCode('(') -> "0008102020201008"
             toAsciiCode(')') -> "0020100808081020"
             toAsciiCode('*') -> "000028107C102800"
