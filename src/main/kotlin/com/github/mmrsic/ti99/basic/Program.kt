@@ -3,10 +3,17 @@ package com.github.mmrsic.ti99.basic
 import com.github.mmrsic.ti99.hw.checkLineNumber
 import java.util.*
 
-class ProgramLine(val lineNumber: Int, val statements: List<Statement>)
+class ProgramLine(val lineNumber: Int, val statements: List<Statement>) {
+    override fun toString(): String {
+        return super.toString() + " $lineNumber ${statements.joinToString(" :: ") { stmt -> stmt.listText() }}"
+    }
+}
 
 
 sealed class Program(protected val lines: TreeMap<Int, ProgramLine> = TreeMap()) {
+
+    /** Program listing. */
+    val listing get() = lines.values.toList()
 
     fun store(line: ProgramLine) {
         val lineNumber = line.lineNumber
