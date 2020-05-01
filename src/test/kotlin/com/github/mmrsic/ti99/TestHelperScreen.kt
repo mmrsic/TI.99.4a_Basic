@@ -6,50 +6,51 @@ import kotlin.test.assertEquals
 
 class TestHelperScreen {
 
-    companion object {
+   companion object {
 
-        fun assertCursorAt(row: Int, column: Int, screen: Screen) {
-            assertEquals(row, screen.cursor?.row, "Cursor row")
-            assertEquals(column, screen.cursor?.column, "Cursor column")
-        }
+      fun assertCursorAt(row: Int, column: Int, screen: Screen) {
+         assertEquals(row, screen.cursor?.row, "Cursor row")
+         assertEquals(column, screen.cursor?.column, "Cursor column")
+      }
 
-        fun assertPrintContents(expRowStrings: Map<Int, String>, screen: Screen) {
-            val expText = toWrappedText(expRowStrings)
-            val actualText = toWrappedText(screen.strings.nonEmptyRightTrimmed())
-            assertEquals(expText, actualText, "Print contents")
-        }
+      fun assertPrintContents(expRowStrings: Map<Int, String>, screen: Screen) {
+         val expText = toWrappedText(expRowStrings)
+         val actualText = toWrappedText(screen.strings.nonEmptyRightTrimmed())
+         assertEquals(expText, actualText, "Print contents")
+      }
 
-        fun assertAllPatternsEqual(expectedPattern: String, screen: Screen) {
-            screen.patterns.forEachCellDo { row, col, actualPattern ->
-                assertEquals(expectedPattern, actualPattern, "Pattern at row $row, column $col")
+      fun assertAllPatternsEqual(expectedPattern: String, screen: Screen) {
+         screen.patterns.forEachCellDo { row, col, actualPattern ->
+            assertEquals(expectedPattern, actualPattern.hex, "Pattern at row $row, column $col")
+         }
+      }
+
+      fun assertPatterns(cellValidator: (Int, Int, String) -> Boolean, screen: Screen) {
+         screen.patterns.forEachCellDo { row, col, actualPattern ->
+            assert(cellValidator.invoke(row, col, actualPattern.hex)) {
+               "Wrong pattern at row $row, column $col: $actualPattern"
             }
-        }
+         }
+      }
 
-        fun assertPatterns(cellValidator: (Int, Int, String) -> Boolean, screen: Screen) {
-            screen.patterns.forEachCellDo { row, col, actualPattern ->
-                assert(cellValidator.invoke(row, col, actualPattern)) {
-                    "Wrong pattern at row $row, column $col: $actualPattern"
-                }
+      fun assertAllColorsEqual(expectedColor: TiCharacterColor, screen: Screen) {
+         assertColors({ _, _, charColors -> charColors == expectedColor }, screen)
+      }
+
+      fun assertColors(cellValidator: (Int, Int, TiCharacterColor) -> Boolean, screen: Screen) {
+         screen.colors.forEachCellDo { row, col, charColors ->
+            assert(cellValidator.invoke(row, col, charColors)) {
+               "Wrong colors at row $row, column $col: $charColors"
             }
-        }
+         }
+      }
 
-        fun assertAllColorsEqual(expectedColor: TiCharacterColor, screen: Screen) =
-            assertColors({ _, _, charColors -> charColors == expectedColor }, screen)
+      // HELPERS //
 
-        fun assertColors(cellValidator: (Int, Int, TiCharacterColor) -> Boolean, screen: Screen) {
-            screen.colors.forEachCellDo { row, col, charColors ->
-                assert(cellValidator.invoke(row, col, charColors)) {
-                    "Wrong colors at row $row, column $col: $charColors"
-                }
-            }
-        }
+      private fun toWrappedText(lines: Map<Int, String>) = buildString {
+         for (line in lines) append(line).append("\n")
+      }
 
-        // HELPERS //
-
-        private fun toWrappedText(lines: Map<Int, String>) = buildString {
-            for (line in lines) append(line).append("\n")
-        }
-
-    }
+   }
 
 }
