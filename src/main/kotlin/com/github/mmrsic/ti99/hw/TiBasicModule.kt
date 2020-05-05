@@ -129,7 +129,10 @@ class TiBasicModule : TiModule {
       setVariable(memoryVarName, stringValue.replace("\"\"", "\""))
    }
 
-   /** The current value of a string value given by its name. */
+   /**
+    * The current value of a string value given by its name.
+    * @param name a valid string variable name with a trailing $ sign
+    */
    fun getStringVariableValue(name: String): StringConstant {
       if (name.last() != '$') throw IllegalArgumentException("Illegal string variable name: $name")
       if (name.length > 15) throw BadName()
@@ -651,7 +654,12 @@ class TiBasicModule : TiModule {
    fun readFromFile(fileNumber: NumericExpr, variableNames: List<String>) {
       val number = fileNumber.value().toNative().roundToInt()
       val file = openFiles[number] ?: throw IllegalArgumentException("No such file number: $number")
-      for (variableName in variableNames) setVariable(variableName, file.getNextString())
+      for (variableName in variableNames) try {
+         setVariable(variableName, file.getNextString())
+      } catch (e: NumberFormatException) {
+         println("Failed to read variable '$variableName' from file #$fileNumber: ${e.message}")
+         throw InputError()
+      }
    }
 
    private val attachedAccessoryDevices: MutableMap<String, AccessoryDevice> = mutableMapOf()

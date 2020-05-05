@@ -498,9 +498,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    // SPECIAL PARSERS
 
    /** [Parser] for a comma-separated list of [Constant]s. */
-   private val unquoted by token("[^,]") use { StringConstant(this.text) }
-   private val constListParser: Parser<List<Constant>>
-           by separatedTerms(numericConst or stringConst, comma, acceptZero = true)
+   private val unquoted: Parser<StringConstant> by separated(name, ws) use {
+      StringConstant(terms.joinToString(" ") { it.text })
+   }
+   private val constListParser: Parser<List<Constant>> by separatedTerms(numericConst or stringConst or unquoted, comma, true)
 
    /** Parse a given String as a list of comma-separated [Constant]s. */
    fun parseConstantsList(input: String): List<Constant> {

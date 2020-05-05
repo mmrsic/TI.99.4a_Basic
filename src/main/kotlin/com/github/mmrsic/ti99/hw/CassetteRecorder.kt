@@ -103,7 +103,7 @@ class TiBasicFileCassetteRecorder(val id: String, displayData: String = "", priv
 
     private var options: FileOpenOptions? = null
 
-    private val data: List<Constant> = TiBasicParser(machine).parseConstantsList(displayData)
+    private val data: List<Constant> by lazy { TiBasicParser(machine).parseConstantsList(displayData) }
     private var dataIndex = 0
 
     override fun open(options: FileOpenOptions) {
