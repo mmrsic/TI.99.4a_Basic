@@ -82,6 +82,7 @@ class TiBasicModule : TiModule {
 
    internal fun eraseProgram() {
       program = null
+      executeProgramChangeListeners()
    }
 
    /** Cancel the effect of the BREAK command. */
@@ -292,17 +293,32 @@ class TiBasicModule : TiModule {
       closeOpenFiles()
       resetVariables()
       if (program == null) {
-         program = TiBasicProgram()
+         program = TiBasicProgram().apply {
+            programChangeListeners.forEach { addChangeListener(it) }
+         }
       }
       program!!.store(programLine)
       programLine.statements.forEach { if (it is ExecutedOnStore) it.onStore(programLine.lineNumber, this) }
       continueLine = null
+      executeProgramChangeListeners()
    }
+
+   private val programChangeListeners: MutableList<() -> Any?> = mutableListOf()
+   fun addProgramChangeListener(listener: () -> Any?) {
+      programChangeListeners.add(listener)
+   }
+
+   fun removeProgramChangeListener(listener: () -> Any?) {
+      programChangeListeners.remove(listener)
+   }
+
+   private fun executeProgramChangeListeners() = programChangeListeners.forEach { it() }
 
    /** Remove a given line number from the program of this module. */
    fun removeProgramLine(lineNumber: Int) {
       val programToChange = program ?: return
       if (programToChange.remove(lineNumber)) continueLine = null
+      executeProgramChangeListeners()
    }
 
    /** List the [program] of this instance. */
@@ -330,8 +346,8 @@ class TiBasicModule : TiModule {
 
    /** RESEQUENCE command for [program] of this instance. */
    fun resequenceProgram(initialLine: Int, increment: Int) {
-      if (program == null) throw CantDoThat()
-      program!!.resequence(initialLine, increment)
+      program?.resequence(initialLine, increment) ?: throw CantDoThat()
+      executeProgramChangeListeners()
    }
 
    /** Run the [program] of this module, optionally starting at a given line number. */
