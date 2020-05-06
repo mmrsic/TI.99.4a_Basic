@@ -277,8 +277,8 @@ class TiBasicModule : TiModule {
     * @return true if the specified function name bears a name conflict, false otherwise
     */
    fun hasUserFunctionParameterNameConflict(functionName: String): Boolean {
-      val userFunctionToCheck =
-              userFunctions[functionName] ?: throw IllegalArgumentException("No such user function: $functionName")
+      val userFunctionToCheck = userFunctions[functionName]
+         ?: throw IllegalArgumentException("No such user function: $functionName")
       val arg = userFunctionToCheck.parameterName
       return userFunctionToCheck.definition.listText().contains(Regex("\\b$arg\\("))
    }
@@ -552,19 +552,19 @@ class TiBasicModule : TiModule {
          }
       }
       val suppressScroll =
-              listOf(PrintSeparator.Adjacent, PrintSeparator.NextField).contains(tokens.lastOrNull())
+         listOf(PrintSeparator.Adjacent, PrintSeparator.NextField).contains(tokens.lastOrNull())
       if (suppressScroll) currentPrintColumn = currCol else screen.scroll()
    }
 
    /** Evaluate a given [Expression], optionally from within a given program line number. */
    private fun evaluateRuntimeExpression(expression: Expression, programLineNumber: Int?) =
-           expression.value { intermediateValue ->
-              if (intermediateValue is NumericConstant && intermediateValue.isOverflow) {
-                 screen.scroll()
-                 screen.print("* WARNING:")
-                 screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
-              }
-           }
+      expression.value { intermediateValue ->
+         if (intermediateValue is NumericConstant && intermediateValue.isOverflow) {
+            screen.scroll()
+            screen.print("* WARNING:")
+            screen.print("  NUMBER TOO BIG" + if (programLineNumber != null) " IN $programLineNumber" else "")
+         }
+      }
 
    /** Current [KeyboardInputProvider] used by this module. */
    private var keyboardInputProvider: KeyboardInputProvider = object : KeyboardInputProvider {
@@ -583,19 +583,14 @@ class TiBasicModule : TiModule {
     */
    fun acceptUserInput(variableNames: List<Variable>, programLineNumber: Int, prompt: String = "? ") {
       val interpreter = programInterpreter
-              ?: throw IllegalArgumentException("User input is possible only while a program is running")
+         ?: throw IllegalArgumentException("User input is possible only while a program is running")
       interpreter.acceptUserInput(variableNames, programLineNumber, prompt)
       screen.scroll()
       currentPrintColumn = null
    }
 
    /** Accept a single keyboard key press from the TI 99/4a keyboard. */
-   fun acceptKeyboardInput(
-           programLineNumber: Int?,
-           keyUnit: NumericConstant,
-           returnVar: NumericVariable,
-           statusVar: NumericVariable
-   ) {
+   fun acceptKeyboardInput(programLineNumber: Int?, keyUnit: NumericConstant, returnVar: NumericVariable, statusVar: NumericVariable) {
       val keyCode = keyboardInputProvider.currentlyPressedKeyCode(object : KeyboardInputProvider.CallKeyContext {
          override val programLineNumber = programLineNumber
          override val keyUnit = keyUnit.toNative().roundToInt()
@@ -651,7 +646,7 @@ class TiBasicModule : TiModule {
    }
 
    /** Read data from a file associated to a [fileNumber] into variables given by their [variableNames]. */
-   fun readFromFile(fileNumber: NumericExpr, variableNames: List<String>) {
+   fun readFromFile(fileNumber: NumericExpr, recordNum: NumericExpr?, variableNames: List<String>) {
       val number = fileNumber.value().toNative().roundToInt()
       val file = openFiles[number] ?: throw IllegalArgumentException("No such file number: $number")
       for (variableName in variableNames) try {

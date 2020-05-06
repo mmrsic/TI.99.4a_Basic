@@ -12,8 +12,9 @@ import kotlin.math.roundToInt
  * A [TiBasicExecutable] that may be used within a [TiBasicProgram].
  */
 interface Statement : TiBasicExecutable {
-    /** Text used to print this statement on the screen when the LIST command is executed. */
-    fun listText(): String
+
+   /** Text used to print this statement on the screen when the LIST command is executed. */
+   fun listText(): String
 }
 
 /** Marker for instances which are skipped on [ContinueCommand]. */
@@ -23,8 +24,9 @@ interface SkippedOnContinue
  * A [Statement] that may depend on at least one line number of a program
  */
 interface LineNumberDependentStatement : Statement {
-    /** Change the line numbers of this [Statement] for a given mapping from old to new line numbers. */
-    fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
+
+   /** Change the line numbers of this [Statement] for a given mapping from old to new line numbers. */
+   fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
 }
 
 /**
@@ -34,13 +36,14 @@ interface LineNumberDependentStatement : Statement {
  * the program to stop immediately before the specified lines are executed
  */
 class BreakStatement(private val lineNumberList: List<Int>? = null) : Statement, SkippedOnContinue {
-    override fun listText() = if (lineNumberList != null) "BREAK $lineNumberList" else "BREAK"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        programLineNumber ?: throw IllegalArgumentException("Break statement may not be used without program")
-        if (lineNumberList == null) throw Breakpoint()
-        if (lineNumberList.isEmpty()) throw Breakpoint()
-        machine.addBreakpoints(lineNumberList, programLineNumber)
-    }
+
+   override fun listText() = if (lineNumberList != null) "BREAK $lineNumberList" else "BREAK"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      programLineNumber ?: throw IllegalArgumentException("Break statement may not be used without program")
+      if (lineNumberList == null) throw Breakpoint()
+      if (lineNumberList.isEmpty()) throw Breakpoint()
+      machine.addBreakpoints(lineNumberList, programLineNumber)
+   }
 }
 
 /**
@@ -51,19 +54,19 @@ class BreakStatement(private val lineNumberList: List<Int>? = null) : Statement,
  * The DISPLAY statement is identical to the PRINT statement when you use it to print items on the screen. The DISPLAY
  * statement may not be used to write on any device except the screen.
  *
- * @param printList consists of print-items - [NumericExpr] and [StringExpr] as well as [TabFunction] - and
- * print-separators - the punctuation between print-items (commas, colons, and semicolons)
+ * @param printList consists of print-items - [Expression] to print
  */
 class PrintStatement(val printList: List<Expression>) : Statement, Command {
-    override val name: String = "PRINT"
-    override fun listText(): String {
-        if (printList.isEmpty()) return name
-        return "$name " + printList.joinToString("") { it.listText() }
-    }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.printTokens(printList, programLineNumber)
-    }
+   override val name: String = "PRINT"
+   override fun listText(): String {
+      if (printList.isEmpty()) return name
+      return "$name " + printList.joinToString("") { it.listText() }
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.printTokens(printList, programLineNumber)
+   }
 }
 
 /**
@@ -72,9 +75,10 @@ class PrintStatement(val printList: List<Expression>) : Statement, Command {
  * @param varName name of the variable for which to assign the [expr]
  */
 abstract class LetStatement(val varName: String) : Statement {
-    /** The right-hand-side expression of this LET statement. */
-    abstract val expr: Expression
-    override fun listText(): String = "$varName=${expr.listText().trim()}" // TODO: Add optional LET
+
+   /** The right-hand-side expression of this LET statement. */
+   abstract val expr: Expression
+   override fun listText(): String = "$varName=${expr.listText().trim()}" // TODO: Add optional LET
 }
 
 /**
@@ -82,16 +86,18 @@ abstract class LetStatement(val varName: String) : Statement {
  * The rules governing underflow and overflow for the evaluation of numeric expressions are used in the LET statement.
  */
 open class LetNumberStatement(varName: String, override val expr: NumericExpr) : LetStatement(varName) {
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.setNumericVariable(varName, expr)
-    }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.setNumericVariable(varName, expr)
+   }
 }
 
 class LetNumberArrayElementStatement(baseVarName: String, val subscripts: List<NumericExpr>, expr: NumericExpr) :
-    LetNumberStatement(baseVarName, expr) {
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.setNumericArrayVariable(varName, subscripts, expr.value())
-    }
+   LetNumberStatement(baseVarName, expr) {
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.setNumericArrayVariable(varName, subscripts, expr.value())
+   }
 }
 
 /**
@@ -100,9 +106,10 @@ class LetNumberArrayElementStatement(baseVarName: String, val subscripts: List<N
  * program continues. No warning is given.
  */
 class LetStringStatement(varName: String, override val expr: StringExpr) : LetStatement(varName) {
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.setStringVariable(varName, expr)
-    }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.setStringVariable(varName, expr)
+   }
 }
 
 /**
@@ -112,10 +119,11 @@ class LetStringStatement(varName: String, override val expr: StringExpr) : LetSt
  * in your program. In TI BASIC you are not required to place an end statement in your program.
  */
 class EndStatement : Statement {
-    override fun listText() = "END"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.endProgramRun()
-    }
+
+   override fun listText() = "END"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.endProgramRun()
+   }
 }
 
 /**
@@ -124,10 +132,11 @@ class EndStatement : Statement {
  * in the same program. Many BASIC programmers use the END statement if there is only one ending point in the program.
  */
 class StopStatement : Statement {
-    override fun listText() = "STOP"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.endProgramRun()
-    }
+
+   override fun listText() = "STOP"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.endProgramRun()
+   }
 }
 
 /**
@@ -137,8 +146,9 @@ class StopStatement : Statement {
  * @param text text of the REMark statement
  */
 class RemarkStatement(val text: String) : Statement {
-    override fun listText(): String = "REM $text"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = println("Remark: $text")
+
+   override fun listText(): String = "REM $text"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = println("Remark: $text")
 }
 
 /**
@@ -149,14 +159,15 @@ class RemarkStatement(val text: String) : Statement {
  * @param lowerLimit either 0 or 1
  */
 class OptionBaseStatement(val lowerLimit: Int) : Statement {
-    init {
-        if (lowerLimit !in 0..1) throw IncorrectStatement()
-    }
 
-    override fun listText() = "OPTION BASE $lowerLimit"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.setArrayLowerLimit(lowerLimit)
-    }
+   init {
+      if (lowerLimit !in 0..1) throw IncorrectStatement()
+   }
+
+   override fun listText() = "OPTION BASE $lowerLimit"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.setArrayLowerLimit(lowerLimit)
+   }
 }
 
 /**
@@ -168,18 +179,19 @@ class OptionBaseStatement(val lowerLimit: Int) : Statement {
  * Note that the space between the words GO and TO is optional.
  */
 class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
-    private var lineNumber: Int = originalLineNum
 
-    override fun listText(): String = "GO TO $lineNumber" // TODO: Implement GOTO variant
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter =
-            machine.programInterpreter ?: throw IllegalArgumentException("GO TO must not be used without program")
-        interpreter.jumpTo(lineNumber)
-    }
+   private var lineNumber: Int = originalLineNum
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
-        lineNumber = lineNumbersMapping.getValue(lineNumber)
-    }
+   override fun listText(): String = "GO TO $lineNumber" // TODO: Implement GOTO variant
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter =
+         machine.programInterpreter ?: throw IllegalArgumentException("GO TO must not be used without program")
+      interpreter.jumpTo(lineNumber)
+   }
+
+   override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+      lineNumber = lineNumbersMapping.getValue(lineNumber)
+   }
 }
 
 /**
@@ -188,17 +200,17 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
  */
 class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int>) : LineNumberDependentStatement {
 
-    override fun listText() = "ON ${numericExpr.listText()} GOTO $lineNumberList"
+   override fun listText() = "ON ${numericExpr.listText()} GOTO $lineNumberList"
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter =
-            machine.programInterpreter ?: throw IllegalArgumentException("ON GOTO must not be used without program")
-        val lineNumberIdx = numericExpr.value().toNative().roundToInt()
-        if (lineNumberIdx !in 1..lineNumberList.size) throw BadValue()
-        interpreter.jumpTo(lineNumberList[lineNumberIdx - 1])
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter =
+         machine.programInterpreter ?: throw IllegalArgumentException("ON GOTO must not be used without program")
+      val lineNumberIdx = numericExpr.value().toNative().roundToInt()
+      if (lineNumberIdx !in 1..lineNumberList.size) throw BadValue()
+      interpreter.jumpTo(lineNumberList[lineNumberIdx - 1])
+   }
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) = TODO("not implemented")
+   override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) = TODO("not implemented")
 }
 
 /**
@@ -208,16 +220,17 @@ class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int
  * @param subprogramLineNumber program line number where to start the subroutine
  */
 class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStatement {
-    override fun listText() = "GOSUB $subprogramLineNumber"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter = machine.programInterpreter
-            ?: throw IllegalArgumentException("GOSUB can be used only within a program")
-        interpreter.gosub(subprogramLineNumber, programLineNumber!!)
-    }
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
-        TODO("not implemented")
-    }
+   override fun listText() = "GOSUB $subprogramLineNumber"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter = machine.programInterpreter
+         ?: throw IllegalArgumentException("GOSUB can be used only within a program")
+      interpreter.gosub(subprogramLineNumber, programLineNumber!!)
+   }
+
+   override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+      TODO("not implemented")
+   }
 }
 
 /**
@@ -232,22 +245,22 @@ class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStateme
  */
 class OnGosubStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int>) : LineNumberDependentStatement {
 
-    init {
-        if (lineNumberList.isEmpty()) throw IllegalArgumentException("Line number must not be empty")
-    }
+   init {
+      if (lineNumberList.isEmpty()) throw IllegalArgumentException("Line number must not be empty")
+   }
 
-    override fun listText() = "ON ${numericExpr.listText()} GOSUB $lineNumberList"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter =
-            machine.programInterpreter ?: throw IllegalArgumentException("ON GOSUB must not be used without program")
-        val lineNumberIdx = numericExpr.value().toNative().roundToInt()
-        if (lineNumberIdx !in 1..lineNumberList.size) throw BadValue()
-        val currLineNumber = programLineNumber
-            ?: throw IllegalArgumentException("ON GOSUB must not be used without current program line number")
-        interpreter.gosub(lineNumberList[lineNumberIdx - 1], currLineNumber)
-    }
+   override fun listText() = "ON ${numericExpr.listText()} GOSUB $lineNumberList"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter =
+         machine.programInterpreter ?: throw IllegalArgumentException("ON GOSUB must not be used without program")
+      val lineNumberIdx = numericExpr.value().toNative().roundToInt()
+      if (lineNumberIdx !in 1..lineNumberList.size) throw BadValue()
+      val currLineNumber = programLineNumber
+         ?: throw IllegalArgumentException("ON GOSUB must not be used without current program line number")
+      interpreter.gosub(lineNumberList[lineNumberIdx - 1], currLineNumber)
+   }
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) = TODO("not implemented")
+   override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) = TODO("not implemented")
 }
 
 /**
@@ -256,28 +269,29 @@ class OnGosubStatement(val numericExpr: NumericExpr, val lineNumberList: List<In
  * following the GOSUB statement that transferred the computer to that particular subroutine in the first place.
  */
 class ReturnStatement : Statement {
-    override fun listText() = "RETURN"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter = machine.programInterpreter
-            ?: throw IllegalArgumentException("RETURN can be used only within a program")
-        interpreter.returnFromGosub()
-    }
+
+   override fun listText() = "RETURN"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter = machine.programInterpreter
+         ?: throw IllegalArgumentException("RETURN can be used only within a program")
+      interpreter.returnFromGosub()
+   }
 }
 
 class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumberDependentStatement {
-    override fun listText() = if (lineNumberList != null) "UNBREAK $lineNumberList" else "UNBREAK"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        programLineNumber ?: throw IllegalArgumentException("Unbreak statement may not be used without program")
-        if (lineNumberList == null) {
-            machine.removeBreakpoints(programLineNumber = programLineNumber)
-        } else {
-            machine.removeBreakpoints(lineNumberList, programLineNumber)
-        }
-    }
+   override fun listText() = if (lineNumberList != null) "UNBREAK $lineNumberList" else "UNBREAK"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      programLineNumber ?: throw IllegalArgumentException("Unbreak statement may not be used without program")
+      if (lineNumberList == null) {
+         machine.removeBreakpoints(programLineNumber = programLineNumber)
+      } else {
+         machine.removeBreakpoints(lineNumberList, programLineNumber)
+      }
+   }
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
-        TODO("not yet implemented")
-    }
+   override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+      TODO("not yet implemented")
+   }
 }
 
 /**
@@ -289,27 +303,27 @@ class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumb
  * effect on the number of times the loop is performed.
  */
 class ForToStepStatement(val initializer: LetNumberStatement, val limit: NumericExpr, val increment: NumericExpr?) :
-    Statement {
+   Statement {
 
-    override fun listText(): String {
-        return when (increment) {
-            null -> "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
-            else -> "FOR ${initializer.listText().trim()} TO ${limit.listText()} STEP ${increment.listText()}"
-        }
-    }
+   override fun listText(): String {
+      return when (increment) {
+         null -> "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
+         else -> "FOR ${initializer.listText().trim()} TO ${limit.listText()} STEP ${increment.listText()}"
+      }
+   }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val pln = programLineNumber ?: throw IllegalArgumentException("$this can be used as a statement only")
-        val interpreter = machine.programInterpreter
-            ?: throw IllegalArgumentException("Machine program interpreter must be present for $this")
-        // Limit and increment must be evaluated before the initializer is executed!
-        val limitConst = limit.value()
-        val incrementConst = increment?.value()
-        initializer.execute(machine, programLineNumber)
-        interpreter.beginForLoop(pln, initializer.varName, limitConst, incrementConst)
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val pln = programLineNumber ?: throw IllegalArgumentException("$this can be used as a statement only")
+      val interpreter = machine.programInterpreter
+         ?: throw IllegalArgumentException("Machine program interpreter must be present for $this")
+      // Limit and increment must be evaluated before the initializer is executed!
+      val limitConst = limit.value()
+      val incrementConst = increment?.value()
+      initializer.execute(machine, programLineNumber)
+      interpreter.beginForLoop(pln, initializer.varName, limitConst, incrementConst)
+   }
 
-    override fun requiresEmptyLineAfterExecution() = false
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 /**
@@ -318,14 +332,15 @@ class ForToStepStatement(val initializer: LetNumberStatement, val limit: Numeric
  * @param ctrlVarName name of the control-variable used in the for loop
  */
 class NextStatement(val ctrlVarName: String) : Statement {
-    override fun listText() = "NEXT $ctrlVarName"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter =
-            machine.programInterpreter ?: throw IllegalArgumentException("Cannot use $this without program")
-        interpreter.nextForLoopStep(ctrlVarName)
-    }
 
-    override fun requiresEmptyLineAfterExecution() = false
+   override fun listText() = "NEXT $ctrlVarName"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter =
+         machine.programInterpreter ?: throw IllegalArgumentException("Cannot use $this without program")
+      interpreter.nextForLoopStep(ctrlVarName)
+   }
+
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 /**
@@ -336,27 +351,27 @@ class NextStatement(val ctrlVarName: String) : Statement {
  * is omitted, the computer continues with the next program line.
  */
 class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line2: Int? = null) :
-    LineNumberDependentStatement {
+   LineNumberDependentStatement {
 
-    override fun listText(): String = when {
-        line2 != null -> "IF ${numericExpr.listText()} THEN $line1 ELSE $line2"
-        else -> "IF ${numericExpr.listText()} THEN $line1"
-    }
+   override fun listText(): String = when {
+      line2 != null -> "IF ${numericExpr.listText()} THEN $line1 ELSE $line2"
+      else -> "IF ${numericExpr.listText()} THEN $line1"
+   }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter = machine.programInterpreter
-        if (programLineNumber == null || interpreter == null) {
-            throw IllegalArgumentException("Cannot use IF-THEN-ELSE without program")
-        }
-        val currVal = numericExpr.value()
-        val isTrue = currVal.toNative() != 0.0
-        if (isTrue) interpreter.jumpTo(line1)
-        else if (line2 != null) interpreter.jumpTo(line2)
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter = machine.programInterpreter
+      if (programLineNumber == null || interpreter == null) {
+         throw IllegalArgumentException("Cannot use IF-THEN-ELSE without program")
+      }
+      val currVal = numericExpr.value()
+      val isTrue = currVal.toNative() != 0.0
+      if (isTrue) interpreter.jumpTo(line1)
+      else if (line2 != null) interpreter.jumpTo(line2)
+   }
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
-        TODO("not implemented")
-    }
+   override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+      TODO("not implemented")
+   }
 }
 
 /**
@@ -367,19 +382,19 @@ class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line
  */
 class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Variable>) : Statement {
 
-    override fun listText() = when (promptExpr) {
-        null -> "INPUT ${varNameList.joinToString(",")}"
-        else -> "INPUT $promptExpr:${varNameList.joinToString(",")}"
-    }
+   override fun listText() = when (promptExpr) {
+      null -> "INPUT ${varNameList.joinToString(",")}"
+      else -> "INPUT $promptExpr:${varNameList.joinToString(",")}"
+   }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
-        if (promptExpr != null) {
-            machine.acceptUserInput(varNameList, programLineNumber, promptExpr.value().toNative())
-        } else {
-            machine.acceptUserInput(varNameList, programLineNumber)
-        }
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
+      if (promptExpr != null) {
+         machine.acceptUserInput(varNameList, programLineNumber, promptExpr.value().toNative())
+      } else {
+         machine.acceptUserInput(varNameList, programLineNumber)
+      }
+   }
 }
 
 /**
@@ -388,34 +403,36 @@ class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Variable
  * reference to the array.
  */
 class DimStatement(val arrayDeclarations: List<ArrayDimensions>) : Statement {
-    init {
-        if (arrayDeclarations.isEmpty()) throw IllegalArgumentException("Array declarations must not be empty")
-    }
 
-    override fun listText(): String {
-        return StringBuilder().apply {
-            append("DIM ")
-            for (arrayDeclaration in arrayDeclarations) {
-                if (arrayDeclaration !== arrayDeclarations[0]) append(',')
-                append(arrayDeclaration)
-            }
-        }.toString()
-    }
+   init {
+      if (arrayDeclarations.isEmpty()) throw IllegalArgumentException("Array declarations must not be empty")
+   }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        // Nothing to do
-    }
+   override fun listText(): String {
+      return StringBuilder().apply {
+         append("DIM ")
+         for (arrayDeclaration in arrayDeclarations) {
+            if (arrayDeclaration !== arrayDeclarations[0]) append(',')
+            append(arrayDeclaration)
+         }
+      }.toString()
+   }
 
-    /** Declaration of an TI Basic array with one to three dimensions. */
-    data class ArrayDimensions(val name: String, val firstDim: Int, val secondDim: Int?, val thirdDim: Int?) {
-        override fun toString(): String {
-            return StringBuilder("$name($firstDim").apply {
-                if (secondDim != null) append(secondDim)
-                if (thirdDim != null) append(thirdDim)
-                append(')')
-            }.toString()
-        }
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      // Nothing to do
+   }
+
+   /** Declaration of an TI Basic array with one to three dimensions. */
+   data class ArrayDimensions(val name: String, val firstDim: Int, val secondDim: Int?, val thirdDim: Int?) {
+
+      override fun toString(): String {
+         return StringBuilder("$name($firstDim").apply {
+            if (secondDim != null) append(secondDim)
+            if (thirdDim != null) append(thirdDim)
+            append(')')
+         }.toString()
+      }
+   }
 }
 
 /**
@@ -431,14 +448,15 @@ class DimStatement(val arrayDeclarations: List<ArrayDimensions>) : Statement {
  * specified in the variable-list of the read statement.
  */
 class DataStatement(val dataList: List<Constant>) : Statement, TiBasicModule.ExecutedOnStore {
-    override fun listText() = "DATA $dataList"
-    override fun onStore(lineNumber: Int, machine: TiBasicModule) {
-        machine.storeData(lineNumber, dataList)
-    }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        // Nothing to do: Everything is done on store
-    }
+   override fun listText() = "DATA $dataList"
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      machine.storeData(lineNumber, dataList)
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      // Nothing to do: Everything is done on store
+   }
 }
 
 /**
@@ -447,12 +465,13 @@ class DataStatement(val dataList: List<Constant>) : Statement, TiBasicModule.Exe
  * @param variableList may include numeric variables and/or string variables
  */
 class ReadStatement(val variableList: List<Variable>) : Statement {
-    override fun listText() = "READ $variableList"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter =
-            machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
-        interpreter.readData(variableList)
-    }
+
+   override fun listText() = "READ $variableList"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter =
+         machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
+      interpreter.readData(variableList)
+   }
 }
 
 /**
@@ -468,16 +487,17 @@ class ReadStatement(val variableList: List<Variable>) : Statement {
  * line number in the program, the program will stop running and the message "DATA ERROR IN xx" will be displayed.
  */
 class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStatement {
-    override fun listText() = if (lineNumber != null) "RESTORE $lineNumber" else "RESTORE"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val interpreter =
-            machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
-        interpreter.restore(lineNumber)
-    }
 
-    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
-        TODO("not implemented")
-    }
+   override fun listText() = if (lineNumber != null) "RESTORE $lineNumber" else "RESTORE"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val interpreter =
+         machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
+      interpreter.restore(lineNumber)
+   }
+
+   override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
+      TODO("not implemented")
+   }
 }
 
 /**
@@ -486,10 +506,11 @@ class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStateme
  * value for the expression. Different values give different sequences.
  */
 class RandomizeStatement(private val seed: NumericExpr?) : Statement {
-    override fun listText() = if (seed != null) "RANDOMIZE ${seed.listText()}" else "RANDOMIZE"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.randomize(seed?.value())
-    }
+
+   override fun listText() = if (seed != null) "RANDOMIZE ${seed.listText()}" else "RANDOMIZE"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.randomize(seed?.value())
+   }
 }
 
 /**
@@ -498,24 +519,21 @@ class RandomizeStatement(private val seed: NumericExpr?) : Statement {
  * a string result, the function name you use must be a string variable name (i.e. the last character must be a dollar
  * sign, $).
  */
-class DefineFunctionStatement(
-    private val functionName: String,
-    private val parameterName: String?,
-    private val definition: Expression
-) : Statement, TiBasicModule.ExecutedOnStore {
+class DefineFunctionStatement(private val functionName: String, private val parameterName: String?, private val definition: Expression)
+   : Statement, TiBasicModule.ExecutedOnStore {
 
-    override fun listText(): String {
-        val arg = if (parameterName != null) "($parameterName)" else ""
-        return "DEF $functionName$arg=${definition.listText()}"
-    }
+   override fun listText(): String {
+      val arg = if (parameterName != null) "($parameterName)" else ""
+      return "DEF $functionName$arg=${definition.listText()}"
+   }
 
-    override fun onStore(lineNumber: Int, machine: TiBasicModule) {
-        machine.defineUserFunction(functionName, parameterName, definition)
-    }
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      machine.defineUserFunction(functionName, parameterName, definition)
+   }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (machine.hasUserFunctionParameterNameConflict(functionName)) throw NameConflict()
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (machine.hasUserFunctionParameterNameConflict(functionName)) throw NameConflict()
+   }
 }
 
 /**
@@ -531,24 +549,17 @@ class DefineFunctionStatement(
  * @param fileName a file name refers to a device or to a file located on a device, depending on the capability of the
  * accessory - each accessory has a predefined name which the computer recognizes, for example, the valid file names for
  * the two audio cassette recorders are "CS1" and "CS2"
- * @param fileOrganization used to indicate, which logical structure a file has - DEFAULT is SEQUENTIAL
- * @param fileType designates the format of the data stored on the file: DISPLAY or INTERNAL - default is DISPLAY
- * @param openMode instructs the computer to process the file in the [OpenMode.INPUT], [OpenMode.OUTPUT],
- * [OpenMode.UPDATE], or [OpenMode.APPEND] mode - default is [OpenMode.UPDATE]
- * @param recordType specifies whether the records on the file are all the same length or vary in length - may include a
- * numeric expression specifying the maximum length of a record - each accessory device has its own maximum record
- * length, so be sure to check the manuals which accompany them - if omitted, a record length depending upon the device
- * is used: SEQUENTIAL for VARIABLE-length files, RELATIVE for FIXED-length files
+ * @param options file opening options to use
  */
 class OpenStatement(val fileNumber: NumericExpr, val fileName: StringExpr, val options: FileOpenOptions) : Statement {
 
-    override fun listText(): String {
-        TODO("not implemented")
-    }
+   override fun listText(): String {
+      TODO("not implemented")
+   }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.openFile(fileNumber, fileName, options)
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.openFile(fileNumber, fileName, options)
+   }
 
 }
 
@@ -564,16 +575,16 @@ class OpenStatement(val fileNumber: NumericExpr, val fileName: StringExpr, val o
  */
 class CloseStatement(val fileNumber: NumericExpr, val delete: Boolean = false) : Statement {
 
-    override fun listText(): String {
-        return StringBuilder("CLOSE").apply {
-            append("# ").append(fileNumber.value().toNative().roundToInt())
-            if (delete) append(":DELETE")
-        }.toString()
-    }
+   override fun listText(): String {
+      return StringBuilder("CLOSE").apply {
+         append("# ").append(fileNumber.value().toNative().roundToInt())
+         if (delete) append(":DELETE")
+      }.toString()
+   }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.closeFile(fileNumber, delete)
-    }
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.closeFile(fileNumber, delete)
+   }
 
 }
 
@@ -581,12 +592,24 @@ class CloseStatement(val fileNumber: NumericExpr, val delete: Boolean = false) :
  * This form of the INPUT statement allows you to read data from an accessory device. It can be used only with files
  * opened in INPUT or UPDATE mode.
  */
-class InputFromFileStatement(val fileNumber: NumericExpr, val variableList: List<Variable>) : Statement {
-    override fun listText(): String {
-        TODO("not implemented")
-    }
+class InputFromFileStatement(val fileNumber: NumericExpr, val recordNum: NumericExpr? = null, val variableList: List<Variable>) : Statement {
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.readFromFile(fileNumber, variableList.map { variable -> variable.name })
-    }
+   override fun listText(): String {
+      TODO("not implemented")
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.readFromFile(fileNumber, recordNum, variableList.map { variable -> variable.name })
+   }
+}
+
+class PrintToFileStatement(val fileNumber: NumericExpr, val recordNum: NumericExpr? = null, val variableList: List<NumericExpr>) : Statement {
+
+   override fun listText(): String {
+      TODO("not implemented")
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      TODO("Not yet implemented")
+   }
 }
