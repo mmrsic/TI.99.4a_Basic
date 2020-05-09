@@ -9,6 +9,7 @@ import com.github.mmrsic.ti99.basic.expr.NumericVariable
 import com.github.mmrsic.ti99.basic.expr.PrintSeparator
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.basic.expr.StringExpr
+import com.github.mmrsic.ti99.basic.expr.StringVariable
 import com.github.mmrsic.ti99.basic.expr.TabFunction
 import com.github.mmrsic.ti99.basic.expr.toAsciiCode
 import kotlin.collections.set
@@ -630,30 +631,54 @@ class TiBasicModule : TiModule {
    private val openFiles: MutableMap<Int, TiBasicFile> = mutableMapOf()
 
    /** Open a file and associate it with a given file number. */
-   fun openFile(fileNumber: NumericExpr, fileName: StringExpr, options: FileOpenOptions) {
-      val number = fileNumber.value().toNative().roundToInt()
-      val name = fileName.value().toNative()
-      openFiles[number] = chooseAccessoryDevice(name).open(name, options)
+   fun openFile(number: NumericExpr, name: StringExpr, options: FileOpenOptions) {
+      val fileNumber = number.value().toNative().roundToInt()
+      val deviceAndFileName = name.value().toNative()
+      val deviceName = deviceAndFileName.takeWhile { it != '.' }
+      val fileName = deviceAndFileName.substring(min(deviceAndFileName.length, deviceName.length + 1))
+      openFiles[fileNumber] = chooseAccessoryDeviceFile(deviceName).open(fileName, options)
+      println("Opened file #$fileNumber named '$deviceAndFileName': $options")
    }
 
    /** Close and optionally delete a file given by its file number. */
    fun closeFile(fileNumber: NumericExpr, delete: Boolean) {
-      val number = fileNumber.value().toNative().roundToInt()
-      val file = openFiles[number] ?: throw FileError()
+      val file = getOpenFile(fileNumber)
       file.close()
       if (delete) file.delete()
    }
 
-   /** Read data from a file associated to a [fileNumber] into variables given by their [variableNames]. */
-   fun readFromFile(fileNumber: NumericExpr, recordNum: NumericExpr?, variableNames: List<String>) {
-      val number = fileNumber.value().toNative().roundToInt()
-      val file = openFiles[number] ?: throw IllegalArgumentException("No such file number: $number")
-      for (variableName in variableNames) try {
-         setVariable(variableName, file.getNextString())
-      } catch (e: NumberFormatException) {
-         println("Failed to read variable '$variableName' from file #$fileNumber: ${e.message}")
-         throw InputError()
+   /** Place a list of expressions consecutively into a file associated to a [fileNumber]. */
+   fun printToFile(fileNumber: NumericExpr, printExpressions: List<Expression>) {
+      val file = getOpenFile(fileNumber)
+      // FIXME: Implement for real: The current code is just there to please record forwarding in FIXED sized files
+      println("Not yet implemented: PRINT to file")
+      for (expression in printExpressions) {
+         when (expression) {
+            is NumericVariable -> file.getNextString()
+            is StringVariable -> file.getNextNumber()
+            else -> Unit
+         }
       }
+   }
+
+   /** Read data from a file associated to a [fileNumber] into variables given by their [variables]. */
+   fun readFromFile(fileNumber: NumericExpr, recordNum: NumericExpr?, variables: List<Variable>) {
+      val file = getOpenFile(fileNumber)
+      for (variable in variables) {
+         when {
+            variable.isString() -> setStringVariable(variable.name, file.getNextString())
+            variable.isNumeric() -> setNumericVariable(variable.name, file.getNextNumber())
+         }
+      }
+   }
+
+   fun isEndOfFile(fileNumber: NumericExpr): NumericConstant {
+      return openFiles[fileNumber.value().toNative().roundToInt()]?.isEndOfFile() ?: throw FileError()
+   }
+
+   private fun getOpenFile(fileNumber: NumericExpr): TiBasicFile {
+      val key = fileNumber.value().toNative().roundToInt()
+      return openFiles[key] ?: throw FileError()
    }
 
    private val attachedAccessoryDevices: MutableMap<String, AccessoryDevice> = mutableMapOf()
@@ -664,21 +689,41 @@ class TiBasicModule : TiModule {
       recorder.insertTape(tapeDisplayData)
    }
 
-   private fun chooseAccessoryDevice(deviceAndFileName: String): AccessoryDevice {
-      if (attachedAccessoryDevices.containsKey(deviceAndFileName)) {
-         return attachedAccessoryDevices.getValue(deviceAndFileName)
-      }
-      if (deviceAndFileName.startsWith("CS")) {
-         val result = AccessoryDeviceCassetteRecorder(deviceAndFileName, this)
-         attachedAccessoryDevices[deviceAndFileName] = result
-         return result
-      }
-      return object : AccessoryDevice {}
+   /** Attach a disk drive to this [TiBasicModule]. */
+   fun attachDiskDrive(number: Int, files: List<TiDiskDriveFile>? = null) {
+      val drive = chooseDiskDrive(number)
+      files?.let { drive.saveFiles(it) }
    }
 
    private fun chooseCassetteRecorder(id: String): AccessoryDeviceCassetteRecorder {
       attachedAccessoryDevices.putIfAbsent(id, AccessoryDeviceCassetteRecorder(id, this))
       return attachedAccessoryDevices.getValue(id) as AccessoryDeviceCassetteRecorder
+   }
+
+   private fun chooseDiskDrive(number: Int): AccessoryDeviceDiskDrive {
+      val id = AccessoryDeviceDiskDrive.createId(number)
+      attachedAccessoryDevices.putIfAbsent(id, AccessoryDeviceDiskDrive(number))
+      return attachedAccessoryDevices.getValue(id) as AccessoryDeviceDiskDrive
+   }
+
+   private fun chooseAccessoryDeviceFile(deviceName: String): AccessoryDevice {
+      if (attachedAccessoryDevices.containsKey(deviceName)) {
+         return attachedAccessoryDevices.getValue(deviceName)
+      }
+      if (deviceName.startsWith(AccessoryDeviceCassetteRecorder.PREFIX)) {
+         val result = AccessoryDeviceCassetteRecorder(deviceName, this)
+         attachedAccessoryDevices[result.id] = result
+         return result
+      }
+      if (deviceName.startsWith(AccessoryDeviceDiskDrive.PREFIX)) {
+         val result = AccessoryDeviceDiskDrive(1)
+         attachedAccessoryDevices[result.id] = result
+         return result
+      }
+      println("Failed to find concrete accessory device for: $deviceName")
+      return object : AccessoryDevice {
+         override val id: String = error("No such device")
+      }
    }
 
    /** Provider of pseudo-random values. */
@@ -762,6 +807,9 @@ interface Variable {
 
    /** Name of the variable. */
    val name: String
+
+   fun isString(): Boolean = name.last() == '$'
+   fun isNumeric(): Boolean = !isString()
 }
 
 class CharacterPattern(val hex: String) {

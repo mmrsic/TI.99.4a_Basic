@@ -599,7 +599,7 @@ class InputFromFileStatement(val fileNumber: NumericExpr, val recordNum: Numeric
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      machine.readFromFile(fileNumber, recordNum, variableList.map { variable -> variable.name })
+      machine.readFromFile(fileNumber, recordNum, variableList)
    }
 }
 
@@ -610,6 +610,6 @@ class PrintToFileStatement(val fileNumber: NumericExpr, val recordNum: NumericEx
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      TODO("Not yet implemented")
+      machine.printToFile(fileNumber, printList)
    }
 }

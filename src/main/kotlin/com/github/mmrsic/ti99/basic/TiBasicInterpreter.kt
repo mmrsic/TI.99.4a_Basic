@@ -221,7 +221,7 @@ class TiBasicProgramInterpreter(
         val inputParts = parseInputParts(input)
         if (inputParts.size != variableNames.size) {
             println("Input error: Expecting ${variableNames.size} elements but got ${inputParts.size}")
-            raiseInputErrorWarning(inputLineNumber, InputError())
+            raiseInputErrorWarning(inputLineNumber, InputWarning())
         }
         variableNames.forEachIndexed { varIdx, varNameExpr ->
             val trimmedPart = inputParts[varIdx].trim()
@@ -233,7 +233,7 @@ class TiBasicProgramInterpreter(
                 machine.setVariable(varNameExpr, unquotedPart.replace("\"\"", "\""))
             } catch (e: NumberFormatException) {
                 println("Input warning: Expecting number but got string: ${e.message}")
-                raiseInputErrorWarning(inputLineNumber, InputError())
+                raiseInputErrorWarning(inputLineNumber, InputWarning())
             } catch (e: TiBasicWarning) {
                 println("Input warning: ${e.message}")
                 raiseInputErrorWarning(inputLineNumber, e)

@@ -2,9 +2,14 @@ package com.github.mmrsic.ti99.usersrefguide
 
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
+import com.github.mmrsic.ti99.basic.TiFileContentsBytes
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
+import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiDiskDriveFile
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 /**
  * Test cases for examples found in User's Reference Guide on pages II-118 through II-136.
@@ -407,6 +412,60 @@ class FileProcessingTest {
             24 to " >"
          ), machine.screen
       )
+   }
+
+   @Test
+   fun testUpdateFileWithoutRecClause() {
+      val records = listOf(
+         StringConstant("1A"), StringConstant("1B"), StringConstant("1C"), NumericConstant(11), NumericConstant(12),
+         StringConstant("2A"), StringConstant("2B"), StringConstant("2C"), NumericConstant(21), NumericConstant(22),
+         StringConstant("3A"), StringConstant("3B"), StringConstant("3C"), NumericConstant(31), NumericConstant(32),
+         StringConstant("4A"), StringConstant("4B"), StringConstant("4C"), NumericConstant(41), NumericConstant(42),
+         StringConstant("5A"), StringConstant("5B"), StringConstant("5C"), NumericConstant(51), NumericConstant(52),
+         StringConstant("6A"), StringConstant("6B"), StringConstant("6C"), NumericConstant(61), NumericConstant(62),
+         StringConstant("7A"), StringConstant("7B"), StringConstant("7C"), NumericConstant(71), NumericConstant(72),
+         StringConstant("8A"), StringConstant("8B"), StringConstant("8C"), NumericConstant(81), NumericConstant(82)
+      )
+      val numRecords = records.size / 5 // Used instead of 10 in example in order to reduce test overhead
+
+      val machine = TiBasicModule()
+      machine.attachDiskDrive(1, listOf(TiDiskDriveFile("FILE", TiFileContentsBytes.create(records))))
+
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpret("10 NAME$=\"DSK1.FILE\"", machine) // Defined in order to make example run without error
+      interpreter.interpretAll(
+         """
+         100 OPEN #3:NAME$,RELATIVE,INTERNAL,UPDATE,FIXED
+         110 FOR I=1 TO ${numRecords / 2}
+         120 INPUT #3:A$,B$,C$,X,Y
+         230 PRINT #3:A$,B$,C$,X,Y
+         240 NEXT I
+         250 CLOSE #3
+         260 END
+         RUN
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            9 to "  TI BASIC READY",
+            11 to " >10 NAME$=\"DSK1.FILE\"",
+            12 to " >100 OPEN #3:NAME$,RELATIVE,I",
+            13 to "  NTERNAL,UPDATE,FIXED",
+            14 to " >110 FOR I=1 TO ${numRecords / 2}",
+            15 to " >120 INPUT #3:A$,B$,C$,X,Y",
+            16 to " >230 PRINT #3:A$,B$,C$,X,Y",
+            17 to " >240 NEXT I",
+            18 to " >250 CLOSE #3",
+            19 to " >260 END",
+            20 to " >RUN",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+
+      assertNotEquals(NumericConstant.ZERO, machine.isEndOfFile(NumericConstant(3)),
+         "EOF must indicate that all $numRecords records have been read")
    }
 
 }

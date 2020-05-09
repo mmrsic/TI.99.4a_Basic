@@ -6,23 +6,34 @@ import com.github.mmrsic.ti99.basic.OpenMode.APPEND
 import com.github.mmrsic.ti99.basic.OpenMode.INPUT
 import com.github.mmrsic.ti99.basic.OpenMode.OUTPUT
 import com.github.mmrsic.ti99.basic.OpenMode.UPDATE
+import com.github.mmrsic.ti99.basic.expr.NegatedExpression
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
+import com.github.mmrsic.ti99.basic.expr.StringConstant
 
 /**
  * An accessory device is able to manage files, accessible from TI Basic.
  */
 interface AccessoryDevice {
 
+   val id: String
+
    /** Open a file on this device, that is, make it accessible by TI Basic. */
-   fun open(name: String, options: FileOpenOptions): TiBasicFile {
+   fun open(fileName: String, options: FileOpenOptions): TiBasicFile {
       return object : TiBasicFile {
 
          override fun open(options: FileOpenOptions) {
             TODO("not implemented")
          }
 
-         override fun getNextString(): String {
+         override fun getNextString(): StringConstant {
             TODO("not implemented")
          }
+
+         override fun getNextNumber(): NumericConstant {
+            TODO("not implemented")
+         }
+
+         override fun isEndOfFile() = NegatedExpression(NumericConstant.ONE).value()
 
          override fun close() {
             TODO("not implemented")
@@ -33,7 +44,6 @@ interface AccessoryDevice {
          }
       }
    }
-
 }
 
 /**
@@ -45,7 +55,13 @@ interface TiBasicFile {
    fun open(options: FileOpenOptions)
 
    /** Get the next datum as a string */
-   fun getNextString(): String
+   fun getNextString(): StringConstant
+
+   /** Get the next datum as a number. */
+   fun getNextNumber(): NumericConstant
+
+   /** Check whether this [TiBasicFile] is currently at the end, logically or physically. */
+   fun isEndOfFile(): NumericConstant
 
    /** Close this file previously opened with [AccessoryDevice.open]. */
    fun close()
@@ -85,8 +101,7 @@ interface FileOpenOption
  * @param type access type
  * @param initialNumberOfRecords number of already present records
  */
-data class FileOrganization(val type: Type = Type.SEQUENTIAL, val initialNumberOfRecords: Int? = null) :
-        FileOpenOption {
+data class FileOrganization(val type: Type = Type.SEQUENTIAL, val initialNumberOfRecords: Int? = null) : FileOpenOption {
 
    /** Access type of the [FileOrganization]. */
    enum class Type {

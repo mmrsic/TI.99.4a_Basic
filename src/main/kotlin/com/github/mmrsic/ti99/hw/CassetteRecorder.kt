@@ -5,12 +5,14 @@ import com.github.mmrsic.ti99.basic.FileError
 import com.github.mmrsic.ti99.basic.FileOpenOptions
 import com.github.mmrsic.ti99.basic.FileOrganization
 import com.github.mmrsic.ti99.basic.FileType
+import com.github.mmrsic.ti99.basic.InputError
 import com.github.mmrsic.ti99.basic.OpenMode
 import com.github.mmrsic.ti99.basic.RecordType
 import com.github.mmrsic.ti99.basic.TiBasicFile
 import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
 import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.Expression
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.PrintSeparator
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 
@@ -18,80 +20,81 @@ import com.github.mmrsic.ti99.basic.expr.StringConstant
  * Cassette Recorder [AccessoryDevice], connected to a [TiBasicModule].
  * @param id ID of the cassette recorder - must be either "CS1" or "CS2"
  */
-class AccessoryDeviceCassetteRecorder(val id: String, private val machine: TiBasicModule) : AccessoryDevice {
+class AccessoryDeviceCassetteRecorder(override val id: String, private val machine: TiBasicModule) : AccessoryDevice {
 
-    private val allowedDeviceNames = listOf("CS1", "CS2")
-    private val allowedOrganizations = listOf(FileOrganization.Type.SEQUENTIAL)
-    private val allowedTypes = listOf(FileType.INTERNAL, FileType.DISPLAY)
-    private val allowedModes = listOf(OpenMode.INPUT, OpenMode.OUTPUT)
-    private val allowedLengthTypes = listOf(RecordType.LengthType.FIXED)
+   companion object {
+      const val PREFIX: String = "CS"
+   }
 
-    init {
-        if (id !in allowedDeviceNames) throw  IllegalArgumentException("Illegal cassette recorder ID: $id")
-    }
+   private val allowedDeviceNames = IntRange(1, 2).map { PREFIX + it }
+   private val allowedOrganizations = listOf(FileOrganization.Type.SEQUENTIAL)
+   private val allowedTypes = listOf(FileType.INTERNAL, FileType.DISPLAY)
+   private val allowedModes = listOf(OpenMode.INPUT, OpenMode.OUTPUT)
+   private val allowedLengthTypes = listOf(RecordType.LengthType.FIXED)
 
-    override fun open(name: String, options: FileOpenOptions): TiBasicFile {
-        checkDeviceName(name)
-        checkOrganization(options.organization.type)
-        checkFileType(options.fileType)
-        checkMode(options.mode)
-        checkRecordType(options.recordType)
+   init {
+      if (id !in allowedDeviceNames) throw  IllegalArgumentException("Illegal cassette recorder ID: $id")
+   }
 
-        machine.printTokens(listOf(PrintSeparator.NextRecord))
-        printMessage(name, "REWIND CASSETTE TAPE")
-        printMessage(name, "PRESS CASSETTE ${modeToButton(options.mode)}")
+   override fun open(fileName: String, options: FileOpenOptions): TiBasicFile {
+      checkFileName(fileName)
+      checkOrganization(options.organization.type)
+      checkFileType(options.fileType)
+      checkMode(options.mode)
+      checkRecordType(options.recordType)
 
-        if (tape == null) insertTape("")
-        val result = tape!!
-        result.open(options)
-        return result
-    }
+      machine.printTokens(listOf(PrintSeparator.NextRecord))
+      printMessage(id, "REWIND CASSETTE TAPE")
+      printMessage(id, "PRESS CASSETTE ${modeToButton(options.mode)}")
 
-    /** Currently inserted tape. */
-    private var tape: TiBasicFileCassetteRecorder? = null
+      if (tape == null) insertTape("")
+      val result = tape!!
+      result.open(options)
+      return result
+   }
 
-    /**
-     * Insert a cassette tape with its data given as String into this [AccessoryDeviceCassetteRecorder]. Any previously
-     * inserted tape will be removed.
-     */
-    fun insertTape(tapeDisplayData: String) {
-        tape = TiBasicFileCassetteRecorder(id, tapeDisplayData, machine)
-        println("$id: Inserted tape: $tapeDisplayData")
-    }
+   /** Currently inserted tape. */
+   private var tape: TiBasicFileCassetteRecorder? = null
 
-    /** Remove any previously inserted tape from this [AccessoryDeviceCassetteRecorder]. */
-    fun removeTape() {
-        tape = null
-        println("$id: Removed tape")
-    }
+   /**
+    * Insert a cassette tape with its data given as String into this [AccessoryDeviceCassetteRecorder]. Any previously
+    * inserted tape will be removed.
+    */
+   fun insertTape(tapeDisplayData: String) {
+      tape = TiBasicFileCassetteRecorder(id, tapeDisplayData, machine)
+      println("$id: Inserted tape: $tapeDisplayData")
+   }
 
-    // HELPERS //
+   /** Remove any previously inserted tape from this [AccessoryDeviceCassetteRecorder]. */
+   fun removeTape() {
+      tape = null
+      println("$id: Removed tape")
+   }
 
-    private fun checkDeviceName(nativeCassetteRecorderName: String) {
-        if (nativeCassetteRecorderName != id)
-            throw IllegalArgumentException("Illegal device name: $nativeCassetteRecorderName")
-    }
+   // HELPERS //
 
-    private fun checkOrganization(organization: FileOrganization.Type) {
-        if (organization !in allowedOrganizations)
-            throw IllegalArgumentException("Illegal file organization: $organization")
-    }
+   private fun checkFileName(nativeFileName: String) {
+      if (nativeFileName != "") throw IllegalArgumentException("Illegal file name: $nativeFileName")
+   }
 
-    private fun checkFileType(fileType: FileType) {
-        if (fileType !in allowedTypes) throw IllegalArgumentException("Illegal file type: $fileType")
-    }
+   private fun checkOrganization(organization: FileOrganization.Type) {
+      if (organization !in allowedOrganizations) throw IllegalArgumentException("Illegal file organization: $organization")
+   }
 
-    private fun checkMode(mode: OpenMode) {
-        if (mode !in allowedModes) throw IllegalArgumentException("Illegal mode: $mode")
-    }
+   private fun checkFileType(fileType: FileType) {
+      if (fileType !in allowedTypes) throw IllegalArgumentException("Illegal file type: $fileType")
+   }
 
-    private fun checkRecordType(recordType: RecordType) {
-        if (recordType.lengthType !in allowedLengthTypes)
-            throw IllegalArgumentException("Illegal record type: $recordType")
-    }
+   private fun checkMode(mode: OpenMode) {
+      if (mode !in allowedModes) throw IllegalArgumentException("Illegal mode: $mode")
+   }
 
-    private fun printMessage(id: String, msg: String) = machine.printTokens(printTokensForRecorderAction(id, msg))
-    private fun modeToButton(mode: OpenMode) = if (mode == OpenMode.INPUT) "PLAY" else "RECORD"
+   private fun checkRecordType(recordType: RecordType) {
+      if (recordType.lengthType !in allowedLengthTypes) throw IllegalArgumentException("Illegal record type: $recordType")
+   }
+
+   private fun printMessage(id: String, msg: String) = machine.printTokens(printTokensForRecorderAction(id, msg))
+   private fun modeToButton(mode: OpenMode) = if (mode == OpenMode.INPUT) "PLAY" else "RECORD"
 }
 
 /**
@@ -99,30 +102,35 @@ class AccessoryDeviceCassetteRecorder(val id: String, private val machine: TiBas
  * @param id either "CS1" or "CS2", as the device also represents the "file"
  */
 class TiBasicFileCassetteRecorder(val id: String, displayData: String = "", private val machine: TiBasicModule) :
-    TiBasicFile {
+   TiBasicFile {
 
-    private var options: FileOpenOptions? = null
+   private var options: FileOpenOptions? = null
 
-    private val data: List<Constant> by lazy { TiBasicParser(machine).parseConstantsList(displayData) }
-    private var dataIndex = 0
+   private val data: List<Constant> by lazy { TiBasicParser(machine).parseConstantsList(displayData) }
+   private var dataIndex = 0
 
-    override fun open(options: FileOpenOptions) {
-        this.options = options
-    }
+   override fun open(options: FileOpenOptions) {
+      this.options = options
+   }
 
-    override fun getNextString(): String {
-        if (dataIndex !in data.indices) throw FileError()
-        val result = data[dataIndex++]
-        return result.toNative().toString()
-    }
+   override fun getNextString() = getNextConstant() as? StringConstant ?: throw InputError()
+   override fun getNextNumber() = getNextConstant() as? NumericConstant ?: throw InputError()
+   override fun isEndOfFile() = NumericConstant.ZERO
 
-    override fun close() {
-        machine.printTokens(listOf(PrintSeparator.NextRecord))
-        machine.printTokens(printTokensForRecorderAction(id, "PRESS CASSETTE STOP"))
-        options = null
-    }
+   override fun close() {
+      machine.printTokens(listOf(PrintSeparator.NextRecord))
+      machine.printTokens(printTokensForRecorderAction(id, "PRESS CASSETTE STOP"))
+      options = null
+   }
 
-    override fun delete() = println("Delete is ignored for Cassette Recorder")
+   override fun delete() = println("Delete is ignored for Cassette Recorder")
+
+   // HELPERS //
+
+   private fun getNextConstant(): Constant {
+      if (dataIndex !in data.indices) throw FileError()
+      return data[dataIndex++]
+   }
 
 }
 
@@ -133,10 +141,10 @@ class TiBasicFileCassetteRecorder(val id: String, displayData: String = "", priv
  * additional texts and print separators
  */
 private fun printTokensForRecorderAction(id: String, message: String): List<Expression> {
-    val fillSpaces = " ".repeat(TiBasicScreen.NUM_PRINT_COLUMNS - 2 - message.length - id.length)
-    return listOf(
-        PrintSeparator.NextRecord, StringConstant("* $message"), PrintSeparator.Adjacent,
-        StringConstant(fillSpaces), PrintSeparator.Adjacent, StringConstant(id), PrintSeparator.NextRecord,
-        StringConstant("  THEN PRESS ENTER")
-    )
+   val fillSpaces = " ".repeat(TiBasicScreen.NUM_PRINT_COLUMNS - 2 - message.length - id.length)
+   return listOf(
+      PrintSeparator.NextRecord, StringConstant("* $message"), PrintSeparator.Adjacent,
+      StringConstant(fillSpaces), PrintSeparator.Adjacent, StringConstant(id), PrintSeparator.NextRecord,
+      StringConstant("  THEN PRESS ENTER")
+   )
 }
