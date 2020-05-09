@@ -11,7 +11,6 @@ import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.basic.expr.TabFunction
 import com.github.mmrsic.ti99.basic.expr.toAsciiCode
-import java.util.TreeMap
 import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
@@ -61,10 +60,10 @@ class TiBasicModule : TiModule {
 
    private var currentPrintColumn: Int? = null
 
-   private val stringVariables: MutableMap<String, StringConstant> = TreeMap()
-   private val numericVariables: MutableMap<String, NumericConstant> = TreeMap()
+   private val stringVariables: MutableMap<String, StringConstant> = sortedMapOf()
+   private val numericVariables: MutableMap<String, NumericConstant> = sortedMapOf()
 
-   private val characterPatterns: MutableMap<Int, CharacterPattern> = TreeMap()
+   private val characterPatterns: MutableMap<Int, CharacterPattern> = sortedMapOf()
 
    /** TI Basic screen component as a 32x24 characters grid of 8x8 pixels. */
    val screen = TiBasicScreen { code -> getCharacterPattern(code) }
