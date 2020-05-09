@@ -53,12 +53,8 @@ abstract class Screen(getCharPattern: (Int) -> CharacterPattern, defaultCharColo
 
    /** Place a given characters string onto this screen. */
    fun hchar(row: Int, startCol: Int, characters: String, maxCol: Int = TiBasicScreen.NUM_COLUMNS): String {
-      if (startCol > maxCol) {
-         throw Exception("Start column ($startCol) must not be greater than max column ($maxCol)")
-      }
-      if (characters.isEmpty()) {
-         return ""
-      }
+      if (startCol > maxCol) error("Start column ($startCol) must not be greater than max column ($maxCol)")
+      if (characters.isEmpty()) return ""
       val chunked = characters.chunked(1 + maxCol - startCol)
       val charsToDisplay = chunked[0]
       codes.hchar(row, startCol, charsToDisplay.map { c -> toAsciiCode(c) })

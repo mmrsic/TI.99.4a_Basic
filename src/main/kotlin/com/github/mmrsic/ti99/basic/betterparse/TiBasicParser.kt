@@ -249,7 +249,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
          t1 != null && t2 == null -> NumberCommand(initialLine = t1!!)
          t1 == null && t2 != null -> NumberCommand(increment = t2!!)
          t1 != null && t2 != null -> NumberCommand(initialLine = t1!!, increment = t2!!)
-         else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
+         else -> throw NotImplementedError("Missing branch implementation for combination: t1=$t1 / t2=$t2")
       }
    }
    private val resequenceCmd by skip(resequence) and optional(positiveIntConst) and optional(skip(comma) and positiveIntConst) use {
@@ -258,7 +258,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
          t1 != null && t2 == null -> ResequenceCommand(initialLine = t1!!)
          t1 == null && t2 != null -> ResequenceCommand(increment = t2!!)
          t1 != null && t2 != null -> ResequenceCommand(initialLine = t1!!, increment = t2!!)
-         else -> throw IllegalStateException("Missing branch implementation for combination: t1=$t1 / t2=$t2")
+         else -> throw NotImplementedError("Missing branch implementation for combination: t1=$t1 / t2=$t2")
       }
    }
    private val breakCmd by skip(breakToken) and separatedTerms(positiveIntConst, comma, acceptZero = false) use {
@@ -318,7 +318,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       when {
          text.startsWith("REMARK") -> RemarkStatement(text.substringAfter("REMARK"))
          text.startsWith("REM") -> RemarkStatement(text.substringAfter("REM"))
-         else -> throw IllegalArgumentException("Illegal REMARK: $text")
+         else -> error("Illegal REMARK: $text")
       }
    }
    private val optionBaseStmt by skip(optionBase) and positiveIntConst use { OptionBaseStatement(this) }
@@ -462,6 +462,10 @@ private class ParsedFileOpenOptions : FileOpenOptions {
    override var fileType: FileType = FileType.DISPLAY
    override var mode: OpenMode = OpenMode.UPDATE
    override var recordType: RecordType = RecordType(RecordType.LengthType.VARIABLE, 128)
+
+   override fun toString(): String {
+      return "$organization, $fileType, $mode, $recordType"
+   }
 }
 
 private fun createFileOptions(fileOptions: List<Tuple2<TokenMatch, Int?>>?): FileOpenOptions {
