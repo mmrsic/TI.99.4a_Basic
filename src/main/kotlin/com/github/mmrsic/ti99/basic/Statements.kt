@@ -603,7 +603,7 @@ class InputFromFileStatement(val fileNumber: NumericExpr, val recordNum: Numeric
    }
 }
 
-class PrintToFileStatement(val fileNumber: NumericExpr, val recordNum: NumericExpr? = null, val variableList: List<NumericExpr>) : Statement {
+class PrintToFileStatement(val fileNumber: NumericExpr, val recordNum: NumericExpr? = null, val printList: List<Expression>) : Statement {
 
    override fun listText(): String {
       TODO("not implemented")

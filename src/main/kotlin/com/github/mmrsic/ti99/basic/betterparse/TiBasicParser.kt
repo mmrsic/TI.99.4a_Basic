@@ -375,8 +375,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       skip(colon) and separatedTerms(varRef, comma) use {
       InputFromFileStatement(t1, t2, t3.map { it as Variable })
    }
-   private val printFileStmt by skip(print) and skip(numberSign) and numericExpr and optional(skip(comma and rec) and numericExpr) and
-      skip(colon) and separatedTerms(numericExpr, comma) use {
+   private val printFileStmt by skip(print) and skip(numberSign) and numericExpr and
+      optional(skip(comma and rec) and numericExpr) and skip(colon) and separatedTerms(expr, comma) use {
       PrintToFileStatement(t1, t2, t3)
    }
 
@@ -425,19 +425,18 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       val repetition = t4
       if (repetition != null) VcharSubprogram(t1, t2, t3, repetition) else VcharSubprogram(t1, t2, t3)
    }
-   private val callParser: Parser<Statement> by callChar or callClear or callColor or callGchar or callHchar or
-      callJoyst or callKey or callScreen or callSound or callVchar
+   private val callParser: Parser<Statement> by callChar or callClear or callColor or callGchar or callHchar or callJoyst or
+      callKey or callScreen or callSound or callVchar
 
    // PARSER HIERARCHY
 
-   private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or
-      breakCmd or continueCmd or unbreakCmd or traceCmd or untraceCmd or
-      listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
-   private val stmtParser by printStmt or assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or
-      endStmt or remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or
-      stopStmt or ifStmt or inputStmt or gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or
-      dataStmt or readStmt or restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or
-      optionBaseStmt or openStmt or closeStmt or inputFileStmt or printFileStmt
+   private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or breakCmd or continueCmd or unbreakCmd or
+      traceCmd or untraceCmd or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
+   private val stmtParser by assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
+      callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or inputStmt or
+      gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or dataStmt or readStmt or restoreStmt or randomizeStmt or
+      defNumericFunStmt or defStringFunStmt or dimStmt or optionBaseStmt or openStmt or closeStmt or inputFileStmt or
+      printFileStmt or printStmt
 
    private val programLineParser by positiveIntConst and stmtParser use { StoreProgramLineCommand(ProgramLine(t1, listOf(t2))) }
    private val removeProgramLineParser by positiveIntConst use { RemoveProgramLineCommand(this) }

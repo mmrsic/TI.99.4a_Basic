@@ -354,7 +354,7 @@ class FileProcessingTest {
    }
 
    @Test
-   fun test() {
+   fun testInputInternalRelative() {
       val machine = TiBasicModule()
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpretAll(
@@ -374,6 +374,36 @@ class FileProcessingTest {
             21 to " >110 INPUT #4:A,B,C$,D$,X",
             22 to " >200 CLOSE #4",
             23 to " >210 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   @Test
+   fun testUpdateInternalRelativeRecClause() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #6:NAME$,RELATIVE,INTERNAL,UPDATE,FIXED 72
+         110 INPUT K
+         120 INPUT #6,REC K:A,B,C$,D$
+         170 PRINT #6,REC K:A,B,C$,D$
+         300 CLOSE #6
+         310 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            13 to "  TI BASIC READY",
+            15 to " >100 OPEN #6:NAME$,RELATIVE,I",
+            16 to "  NTERNAL,UPDATE,FIXED 72",
+            17 to " >110 INPUT K",
+            18 to " >120 INPUT #6,REC K:A,B,C$,D$",
+            20 to " >170 PRINT #6,REC K:A,B,C$,D$",
+            22 to " >300 CLOSE #6",
+            23 to " >310 END",
             24 to " >"
          ), machine.screen
       )
