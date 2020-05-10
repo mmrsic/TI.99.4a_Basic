@@ -468,4 +468,32 @@ class FileProcessingTest {
          "EOF must indicate that all $numRecords records have been read")
    }
 
+   @Test
+   fun testPendingInputWithFileNumberZero() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 INPUT #0:A,B,
+         110 PRINT A;B
+         120 GOTO 100
+         RUN
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            14 to "  TI BASIC READY",
+            16 to " >100 INPUT #0:A,B,",
+            17 to " >110 PRINT A;B",
+            18 to " >120 GOTO 100",
+            19 to " >RUN",
+            20 to "  ?",
+            21 to "  * INCORRECT STATEMENT",
+            22 to "     IN 100",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }

@@ -100,11 +100,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 }
 
 /** Interpreter for TI Basic programs. */
-class TiBasicProgramInterpreter(
-   machine: TiBasicModule,
-   private val keyboardInputProvider: KeyboardInputProvider,
-   programD: Map<Int, List<Constant>>
-) : TiBasicInterpreter(machine) {
+class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, List<Constant>>) : TiBasicInterpreter(machine) {
 
    companion object {
       /** Background color used while interpreting a program. */
@@ -203,7 +199,8 @@ class TiBasicProgramInterpreter(
    }
 
    /** Accept user input from [keyboardInputProvider] into a given variable. */
-   fun acceptUserInput(variableNames: List<Variable>, inputLineNumber: Int, prompt: String): String {
+   fun acceptUserInput(variableNames: List<Variable>, inputLineNumber: Int, prompt: String,
+                       keyboardInputProvider: KeyboardInputProvider): String {
       val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
       acceptUserInputCtx.addCall(inputLineNumber, prompt)
       machine.printTokens(listOf(StringConstant(acceptUserInputCtx.prompt), PrintSeparator.Adjacent))
@@ -252,7 +249,7 @@ class TiBasicProgramInterpreter(
       private val restoreEntryPoints: TreeMap<Int, Int>
 
       init {
-         val sortedProgramData = TreeMap(programD)
+         val sortedProgramData = TreeMap(programData)
          constants = sortedProgramData.flatMap { it.value }
          restoreEntryPoints = TreeMap()
          var currOffset = 0

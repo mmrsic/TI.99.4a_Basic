@@ -592,14 +592,15 @@ class CloseStatement(val fileNumber: NumericExpr, val delete: Boolean = false) :
  * This form of the INPUT statement allows you to read data from an accessory device. It can be used only with files
  * opened in INPUT or UPDATE mode.
  */
-class InputFromFileStatement(val fileNumber: NumericExpr, val recordNum: NumericExpr? = null, val variableList: List<Variable>) : Statement {
+class InputFromFileStatement(val fileNumber: NumericExpr, val recordNum: NumericExpr? = null, val variableList: List<Variable>,
+                             val pendingMode: Boolean = false) : Statement {
 
    override fun listText(): String {
       TODO("not implemented")
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      machine.readFromFile(fileNumber, recordNum, variableList)
+      machine.readFromFile(fileNumber, recordNum, variableList, pendingMode, programLineNumber!!)
    }
 }
 

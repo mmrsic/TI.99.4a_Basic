@@ -583,7 +583,7 @@ class TiBasicModule : TiModule {
    fun acceptUserInput(variableNames: List<Variable>, programLineNumber: Int, prompt: String = "? ") {
       val interpreter = programInterpreter
          ?: throw IllegalArgumentException("User input is possible only while a program is running")
-      interpreter.acceptUserInput(variableNames, programLineNumber, prompt)
+      interpreter.acceptUserInput(variableNames, programLineNumber, prompt, keyboardInputProvider)
       screen.scroll()
       currentPrintColumn = null
    }
@@ -661,8 +661,16 @@ class TiBasicModule : TiModule {
    }
 
    /** Read data from a file associated to a [fileNumber] into variables given by their [variables]. */
-   fun readFromFile(fileNumber: NumericExpr, recordNum: NumericExpr?, variables: List<Variable>) {
-      val file = getOpenFile(fileNumber)
+   fun readFromFile(fileNumber: NumericExpr, recordNum: NumericExpr?, variables: List<Variable>, pendingMode: Boolean = false,
+                    programLineNumber: Int) {
+      val fileNumberNative = fileNumber.value().toNative().roundToInt()
+      if (fileNumberNative == 0) {
+         setKeyboardInputProvider(object : KeyboardInputProvider {
+            override fun provideInput(ctx: KeyboardInputProvider.InputContext) = throw IncorrectStatement()
+         })
+         return acceptUserInput(variables, programLineNumber)
+      }
+      val file = getOpenFile(fileNumberNative)
       for (variable in variables) {
          when {
             variable.isString() -> setStringVariable(variable.name, file.getNextString())
@@ -677,7 +685,11 @@ class TiBasicModule : TiModule {
 
    private fun getOpenFile(fileNumber: NumericExpr): TiBasicFile {
       val key = fileNumber.value().toNative().roundToInt()
-      return openFiles[key] ?: throw FileError()
+      return getOpenFile(key)
+   }
+
+   private fun getOpenFile(fileNumber: Int): TiBasicFile {
+      return openFiles[fileNumber] ?: throw FileError()
    }
 
    private val attachedAccessoryDevices: MutableMap<String, AccessoryDevice> = mutableMapOf()
@@ -764,7 +776,7 @@ class TiBasicModule : TiModule {
 
    private fun interpretProgram(startLine: Int?) {
       currentPrintColumn = null // TODO: Move to program interpreter?
-      val interpreter = TiBasicProgramInterpreter(this, keyboardInputProvider, programData)
+      val interpreter = TiBasicProgramInterpreter(this, programData)
       programInterpreter = interpreter
       interpretProgram(interpreter, startLine)
       programInterpreter = null

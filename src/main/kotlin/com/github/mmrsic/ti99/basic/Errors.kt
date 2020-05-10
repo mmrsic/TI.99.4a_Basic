@@ -24,8 +24,11 @@ sealed class TiBasicException(msg: String) : Exception(msg) {
       if (isWarning) {
          screen.print("* WARNING:")
          screen.print("  $excText")
-      } else {
+      } else if (excText.length <= 25 || lineNumber == null) {
          screen.print("* $excText")
+      } else {
+         screen.print("* $message")
+         screen.print("   $lineNumberPrefix $lineNumber")
       }
       if (scrollAfterDisplay) screen.scroll()
    }
