@@ -34,9 +34,9 @@ abstract class NumericFunction(val name: String) : NumericExpr() {
  */
 data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("ABS") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(abs(numericExpr.value(lambda).toNative()))
-      lambda.invoke(result)
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(abs(numericExpr.value(visit).toNative()))
+      visit(result)
       return result
    }
 
@@ -49,9 +49,9 @@ data class AbsFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("ASC") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(toAsciiCode(stringExpr.value(lambda).toNative()[0]))
-      lambda.invoke(result)
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(toAsciiCode(stringExpr.value(visit).toNative()[0]))
+      visit(result)
       return result
    }
 
@@ -65,9 +65,9 @@ data class AscFunction(private val stringExpr: StringExpr) : NumericFunction("AS
  */
 data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("ATN") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(atan(numericExpr.value(lambda).toNative()))
-      lambda.invoke(result)
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(atan(numericExpr.value(visit).toNative()))
+      visit(result)
       return result
    }
 
@@ -80,11 +80,11 @@ data class AtnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("COS") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val arg = radianExpr.value(lambda).toNative()
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val arg = radianExpr.value(visit).toNative()
       if (abs(arg) >= maxArgTrigonometricFunction) throw BadArgument()
       val result = NumericConstant(cos(arg))
-      lambda.invoke(result)
+      visit(result)
       return result
    }
 
@@ -97,9 +97,9 @@ data class CosFunction(private val radianExpr: NumericExpr) : NumericFunction("C
  */
 data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("EXP") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(exp(numericExpr.value(lambda).toNative()))
-      lambda.invoke(result)
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(exp(numericExpr.value(visit).toNative()))
+      visit(result)
       return result
    }
 
@@ -111,9 +111,9 @@ data class ExpFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("INT") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(floor(numericExpr.value(lambda).toNative()).toInt())
-      lambda.invoke(result)
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(floor(numericExpr.value(visit).toNative()).toInt())
+      visit(result)
       return result
    }
 
@@ -126,9 +126,9 @@ data class IntFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class LenFunction(private val stringExpr: StringExpr) : NumericFunction("LEN") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(stringExpr.value(lambda).toNative().length)
-      lambda.invoke(result)
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(stringExpr.value(visit).toNative().length)
+      visit(result)
       return result
    }
 
@@ -148,11 +148,11 @@ data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("
       const val lowerBoundValue = 0
    }
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val arg = numericExpr.value(lambda).toNative()
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val arg = numericExpr.value(visit).toNative()
       if (arg <= lowerBoundValue) throw BadArgument()
       val result = NumericConstant(ln(arg))
-      lambda.invoke(result)
+      visit(result)
       return result
    }
 
@@ -168,13 +168,13 @@ data class LogFunction(private val numericExpr: NumericExpr) : NumericFunction("
 data class PosFunction(private val str1: StringExpr, private val str2: StringExpr, private val pos: NumericExpr) :
    NumericFunction("POS") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val source = str1.value(lambda).toNative()
-      val searchString = str2.value(lambda).toNative()
-      val startIndex = pos.value(lambda).toNative().roundToInt()
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val source = str1.value(visit).toNative()
+      val searchString = str2.value(visit).toNative()
+      val startIndex = pos.value(visit).toNative().roundToInt()
       if (startIndex < 0) throw BadValue()
       val result = NumericConstant(1 + source.indexOf(searchString, startIndex - 1))
-      lambda.invoke(result)
+      visit(result)
       return result
    }
 
@@ -188,7 +188,7 @@ data class PosFunction(private val str1: StringExpr, private val str2: StringExp
  */
 class RndFunction(private val randomGenerator: () -> Double) : NumericFunction("RND") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant = NumericConstant(randomGenerator.invoke())
+   override fun value(visit: (value: Constant) -> Any): NumericConstant = NumericConstant(randomGenerator.invoke())
    override fun listArgs() = ""
 }
 
@@ -197,9 +197,9 @@ class RndFunction(private val randomGenerator: () -> Double) : NumericFunction("
  */
 data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("SGN") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(sign(numericExpr.value(lambda).toNative()))
-      lambda.invoke(result)
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(sign(numericExpr.value(visit).toNative()))
+      visit(result)
       return result
    }
 
@@ -212,11 +212,11 @@ data class SgnFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class SinFunction(private val radianExpr: NumericExpr) : NumericFunction("SIN") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val arg = radianExpr.value(lambda).toNative()
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val arg = radianExpr.value(visit).toNative()
       if (abs(arg) >= maxArgTrigonometricFunction) throw BadArgument()
       val result = NumericConstant(sin(arg))
-      lambda.invoke(result)
+      visit(result)
       return result
    }
 
@@ -229,11 +229,11 @@ data class SinFunction(private val radianExpr: NumericExpr) : NumericFunction("S
  */
 data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("SQR") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val arg = numericExpr.value(lambda).toNative()
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val arg = numericExpr.value(visit).toNative()
       if (arg < 0) throw BadArgument()
       val result = NumericConstant(sqrt(arg))
-      lambda.invoke(result)
+      visit(result)
       return result
    }
 
@@ -249,11 +249,11 @@ data class SqrFunction(private val numericExpr: NumericExpr) : NumericFunction("
  */
 data class TanFunction(private val radianExpr: NumericExpr) : NumericFunction("TAN") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val arg = radianExpr.value(lambda).toNative()
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val arg = radianExpr.value(visit).toNative()
       if (arg >= maxArgTrigonometricFunction) throw BadArgument()
       val result = NumericConstant(tan(arg))
-      lambda.invoke(result)
+      visit(result)
       return result
    }
 
@@ -268,8 +268,8 @@ data class TanFunction(private val radianExpr: NumericExpr) : NumericFunction("T
  */
 data class ValFunction(private val stringExpr: StringExpr) : NumericFunction("VAL") {
 
-   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
-      val arg = stringExpr.value(lambda).toNative()
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      val arg = stringExpr.value(visit).toNative()
       if (arg.isEmpty() || arg.length > 254) throw BadArgument()
       try {
          return NumericConstant(arg.toDouble())

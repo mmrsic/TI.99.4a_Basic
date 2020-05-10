@@ -25,11 +25,9 @@ class TestHelperScreen {
          }
       }
 
-      fun assertPatterns(cellValidator: (Int, Int, String) -> Boolean, screen: Screen) {
+      fun assertPatterns(validateCell: (Int, Int, String) -> Boolean, screen: Screen) {
          screen.patterns.forEachCellDo { row, col, actualPattern ->
-            assert(cellValidator.invoke(row, col, actualPattern.hex)) {
-               "Wrong pattern at row $row, column $col: $actualPattern"
-            }
+            assert(validateCell(row, col, actualPattern.hex)) { "Wrong pattern at row $row, column $col: $actualPattern" }
          }
       }
 
@@ -37,11 +35,9 @@ class TestHelperScreen {
          assertColors({ _, _, charColors -> charColors == expectedColor }, screen)
       }
 
-      fun assertColors(cellValidator: (Int, Int, TiCharacterColor) -> Boolean, screen: Screen) {
+      fun assertColors(validateCell: (Int, Int, TiCharacterColor) -> Boolean, screen: Screen) {
          screen.colors.forEachCellDo { row, col, charColors ->
-            assert(cellValidator.invoke(row, col, charColors)) {
-               "Wrong colors at row $row, column $col: $charColors"
-            }
+            assert(validateCell(row, col, charColors)) { "Wrong colors at row $row, column $col: $charColors" }
          }
       }
 

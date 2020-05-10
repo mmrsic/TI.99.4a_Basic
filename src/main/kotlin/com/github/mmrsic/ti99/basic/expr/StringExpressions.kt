@@ -26,8 +26,8 @@ data class StringConstant(override val constant: String) : StringExpr(), Constan
    }
 }
 
-data class StringVariable(override val name: String, val calc: (String) -> StringConstant) : StringExpr(), Variable {
-   override fun value(lambda: (value: Constant) -> Any): StringConstant = calc.invoke(name)
+data class StringVariable(override val name: String, val calcValue: (String) -> StringConstant) : StringExpr(), Variable {
+   override fun value(lambda: (value: Constant) -> Any): StringConstant = calcValue(name)
    override fun listText(): String = name
 }
 

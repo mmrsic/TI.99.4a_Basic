@@ -218,10 +218,10 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
    private val definedPatterns: Map<Int, CharacterPattern> = mutableMapOf()
 
    /** Execute a piece of code for all character patterns at each and every cell of this pattern screen. */
-   fun forEachCellDo(lambda: (Int, Int, CharacterPattern) -> Unit) {
+   fun forEachCellDo(execute: (Int, Int, CharacterPattern) -> Unit) {
       for (row in 1..TiBasicScreen.NUM_ROWS) {
          for (col in 1..TiBasicScreen.NUM_COLUMNS) {
-            lambda.invoke(row, col, at(row, col))
+            execute(row, col, at(row, col))
          }
       }
    }
@@ -243,11 +243,11 @@ class ColorScreen(private val codes: CodeScreen, val defaultCharColors: TiCharac
       println("New colors for character set #$charSetNumber: $charSetColors")
    }
 
-   fun forEachCellDo(lambda: (Int, Int, TiCharacterColor) -> Unit) {
+   fun forEachCellDo(execute: (Int, Int, TiCharacterColor) -> Unit) {
       for (row in 1..TiBasicScreen.NUM_ROWS) {
          for (col in 1..TiBasicScreen.NUM_COLUMNS) {
             val charColor = characterColorAt(row, col)
-            lambda.invoke(row, col, charColor)
+            execute(row, col, charColor)
          }
       }
    }

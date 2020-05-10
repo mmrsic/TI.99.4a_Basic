@@ -37,9 +37,9 @@ sealed class Program(protected val lines: TreeMap<Int, ProgramLine> = TreeMap())
    }
 
    /** Execute a given lambda accepting the [ProgramLine] at a given line number. */
-   fun withProgramLineNumberDo(lineNumber: Int, lambda: (ProgramLine) -> Unit) {
+   fun withProgramLineNumberDo(lineNumber: Int, execute: (ProgramLine) -> Any?) {
       val programLine = lines[lineNumber] ?: throw IllegalArgumentException("No such line: $lineNumber")
-      lambda.invoke(programLine)
+      execute(programLine)
    }
 
    /** Check whether this program statements for a given line number. */
