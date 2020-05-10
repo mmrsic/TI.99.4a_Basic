@@ -496,4 +496,36 @@ class FileProcessingTest {
       )
    }
 
+   @Test
+   fun testCheckEndOfFileForSequentialInput() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #5:NAME$,SEQUENTIAL,INTERNAL,INPUT,FIXED
+         110 IF EOF(5) THEN 150
+         120 INPUT #5:A,B
+         130 PRINT A;B
+         140 GOTO 110
+         150 CLOSE #5
+         160 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            14 to "  TI BASIC READY",
+            16 to " >100 OPEN #5:NAME$,SEQUENTIAL",
+            17 to "  ,INTERNAL,INPUT,FIXED",
+            18 to " >110 IF EOF(5) THEN 150",
+            19 to " >120 INPUT #5:A,B",
+            20 to " >130 PRINT A;B",
+            21 to " >140 GOTO 110",
+            22 to " >150 CLOSE #5",
+            23 to " >160 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }

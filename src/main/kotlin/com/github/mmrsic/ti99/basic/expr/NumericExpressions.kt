@@ -271,3 +271,25 @@ data class TabFunction(private val numericExpr: NumericExpr) : NumericFunction("
 
    override fun listArgs() = numericExpr.listText()
 }
+
+/**
+ * The end-of-file function determines if an end-of-file has been reached on a file stored on an accessory device. The
+ * [fileNumberExpr] specifies an open file-number. The resulting value depends on the position of the file:
+ * ```
+ *        Value   Position
+ *          0     Not at end of file
+ *         +1     At logical end of file
+ *         -1     At physical end of file
+ * ```
+ * A file is positioned at the logical end when all records on the file have been processed. A file is positioned at the
+ * physical end when no more space is available in the file.
+ */
+class EofFunction(private val fileNumberExpr: NumericExpr,
+                  private val isEof: (fileNumber: NumericExpr) -> NumericConstant) : NumericFunction("EOF") {
+
+   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+      return isEof(fileNumberExpr)
+   }
+
+   override fun listArgs() = fileNumberExpr.listText()
+}

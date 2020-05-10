@@ -68,6 +68,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val display by token("DISPLAY")
    private val elseToken by token("ELSE")
    private val end by token("\\bEND\\b")
+   private val eof by token("\\bEOF\\b")
    private val exp by token("\\bEXP\\b")
    private val fixed by token("FIXED")
    private val forToken by token("FOR")
@@ -185,6 +186,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val ascFun by skip(asc) and singleStringArg use { AscFunction(this) }
    private val atnFun by skip(atn) and singleNumericArg use { AtnFunction(this) }
    private val cosFun by skip(cos) and singleNumericArg use { CosFunction(this) }
+   private val eofFun by skip(eof) and singleNumericArg use { EofFunction(this) { machine.isEndOfFile(it) } }
    private val expFun by skip(exp) and singleNumericArg use { ExpFunction(this) }
    private val intFun by skip(int) and singleNumericArg use { IntFunction(this) }
    private val lenFun by skip(len) and singleStringArg use { LenFunction(this) }
@@ -198,8 +200,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val tabFun by skip(tab) and singleNumericArg use { TabFunction(this) }
    private val tanFun by skip(tan) and singleNumericArg use { TanFunction(this) }
    private val valFun by skip(valToken) and singleStringArg use { ValFunction(this) }
-   private val numericFun by absFun or ascFun or atnFun or cosFun or expFun or intFun or lenFun or logFun or posFun or rndFun or
-      sgnFun or sinFun or sqrFun or tanFun or valFun
+   private val numericFun by absFun or ascFun or atnFun or cosFun or eofFun or expFun or intFun or lenFun or logFun or posFun or
+      rndFun or sgnFun or sinFun or sqrFun or tanFun or valFun
    private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and
       optional(skip(comma) and parser(::numericExpr) and optional(skip(comma) and parser(::numericExpr))) and skip(closeParenthesis) use {
       val baseName = t1.text
