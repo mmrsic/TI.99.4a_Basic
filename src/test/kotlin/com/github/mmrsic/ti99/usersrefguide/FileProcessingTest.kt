@@ -528,4 +528,57 @@ class FileProcessingTest {
       )
    }
 
+   @Test
+   fun testSimplePrintStatement() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #5:"CS1",SEQUENTIAL,INTERNAL,OUTPUT,FIXED
+         170 PRINT #5:A,B,C$,D$
+         200 CLOSE #5
+         210 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            17 to "  TI BASIC READY",
+            19 to " >100 OPEN #5:\"CS1\",SEQUENTIAL",
+            20 to "  ,INTERNAL,OUTPUT,FIXED",
+            21 to " >170 PRINT #5:A,B,C$,D$",
+            22 to " >200 CLOSE #5",
+            23 to " >210 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   @Test
+   fun testPrintDisplayWithSeparators() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #6:"CS2",SEQUENTIAL,DISPLAY,OUTPUT,FIXED
+         170 PRINT #6:A;",";B;",";C$;",";D$
+         200 CLOSE #6
+         210 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            16 to "  TI BASIC READY",
+            18 to " >100 OPEN #6:\"CS2\",SEQUENTIAL",
+            19 to "  ,DISPLAY,OUTPUT,FIXED",
+            20 to " >170 PRINT #6:A;\",\";B;\",\";C$;",
+            21 to "  \",\";D$",
+            22 to " >200 CLOSE #6",
+            23 to " >210 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }

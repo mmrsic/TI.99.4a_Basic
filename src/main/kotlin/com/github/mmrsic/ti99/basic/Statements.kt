@@ -604,6 +604,10 @@ class InputFromFileStatement(val fileNumber: NumericExpr, val recordNum: Numeric
    }
 }
 
+/**
+ * This form of the PRINT statement allows you to write data onto an accessory device. The PRINT statement can be used to write
+ * only on files opened in OUTPUT, UPDATE, or APPEND mode. The [fileNumber] must be the number of a currently open file.
+ */
 class PrintToFileStatement(val fileNumber: NumericExpr, val recordNum: NumericExpr? = null, val printList: List<Expression>) : Statement {
 
    override fun listText(): String {

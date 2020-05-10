@@ -378,7 +378,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       InputFromFileStatement(t1, t2, t3.map { it as Variable }, t4 != null)
    }
    private val printFileStmt by skip(print) and skip(numberSign) and numericExpr and
-      optional(skip(comma and rec) and numericExpr) and skip(colon) and separatedTerms(expr, comma) use {
+      optional(skip(comma and rec) and numericExpr) and skip(colon) and separatedTerms(expr, comma or semicolon) use {
       PrintToFileStatement(t1, t2, t3)
    }
 
