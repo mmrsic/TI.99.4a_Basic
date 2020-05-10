@@ -9,28 +9,28 @@ import kotlin.test.assertTrue
 
 class PrintStatementTest {
 
-    @Test
-    fun testPlain() {
-        val machine = TiBasicModule()
-        val result = TiBasicParser(machine).parseToEnd("PRINT")
-        assertTrue(result is PrintStatement)
-        result.execute(machine)
-    }
+   @Test
+   fun testPlain() {
+      val machine = TiBasicModule()
+      val result = TiBasicParser(machine).parseToEnd("PRINT")
+      assertTrue(result is PrintStatement)
+      result.execute(machine)
+   }
 
-    @Test
-    fun testPrintA() {
-        val machine = TiBasicModule()
-        val result = TiBasicParser(machine).parseToEnd("PRINT A")
-        assertTrue(result is PrintStatement)
-        result.execute(machine)
-    }
+   @Test
+   fun testPrintA() {
+      val machine = TiBasicModule()
+      val result = TiBasicParser(machine).parseToEnd("PRINT A")
+      assertTrue(result is PrintStatement)
+      result.execute(machine)
+   }
 
-    @Test
-    fun testPrintAPlusB() {
-        val machine = TiBasicModule()
-        val result = TiBasicParser(machine).parseToEnd("PRINT A+B")
-        assertTrue(result is PrintStatement)
-        result.execute(machine)
-    }
+   @Test
+   fun testPrintAPlusB() {
+      val machine = TiBasicModule()
+      val result = TiBasicParser(machine).parseToEnd("PRINT A+B")
+      assertTrue(result is PrintStatement)
+      result.execute(machine)
+   }
 
 }

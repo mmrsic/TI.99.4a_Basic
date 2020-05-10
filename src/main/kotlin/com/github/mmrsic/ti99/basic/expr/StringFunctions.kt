@@ -5,12 +5,12 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 abstract class StringFunction(val name: String) : StringExpr() {
-    override fun listText(): String {
-        return "$name(${listArgs()})"
-    }
+   override fun listText(): String {
+      return "$name(${listArgs()})"
+   }
 
-    /** Arguments of this function as provided by the LIST statement. */
-    abstract fun listArgs(): String
+   /** Arguments of this function as provided by the LIST statement. */
+   abstract fun listArgs(): String
 }
 
 /**
@@ -24,13 +24,14 @@ abstract class StringFunction(val name: String) : StringExpr() {
  * @param numericExpr must be between zero and 32767, otherwise [BadValue] is thrown
  */
 data class ChrFunction(private val numericExpr: NumericExpr) : StringFunction("CHR$") {
-    override fun value(lambda: (value: Constant) -> Any): StringConstant {
-        val arg = numericExpr.value().toNative().roundToInt()
-        if (arg !in 0..32767) throw BadValue()
-        return StringConstant(toChar(arg))
-    }
 
-    override fun listArgs(): String = numericExpr.listText()
+   override fun value(lambda: (value: Constant) -> Any): StringConstant {
+      val arg = numericExpr.value().toNative().roundToInt()
+      if (arg !in 0..32767) throw BadValue()
+      return StringConstant(toChar(arg))
+   }
+
+   override fun listArgs(): String = numericExpr.listText()
 }
 
 /**
@@ -40,20 +41,20 @@ data class ChrFunction(private val numericExpr: NumericExpr) : StringFunction("C
  * characters to the end are returned.
  */
 data class SegFunction(private val str: StringExpr, private val pos: NumericExpr, private val len: NumericExpr) :
-    StringFunction("SEG$") {
+   StringFunction("SEG$") {
 
-    override fun value(lambda: (value: Constant) -> Any): StringConstant {
-        val nativeString = str.value().toNative()
-        val nativeStart = pos.value().toNative().roundToInt() - 1
-        if (nativeStart < 0) throw BadValue()
-        if (nativeStart >= nativeString.length) return StringConstant.EMPTY
-        val nativeLength = min(nativeString.length - nativeStart, len.value().toNative().roundToInt())
-        val nativeEnd = nativeStart + nativeLength
-        if (nativeEnd < nativeStart) throw BadValue()
-        return StringConstant(nativeString.substring(nativeStart, nativeEnd))
-    }
+   override fun value(lambda: (value: Constant) -> Any): StringConstant {
+      val nativeString = str.value().toNative()
+      val nativeStart = pos.value().toNative().roundToInt() - 1
+      if (nativeStart < 0) throw BadValue()
+      if (nativeStart >= nativeString.length) return StringConstant.EMPTY
+      val nativeLength = min(nativeString.length - nativeStart, len.value().toNative().roundToInt())
+      val nativeEnd = nativeStart + nativeLength
+      if (nativeEnd < nativeStart) throw BadValue()
+      return StringConstant(nativeString.substring(nativeStart, nativeEnd))
+   }
 
-    override fun listArgs(): String = "$str,$pos,$len"
+   override fun listArgs(): String = "$str,$pos,$len"
 }
 
 /**
@@ -62,19 +63,20 @@ data class SegFunction(private val str: StringExpr, private val pos: NumericExpr
  * of numeric-expression. The STR$ is the inverse of the [ValFunction].
  */
 data class StrFunction(private val numericExpr: NumericExpr) : StringFunction("STR$") {
-    override fun value(lambda: (value: Constant) -> Any): StringConstant {
-        return StringConstant(numericExpr.displayValue().trim())
-    }
 
-    override fun listArgs(): String = numericExpr.listText()
+   override fun value(lambda: (value: Constant) -> Any): StringConstant {
+      return StringConstant(numericExpr.displayValue().trim())
+   }
+
+   override fun listArgs(): String = numericExpr.listText()
 }
 
 /** Convert a given ASCII code into a string containing the character associated with the code. */
 fun toChar(asciiCode: Int): String {
-    return asciiCode.toChar().toString()
+   return asciiCode.toChar().toString()
 }
 
 /** Remove all surrounding quotes of a given string. */
 fun unquote(text: String?): String? {
-    return text?.removePrefix("\"")?.removeSuffix("\"")
+   return text?.removePrefix("\"")?.removeSuffix("\"")
 }

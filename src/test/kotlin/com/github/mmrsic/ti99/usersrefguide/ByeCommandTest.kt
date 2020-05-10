@@ -11,22 +11,22 @@ import kotlin.test.assertNull
  */
 class ByeCommandTest {
 
-    @Test
-    fun testExample() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            """
+   @Test
+   fun testExample() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
             100 LET X$="HELLO, GENIUS!"
             110 PRINT X$
             120 END
             RUN
             BYE
             """.trimIndent(), machine
-        )
+      )
 
-        assertNull(machine.program, "Program must be erased after BYE command")
-        assertEquals(mapOf(), machine.getAllNumericVariableValues())
-        assertEquals(mapOf(), machine.getAllStringVariableValues())
-    }
+      assertNull(machine.program, "Program must be erased after BYE command")
+      assertEquals(mapOf(), machine.getAllNumericVariableValues())
+      assertEquals(mapOf(), machine.getAllStringVariableValues())
+   }
 }

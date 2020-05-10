@@ -10,39 +10,39 @@ import kotlin.test.assertTrue
 
 class NewCommandTest {
 
-    @Test
-    fun testOnFreshMachineTi994a() {
-        val machine = TiBasicModule()
-        NewCommand().execute(machine)
-        assertEquals(null, machine.program)
-        assertEquals(mapOf(), machine.getAllNumericVariableValues())
-    }
+   @Test
+   fun testOnFreshMachineTi994a() {
+      val machine = TiBasicModule()
+      NewCommand().execute(machine)
+      assertEquals(null, machine.program)
+      assertEquals(mapOf(), machine.getAllNumericVariableValues())
+   }
 
-    @Test
-    fun testAfterPrint() {
-        val machine = TiBasicModule()
-        machine.screen.print("HELLO!")
-        NewCommand().execute(machine)
-        assertEquals(null, machine.program)
-        assertEquals(mapOf(), machine.getAllNumericVariableValues())
-    }
+   @Test
+   fun testAfterPrint() {
+      val machine = TiBasicModule()
+      machine.screen.print("HELLO!")
+      NewCommand().execute(machine)
+      assertEquals(null, machine.program)
+      assertEquals(mapOf(), machine.getAllNumericVariableValues())
+   }
 
-    @Test
-    fun testParseNewCommand() {
-        val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd("NEW")
-        assertTrue(parsedCommand is NewCommand)
-    }
+   @Test
+   fun testParseNewCommand() {
+      val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd("NEW")
+      assertTrue(parsedCommand is NewCommand)
+   }
 
-    @Test
-    fun testParseNewCommandIncludingLeadingAndTrailingBlanks() {
-        val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd(" NEW  ")
-        assertTrue(parsedCommand is NewCommand)
-    }
+   @Test
+   fun testParseNewCommandIncludingLeadingAndTrailingBlanks() {
+      val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd(" NEW  ")
+      assertTrue(parsedCommand is NewCommand)
+   }
 
-    @Test
-    fun testParseNewCommandWithTrailingOneSeparatedByBlank() {
-        val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd("NEW 1")
-        assertTrue(parsedCommand is NewCommand)
-    }
+   @Test
+   fun testParseNewCommandWithTrailingOneSeparatedByBlank() {
+      val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd("NEW 1")
+      assertTrue(parsedCommand is NewCommand)
+   }
 
 }

@@ -4,7 +4,6 @@ import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
-
 /**
  * When the NUMBER command is entered, your computer automatically generates line numbers for you. Your
  * computer is in Number Mode when it is generating line numbers. In Number Mode each line entered in
@@ -17,32 +16,32 @@ import org.junit.Test
  */
 class NumberCommandTest {
 
-    @Test
-    fun testNumberTenFive() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpret("NUMBER 10,5", machine)
-    }
+   @Test
+   fun testNumberTenFive() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpret("NUMBER 10,5", machine)
+   }
 
-    @Test
-    fun testNum() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpret("NUM", machine)
-    }
+   @Test
+   fun testNum() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpret("NUM", machine)
+   }
 
-    @Test
-    fun testNumberFifty() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpret("NUMBER 50", machine)
-    }
+   @Test
+   fun testNumberFifty() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpret("NUMBER 50", machine)
+   }
 
-    @Test
-    fun testNumComma5() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpret("NUM ,5", machine)
-    }
+   @Test
+   fun testNumComma5() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpret("NUM ,5", machine)
+   }
 
 }

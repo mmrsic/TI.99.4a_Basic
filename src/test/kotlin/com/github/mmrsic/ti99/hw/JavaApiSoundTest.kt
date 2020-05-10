@@ -8,12 +8,12 @@ import org.junit.Test
  */
 class JavaApiSoundTest {
 
-    @Test
-    fun testSimpleShortTone() {
-        val duration = NumericConstant(25)
-        val frequency = NumericConstant(220)
-        val volume = NumericConstant.ZERO
-        TiSoundJava().play(duration, frequency, volume) // Should produce a very short sound of 220 Hz
-    }
+   @Test
+   fun testSimpleShortTone() {
+      val duration = NumericConstant(25)
+      val frequency = NumericConstant(220)
+      val volume = NumericConstant.ZERO
+      TiSoundJava().play(duration, frequency, volume) // Should produce a very short sound of 220 Hz
+   }
 
 }

@@ -9,22 +9,22 @@ import kotlin.test.assertTrue
 
 class RunCommandTest {
 
-    @Test
-    fun testParseRun() {
-        val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd("RUN")
-        assertTrue(parsedCommand is RunCommand)
-    }
+   @Test
+   fun testParseRun() {
+      val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd("RUN")
+      assertTrue(parsedCommand is RunCommand)
+   }
 
-    @Test
-    fun testParseRunWithLeadingAndTrailingBlanks() {
-        val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd(" RUN   ")
-        assertTrue(parsedCommand is RunCommand)
-    }
+   @Test
+   fun testParseRunWithLeadingAndTrailingBlanks() {
+      val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd(" RUN   ")
+      assertTrue(parsedCommand is RunCommand)
+   }
 
-    @Test
-    fun testParseRunWithLineNumber() {
-        val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd(" RUN 120")
-        assertTrue(parsedCommand is RunCommand)
-    }
+   @Test
+   fun testParseRunWithLineNumber() {
+      val parsedCommand = TiBasicParser(TiBasicModule()).parseToEnd(" RUN 120")
+      assertTrue(parsedCommand is RunCommand)
+   }
 
 }

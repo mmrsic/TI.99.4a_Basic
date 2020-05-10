@@ -10,12 +10,12 @@ import org.junit.Test
  */
 class CallGcharTest {
 
-    @Test
-    fun testStatement() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            """
+   @Test
+   fun testStatement() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
             100 CALL CLEAR
             110 CALL HCHAR(1,1,36,768)
             120 CALL GCHAR(5,10,X)
@@ -24,15 +24,15 @@ class CallGcharTest {
             150 END
             RUN
             """.trimIndent(), machine
-        )
+      )
 
-        TestHelperScreen.assertPrintContents(
-            mapOf(
-                20 to "   36",
-                22 to "  ** DONE **",
-                24 to " >"
-            ), machine.screen
-        )
-    }
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            20 to "   36",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
 
 }

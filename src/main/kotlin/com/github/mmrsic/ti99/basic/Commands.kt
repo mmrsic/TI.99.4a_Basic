@@ -6,10 +6,10 @@ import com.github.mmrsic.ti99.hw.TiBasicModule
  * A command is a [TiBasicExecutable] which may be interpreted by a [TiBasicCommandLineInterpreter].
  */
 interface Command : TiBasicExecutable {
-    /** Name of this command.*/
-    val name: String
-}
 
+   /** Name of this command.*/
+   val name: String
+}
 
 /**
  * The NEW command erases the program that is currently stored in memory. Entering the NEW command cancels
@@ -20,16 +20,17 @@ interface Command : TiBasicExecutable {
  * on the screen. The prompt and flashing cursor indicate that you may enter another command or a program line.
  */
 class NewCommand : Command {
-    override val name: String = "NEW"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.eraseProgram()
-        machine.cancelBreak()
-        machine.traceProgramExecution = false
-        machine.closeOpenFiles()
-        machine.resetCharacters()
-        machine.resetVariables()
-        machine.initCommandScreen()
-    }
+
+   override val name: String = "NEW"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.eraseProgram()
+      machine.cancelBreak()
+      machine.traceProgramExecution = false
+      machine.closeOpenFiles()
+      machine.resetCharacters()
+      machine.resetVariables()
+      machine.initCommandScreen()
+   }
 }
 
 /**
@@ -54,32 +55,33 @@ class NewCommand : Command {
  * in the range and not greater than the second line number are displayed
  */
 class ListCommand(val start: Int?, val end: Int?) : Command {
-    override val name: String = "LIST"
 
-    /** Whether a hyphenated range of line numbers was specified. */
-    var isRange = true
-        private set
+   override val name: String = "LIST"
 
-    constructor(line: Int?) : this(line, null) {
-        isRange = false
-    }
+   /** Whether a hyphenated range of line numbers was specified. */
+   var isRange = true
+      private set
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (machine.program == null) throw CantDoThat()
-        when {
-            isRange -> machine.listProgram(start, end)
-            start != null -> machine.listProgram(start, start)
-            else -> machine.listProgram()
-        }
-    }
+   constructor(line: Int?) : this(line, null) {
+      isRange = false
+   }
 
-    override fun requiresEmptyLineAfterExecution() = false
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (machine.program == null) throw CantDoThat()
+      when {
+         isRange -> machine.listProgram(start, end)
+         start != null -> machine.listProgram(start, start)
+         else -> machine.listProgram()
+      }
+   }
+
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 class RunCommand(val line: Int?) : Command {
-    override val name: String = "RUN"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.runProgram(line)
-    override fun requiresEmptyLineAfterExecution() = false
+   override val name: String = "RUN"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.runProgram(line)
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 /**
@@ -87,27 +89,28 @@ class RunCommand(val line: Int?) : Command {
  * program lines are erased and the computer is reset.
  */
 class ByeCommand : Command {
-    override val name: String = "BYE"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.leave()
+
+   override val name: String = "BYE"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.leave()
 }
 
 class StoreProgramLineCommand(private val programLine: ProgramLine) : Command {
-    override val name = "-- IMPLICIT STORE --"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.store(programLine)
-    override fun requiresEmptyLineAfterExecution() = false
+   override val name = "-- IMPLICIT STORE --"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.store(programLine)
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 class RemoveProgramLineCommand(private val lineNumber: Int) : Command {
-    override val name = "-- IMPLICIT REMOVAL --"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.removeProgramLine(lineNumber)
-    override fun requiresEmptyLineAfterExecution() = false
+   override val name = "-- IMPLICIT REMOVAL --"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.removeProgramLine(lineNumber)
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : Command {
-    override val name = "NUMBER"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        println("Not yet implemented: NUM[BER] $initialLine,$increment")
-    }
+   override val name = "NUMBER"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      println("Not yet implemented: NUM[BER] $initialLine,$increment")
+   }
 }
 
 /**
@@ -117,12 +120,13 @@ class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : Comma
  * @param increment a strictly positive value
  */
 class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : Command {
-    override val name = "RESEQUENCE"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.resequenceProgram(initialLine, increment)
-    }
 
-    override fun requiresEmptyLineAfterExecution() = false
+   override val name = "RESEQUENCE"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.resequenceProgram(initialLine, increment)
+   }
+
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 /**
@@ -142,21 +146,22 @@ class ResequenceCommand(val initialLine: Int = 100, val increment: Int = 10) : C
  * colors.
  */
 class BreakCommand(private val lineNumberList: List<Int>) : Command {
-    override val name = "BREAK"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (programLineNumber != null) throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
-        machine.addBreakpoints(lineNumberList)
-    }
+
+   override val name = "BREAK"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (programLineNumber != null) throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
+      machine.addBreakpoints(lineNumberList)
+   }
 }
 
 class ContinueCommand : Command {
-    override val name = "CONTINUE"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        if (programLineNumber != null) throw IllegalArgumentException("Continue command may not be used in program: $programLineNumber")
-        machine.continueProgram()
-    }
+   override val name = "CONTINUE"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (programLineNumber != null) throw IllegalArgumentException("Continue command may not be used in program: $programLineNumber")
+      machine.continueProgram()
+   }
 
-    override fun requiresEmptyLineAfterExecution() = false
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 /**
@@ -164,10 +169,11 @@ class ContinueCommand : Command {
  * used as a [Statement].
  */
 class UnbreakCommand(private val lineList: List<Int> = listOf()) : Command, Statement {
-    override val name: String = "UNBREAK"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.removeBreakpoints(lineList)
 
-    override fun listText() = "$name $lineList"
+   override val name: String = "UNBREAK"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.removeBreakpoints(lineList)
+
+   override fun listText() = "$name $lineList"
 }
 
 /**
@@ -176,11 +182,12 @@ class UnbreakCommand(private val lineList: List<Int> = listOf()) : Command, Stat
  * performed. The TRACE command may be placed as a statement in a program.
  */
 class TraceCommand : Command, Statement {
-    override val name = "TRACE"
-    override fun listText() = name
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.traceProgramExecution = true
-    }
+
+   override val name = "TRACE"
+   override fun listText() = name
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.traceProgramExecution = true
+   }
 }
 
 /**
@@ -188,9 +195,10 @@ class TraceCommand : Command, Statement {
  * in a program.
  */
 class UntraceCommand : Command, Statement {
-    override val name = "UNTRACE"
-    override fun listText() = name
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.traceProgramExecution = false
-    }
+
+   override val name = "UNTRACE"
+   override fun listText() = name
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.traceProgramExecution = false
+   }
 }

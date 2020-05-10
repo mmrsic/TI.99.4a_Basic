@@ -34,11 +34,11 @@ class CallCharTest {
       interpreter.interpret("RUN", machine)
 
       TestHelperScreen.assertPrintContents(
-              mapOf(
-                      10 to " ".repeat(15) + "!",
-                      23 to "  * BREAKPOINT AT 140",
-                      24 to " >"
-              ), machine.screen
+         mapOf(
+            10 to " ".repeat(15) + "!",
+            23 to "  * BREAKPOINT AT 140",
+            24 to " >"
+         ), machine.screen
       )
    }
 
@@ -47,7 +47,7 @@ class CallCharTest {
       val machine = TiBasicModule()
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpretAll(
-              """
+         """
             100 CALL CLEAR
             110 A$="1898FF3D3C3CE404"
             120 B$="1819FFBC3C3C2720"
@@ -84,11 +84,11 @@ class CallCharTest {
       interpreter.interpret("RUN", machine)
 
       TestHelperScreen.assertPrintContents(
-              mapOf(
-                      10 to " ".repeat(15) + toChar(129),
-                      23 to "  * BREAKPOINT AT 220",
-                      24 to " >"
-              ), machine.screen
+         mapOf(
+            10 to " ".repeat(15) + toChar(129),
+            23 to "  * BREAKPOINT AT 220",
+            24 to " >"
+         ), machine.screen
       )
    }
 
@@ -97,7 +97,7 @@ class CallCharTest {
       val machine = TiBasicModule()
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpretAll(
-              """
+         """
             100 CALL CLEAR
             110 CALL CHAR(128,"0103070F1F3F7FFF")
             120 PRINT CHR$(128)
@@ -112,11 +112,11 @@ class CallCharTest {
       interpreter.interpret("RUN", machine)
 
       TestHelperScreen.assertPrintContents(
-              mapOf(
-                      20 to "  " + toChar(128),
-                      22 to "  ** DONE **",
-                      24 to " >"
-              ), machine.screen
+         mapOf(
+            20 to "  " + toChar(128),
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
       )
       val actualPatternAfterEnd = machine.screen.patterns.at(20, 3)
       assert(actualPatternAfterEnd.hex == "0103070F1F3F7FFF") { "Wrong pattern: $actualPatternAfterEnd" }
@@ -127,7 +127,7 @@ class CallCharTest {
       val machine = TiBasicModule()
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpretAll(
-              """
+         """
             100 CALL CLEAR
             110 CALL CHAR(128,"FFFFFFFFFFFFFFFF")
             120 CALL CHAR(42,"0F0F0F0F0F0F0F0F")

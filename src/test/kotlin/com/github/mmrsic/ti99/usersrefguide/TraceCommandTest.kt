@@ -10,12 +10,12 @@ import org.junit.Test
  */
 class TraceCommandTest {
 
-    @Test
-    fun testEntireProgram() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            """
+   @Test
+   fun testEntireProgram() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
             100 PRINT "HI"
             110 B=27.9
             120 PRINT :B
@@ -23,24 +23,24 @@ class TraceCommandTest {
             TRACE
             RUN
             """.trimIndent(), machine
-        )
+      )
 
-        TestHelperScreen.assertPrintContents(
-            mapOf(
-                9 to "  TI BASIC READY",
-                11 to """ >100 PRINT "HI"""",
-                12 to " >110 B=27.9",
-                13 to " >120 PRINT :B",
-                14 to " >130 END",
-                15 to " >TRACE",
-                17 to " >RUN",
-                18 to "  <100>HI",
-                19 to "  <110><120>",
-                20 to "   27.9",
-                21 to "  <130>",
-                22 to "  ** DONE **",
-                24 to " >"
-            ), machine.screen
-        )
-    }
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            9 to "  TI BASIC READY",
+            11 to """ >100 PRINT "HI"""",
+            12 to " >110 B=27.9",
+            13 to " >120 PRINT :B",
+            14 to " >130 END",
+            15 to " >TRACE",
+            17 to " >RUN",
+            18 to "  <100>HI",
+            19 to "  <110><120>",
+            20 to "   27.9",
+            21 to "  <130>",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
 }

@@ -5,17 +5,17 @@ import kotlin.test.assertEquals
 
 class AtnFunctionTest {
 
-    @Test
-    fun testZero() {
-        val result = AtnFunction(NumericConstant.ZERO).value()
-        assertEquals(0.0, result.toNative(), "ATN(0) must yield 0")
-        assertEquals(" 0 ", result.displayValue(), "ATN(0) must yield 0")
-    }
+   @Test
+   fun testZero() {
+      val result = AtnFunction(NumericConstant.ZERO).value()
+      assertEquals(0.0, result.toNative(), "ATN(0) must yield 0")
+      assertEquals(" 0 ", result.displayValue(), "ATN(0) must yield 0")
+   }
 
-    @Test
-    fun testPointFourFour() {
-        val result = AtnFunction(NumericConstant(.44)).value()
-        assertEquals(" .4145068746 ", result.displayValue(), "ATN(.44) must yield .4145068746")
-    }
+   @Test
+   fun testPointFourFour() {
+      val result = AtnFunction(NumericConstant(.44)).value()
+      assertEquals(" .4145068746 ", result.displayValue(), "ATN(.44) must yield .4145068746")
+   }
 
 }

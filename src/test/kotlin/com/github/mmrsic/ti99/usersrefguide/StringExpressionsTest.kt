@@ -10,12 +10,12 @@ import org.junit.Test
  */
 class StringExpressionsTest {
 
-    @Test
-    fun testConcatenationUsingSegFunction() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            """
+   @Test
+   fun testConcatenationUsingSegFunction() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
             NEW
             100 A$="HI"
             110 B$="HELLO THERE!"
@@ -25,25 +25,25 @@ class StringExpressionsTest {
             150 END
             RUN
             """.trimIndent()
-            , machine
-        )
+         , machine
+      )
 
-        TestHelperScreen.assertPrintContents(
-            mapOf(
-                11 to "  TI BASIC READY",
-                13 to " >100 A$=\"HI\"",
-                14 to " >110 B$=\"HELLO THERE!\"",
-                15 to " >120 C$=\"HOW ARE YOU?\"",
-                16 to " >130 MSG$=A$&SEG$(B$,6,7)",
-                17 to " >140 PRINT MSG$&\" \"&C$",
-                18 to " >150 END",
-                19 to " >RUN",
-                20 to "  HI THERE! HOW ARE YOU?",
-                22 to "  ** DONE **",
-                24 to " >"
-            ), machine.screen
-        )
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            11 to "  TI BASIC READY",
+            13 to " >100 A$=\"HI\"",
+            14 to " >110 B$=\"HELLO THERE!\"",
+            15 to " >120 C$=\"HOW ARE YOU?\"",
+            16 to " >130 MSG$=A$&SEG$(B$,6,7)",
+            17 to " >140 PRINT MSG$&\" \"&C$",
+            18 to " >150 END",
+            19 to " >RUN",
+            20 to "  HI THERE! HOW ARE YOU?",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
 
-    }
+   }
 
 }

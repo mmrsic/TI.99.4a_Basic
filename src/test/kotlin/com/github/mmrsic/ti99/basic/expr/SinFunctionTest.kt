@@ -5,11 +5,11 @@ import kotlin.test.assertEquals
 
 class SinFunctionTest {
 
-    @Test
-    fun testPointFiveSomething() {
-        val argument = NumericConstant(.5235987755982)
-        val result = SinFunction(argument).value()
-        assertEquals(" .5 ", result.displayValue(), "SIN($argument)")
-    }
+   @Test
+   fun testPointFiveSomething() {
+      val argument = NumericConstant(.5235987755982)
+      val result = SinFunction(argument).value()
+      assertEquals(" .5 ", result.displayValue(), "SIN($argument)")
+   }
 
 }

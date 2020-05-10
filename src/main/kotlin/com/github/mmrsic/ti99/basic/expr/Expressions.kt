@@ -6,61 +6,63 @@ package com.github.mmrsic.ti99.basic.expr
  */
 interface Expression {
 
-    /** Value of this expression as a [Constant]. */
-    fun value(lambda: (value: Constant) -> Any = {}): Constant {
-        return value()
-    }
+   /** Value of this expression as a [Constant]. */
+   fun value(lambda: (value: Constant) -> Any = {}): Constant {
+      return value()
+   }
 
-    /** [value] of this expression as printed on the TI Basic screen. */
-    fun displayValue(): String
+   /** [value] of this expression as printed on the TI Basic screen. */
+   fun displayValue(): String
 
-    /** String representing this expression as output by LIST command. */
-    fun listText(): String
+   /** String representing this expression as output by LIST command. */
+   fun listText(): String
 }
 
 /**
  * A constant may be converted to a native value, that is, a Kotlin value.
  */
 interface Constant : Expression {
-    /** The original constant of this instance. */
-    val constant: Any
 
-    /** The native value of this constant that is used within arithmetic operations. */
-    fun toNative(): Any
+   /** The original constant of this instance. */
+   val constant: Any
+
+   /** The native value of this constant that is used within arithmetic operations. */
+   fun toNative(): Any
 }
 
 /** Separators used for formatting in PRINT statement. */
 enum class PrintSeparator : Expression {
-    /** Print next value adjacent to previous one. */
-    Adjacent,
 
-    /** Print next value at the next field. For printing on the screen, this means the next (of two) columns. */
-    NextField,
+   /** Print next value adjacent to previous one. */
+   Adjacent,
 
-    /** Print next vale at the next record. For printing on the screen, this means the next row. */
-    NextRecord;
+   /** Print next value at the next field. For printing on the screen, this means the next (of two) columns. */
+   NextField,
 
-    override fun displayValue() = when (this) {
-        Adjacent -> ";"
-        NextField -> ","
-        NextRecord -> ":"
-    }
+   /** Print next vale at the next record. For printing on the screen, this means the next row. */
+   NextRecord;
 
-    override fun listText() = displayValue()
-    override fun value(lambda: (value: Constant) -> Any): Constant = StringConstant(displayValue())
+   override fun displayValue() = when (this) {
+      Adjacent -> ";"
+      NextField -> ","
+      NextRecord -> ":"
+   }
 
-    companion object {
-        /**
-         * The [PrintSeparator] for a given text representation.
-         * @param text text representation of the print token as given by [value]
-         * @return any of the [PrintSeparator.values] if its [value] equals the specified text, null if no such print token
-         * exists
-         */
-        fun fromString(text: String): PrintSeparator? = when (text) {
-            ";" -> Adjacent
-            "," -> NextField
-            ":" -> NextRecord
-            else -> null
-        }
-    }
+   override fun listText() = displayValue()
+   override fun value(lambda: (value: Constant) -> Any): Constant = StringConstant(displayValue())
+
+   companion object {
+      /**
+       * The [PrintSeparator] for a given text representation.
+       * @param text text representation of the print token as given by [value]
+       * @return any of the [PrintSeparator.values] if its [value] equals the specified text, null if no such print token
+       * exists
+       */
+      fun fromString(text: String): PrintSeparator? = when (text) {
+         ";" -> Adjacent
+         "," -> NextField
+         ":" -> NextRecord
+         else -> null
+      }
+   }
 }

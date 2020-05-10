@@ -14,33 +14,33 @@ import org.junit.Test
  */
 class CallHcharTest {
 
-    @Test
-    fun testCommand() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            """
+   @Test
+   fun testCommand() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
             CALL CLEAR
             CALL HCHAR(10,1,72,50)
             """.trimIndent(), machine
-        )
+      )
 
-        TestHelperScreen.assertPrintContents(
-            mapOf(
-                9 to "H".repeat(32),
-                10 to "H".repeat(18),
-                22 to " >CALL HCHAR(10,1,72,50)",
-                24 to " >"
-            ), machine.screen
-        )
-    }
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            9 to "H".repeat(32),
+            10 to "H".repeat(18),
+            22 to " >CALL HCHAR(10,1,72,50)",
+            24 to " >"
+         ), machine.screen
+      )
+   }
 
-    @Test
-    fun testColoredBarAnimation() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            """
+   @Test
+   fun testColoredBarAnimation() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
             100 CALL CLEAR
             110 FOR S=2 TO 16
             120 CALL COLOR(S,S,S)
@@ -53,95 +53,95 @@ class CallHcharTest {
             190 NEXT X
             200 GOTO 140
             """.trimIndent(), machine
-        )
-        machine.addProgramLineHookAfterLine(200) {
+      )
+      machine.addProgramLineHookAfterLine(200) {
 //            machine.screen.colors.forEachCellDo { r, c, charcols-> println("$r:$c = $charcols")}
-            TestHelperScreen.assertColors({ row, col, actualColors ->
-                actualColors == when {
-                    row < 4 || row > 18 || col < 8 || col > 22 -> TiCharacterColor(2, 4)
-                    row == 4 && col == 8 -> TiCharacterColor(2, 2)
-                    row <= 5 && col <= 9 -> TiCharacterColor(3, 3)
-                    row <= 6 && col <= 10 -> TiCharacterColor(4, 4)
-                    row <= 7 && col <= 11 -> TiCharacterColor(5, 5)
-                    row <= 8 && col <= 12 -> TiCharacterColor(6, 6)
-                    row <= 9 && col <= 13 -> TiCharacterColor(7, 7)
-                    row <= 10 && col <= 14 -> TiCharacterColor(8, 8)
-                    row <= 11 && col <= 15 -> TiCharacterColor(9, 9)
-                    row <= 12 && col <= 16 -> TiCharacterColor(10, 10)
-                    row <= 13 && col <= 17 -> TiCharacterColor(11, 11)
-                    row <= 14 && col <= 18 -> TiCharacterColor(12, 12)
-                    row <= 15 && col <= 19 -> TiCharacterColor(13, 13)
-                    row <= 16 && col <= 20 -> TiCharacterColor(14, 14)
-                    row <= 17 && col <= 21 -> TiCharacterColor(15, 15)
-                    row <= 18 && col <= 22 -> TiCharacterColor(16, 16)
-                    else -> throw IllegalArgumentException("Missing expected color at row=$row, column=$col: $actualColors")
-                }
-            }, machine.screen)
+         TestHelperScreen.assertColors({ row, col, actualColors ->
+            actualColors == when {
+               row < 4 || row > 18 || col < 8 || col > 22 -> TiCharacterColor(2, 4)
+               row == 4 && col == 8 -> TiCharacterColor(2, 2)
+               row <= 5 && col <= 9 -> TiCharacterColor(3, 3)
+               row <= 6 && col <= 10 -> TiCharacterColor(4, 4)
+               row <= 7 && col <= 11 -> TiCharacterColor(5, 5)
+               row <= 8 && col <= 12 -> TiCharacterColor(6, 6)
+               row <= 9 && col <= 13 -> TiCharacterColor(7, 7)
+               row <= 10 && col <= 14 -> TiCharacterColor(8, 8)
+               row <= 11 && col <= 15 -> TiCharacterColor(9, 9)
+               row <= 12 && col <= 16 -> TiCharacterColor(10, 10)
+               row <= 13 && col <= 17 -> TiCharacterColor(11, 11)
+               row <= 14 && col <= 18 -> TiCharacterColor(12, 12)
+               row <= 15 && col <= 19 -> TiCharacterColor(13, 13)
+               row <= 16 && col <= 20 -> TiCharacterColor(14, 14)
+               row <= 17 && col <= 21 -> TiCharacterColor(15, 15)
+               row <= 18 && col <= 22 -> TiCharacterColor(16, 16)
+               else -> throw IllegalArgumentException("Missing expected color at row=$row, column=$col: $actualColors")
+            }
+         }, machine.screen)
 
-            throw TiBasicProgramException(200, Breakpoint())
-        }
-        interpreter.interpret("RUN", machine)
+         throw TiBasicProgramException(200, Breakpoint())
+      }
+      interpreter.interpret("RUN", machine)
 
-        TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
-    }
+      TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
+   }
 
-    @Test
-    fun testHugeCharCode() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            listOf(
-                "CALL HCHAR(24,14,29752)",
-                "CALL HCHAR(24,14,35)",
-                "CALL HCHAR(24,14,132)"
-            ), machine
-        )
+   @Test
+   fun testHugeCharCode() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         listOf(
+            "CALL HCHAR(24,14,29752)",
+            "CALL HCHAR(24,14,35)",
+            "CALL HCHAR(24,14,132)"
+         ), machine
+      )
 
-        TestHelperScreen.assertPrintContents(
-            mapOf(
-                16 to "  TI BASIC READY",
-                18 to " >CALL HCHAR(24,14,29752)",
-                19 to "             8",
-                20 to " >CALL HCHAR(24,14,35)",
-                21 to "             #",
-                22 to " >CALL HCHAR(24,14,132)",
-                23 to "             " + 132.toChar(),
-                24 to " >"
-            ), machine.screen
-        )
-    }
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            16 to "  TI BASIC READY",
+            18 to " >CALL HCHAR(24,14,29752)",
+            19 to "             8",
+            20 to " >CALL HCHAR(24,14,35)",
+            21 to "             #",
+            22 to " >CALL HCHAR(24,14,132)",
+            23 to "             " + 132.toChar(),
+            24 to " >"
+         ), machine.screen
+      )
+   }
 
-    @Test
-    fun testRepetition() {
-        val machine = TiBasicModule()
-        val interpreter = TiBasicCommandLineInterpreter(machine)
-        interpreter.interpretAll(
-            """
+   @Test
+   fun testRepetition() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
             100 CALL CLEAR
             110 FOR I=9 TO 15
             120 CALL HCHAR(I,13,36,6)
             130 NEXT I
             140 GOTO 140
             """.trimIndent(), machine
-        )
-        machine.addProgramLineHookAfterLine(140) {
-            throw TiBasicProgramException(140, Breakpoint())
-        }
-        interpreter.interpret("RUN", machine)
+      )
+      machine.addProgramLineHookAfterLine(140) {
+         throw TiBasicProgramException(140, Breakpoint())
+      }
+      interpreter.interpret("RUN", machine)
 
-        TestHelperScreen.assertPrintContents(
-            mapOf(
-                7 to " ".repeat(12) + "$".repeat(6),
-                8 to " ".repeat(12) + "$".repeat(6),
-                9 to " ".repeat(12) + "$".repeat(6),
-                10 to " ".repeat(12) + "$".repeat(6),
-                11 to " ".repeat(12) + "$".repeat(6),
-                12 to " ".repeat(12) + "$".repeat(6),
-                13 to " ".repeat(12) + "$".repeat(6),
-                23 to "  * BREAKPOINT AT 140",
-                24 to " >"
-            ), machine.screen
-        )
-    }
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            7 to " ".repeat(12) + "$".repeat(6),
+            8 to " ".repeat(12) + "$".repeat(6),
+            9 to " ".repeat(12) + "$".repeat(6),
+            10 to " ".repeat(12) + "$".repeat(6),
+            11 to " ".repeat(12) + "$".repeat(6),
+            12 to " ".repeat(12) + "$".repeat(6),
+            13 to " ".repeat(12) + "$".repeat(6),
+            23 to "  * BREAKPOINT AT 140",
+            24 to " >"
+         ), machine.screen
+      )
+   }
 
 }

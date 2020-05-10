@@ -26,13 +26,14 @@ import kotlin.math.roundToInt
  * remaining characters are zero. If it is longer than 16 characters, the computer will ignore the excess.
  */
 class CharSubprogram(private val code: NumericExpr, private val pattern: StringExpr) : Statement, Command {
-    override val name = "CHAR"
-    override fun listText() = "CALL $name(${code.listText().trim()},${pattern.listText()})"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val characterCode = code.value().toNative().toInt()
-        val patternIdentifier = pattern.displayValue()
-        machine.defineCharacter(characterCode, patternIdentifier)
-    }
+
+   override val name = "CHAR"
+   override fun listText() = "CALL $name(${code.listText().trim()},${pattern.listText()})"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val characterCode = code.value().toNative().toInt()
+      val patternIdentifier = pattern.displayValue()
+      machine.defineCharacter(characterCode, patternIdentifier)
+   }
 }
 
 /**
@@ -40,10 +41,11 @@ class CharSubprogram(private val code: NumericExpr, private val pattern: StringE
  * character (ASCII code 32) is placed in all positions on the screen.
  */
 class ClearSubprogram : Statement, Command {
-    override val name = "CLEAR"
-    override fun listText() = "CALL $name"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.screen.clear()
-    override fun requiresEmptyLineAfterExecution() = false
+
+   override val name = "CLEAR"
+   override fun listText() = "CALL $name"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.screen.clear()
+   override fun requiresEmptyLineAfterExecution() = false
 }
 
 /**
@@ -104,17 +106,18 @@ class ClearSubprogram : Statement, Command {
  * ```
  */
 class ColorSubprogram(
-    private val characterSetNumber: NumericExpr,
-    private val foregrColorCode: NumericExpr,
-    private val backgrColorCode: NumericExpr
+   private val characterSetNumber: NumericExpr,
+   private val foregrColorCode: NumericExpr,
+   private val backgrColorCode: NumericExpr
 ) : Statement, Command {
-    override val name = "COLOR"
-    override fun listText() =
-        "CALL $name(${characterSetNumber.listText()},${foregrColorCode.listText()},${backgrColorCode.listText()})"
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.setColor(characterSetNumber.value(), foregrColorCode.value(), backgrColorCode.value())
-    }
+   override val name = "COLOR"
+   override fun listText() =
+      "CALL $name(${characterSetNumber.listText()},${foregrColorCode.listText()},${backgrColorCode.listText()})"
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.setColor(characterSetNumber.value(), foregrColorCode.value(), backgrColorCode.value())
+   }
 }
 
 /**
@@ -126,20 +129,19 @@ class ColorSubprogram(
  * @param numericVarRef where to put the ASCII numeric code of the requested character
  */
 class GcharSubprogram(
-    private val row: NumericExpr,
-    private val column: NumericExpr,
-    private val numericVarRef: NumericVariable
+   private val row: NumericExpr,
+   private val column: NumericExpr,
+   private val numericVarRef: NumericVariable
 ) : Statement, Command {
 
-    override val name = "GCHAR"
-    override fun listText() = "CALL $name(${row.listText()},${column.listText()},$numericVarRef)"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val intRow = row.value().toNative().roundToInt()
-        val intCol = column.value().toNative().roundToInt()
-        machine.readScreenCharCode(numericVarRef.name, intRow, intCol)
-    }
+   override val name = "GCHAR"
+   override fun listText() = "CALL $name(${row.listText()},${column.listText()},$numericVarRef)"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val intRow = row.value().toNative().roundToInt()
+      val intCol = column.value().toNative().roundToInt()
+      machine.readScreenCharCode(numericVarRef.name, intRow, intCol)
+   }
 }
-
 
 /**
  * The HCHAR subprogram places a character anywhere on the screen and, optionally, repeats it horizontally. The
@@ -162,25 +164,26 @@ class GcharSubprogram(
  * @param column A value of 1 indicates the left side of the screen.
  */
 class HcharSubprogram(
-    private val row: NumericExpr, private val column: NumericExpr, private val charCode: NumericExpr,
-    private val repetitions: NumericExpr = NumericConstant.ONE
+   private val row: NumericExpr, private val column: NumericExpr, private val charCode: NumericExpr,
+   private val repetitions: NumericExpr = NumericConstant.ONE
 ) : Statement, Command {
-    override val name = "HCHAR"
-    override fun listText(): String {
-        val rowPart = row.listText().trim()
-        val columnPart = column.listText().trim()
-        val codePart = charCode.listText().trim()
-        val optionalRepetitionPart = if (repetitions != NumericConstant.ONE) ",${repetitions.listText().trim()}" else ""
-        return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
-    }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val row = row.value().toNative().roundToInt()
-        val column = column.value().toNative().roundToInt()
-        val characterCode = charCode.value().toNative().roundToInt()
-        val repetition = repetitions.value().toNative().roundToInt()
-        machine.screen.hchar(row, column, characterCode, repetition)
-    }
+   override val name = "HCHAR"
+   override fun listText(): String {
+      val rowPart = row.listText().trim()
+      val columnPart = column.listText().trim()
+      val codePart = charCode.listText().trim()
+      val optionalRepetitionPart = if (repetitions != NumericConstant.ONE) ",${repetitions.listText().trim()}" else ""
+      return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val row = row.value().toNative().roundToInt()
+      val column = column.value().toNative().roundToInt()
+      val characterCode = charCode.value().toNative().roundToInt()
+      val repetition = repetitions.value().toNative().roundToInt()
+      machine.screen.hchar(row, column, characterCode, repetition)
+   }
 }
 
 /**
@@ -208,25 +211,26 @@ class HcharSubprogram(
  * return value
  */
 class JoystSubprogram(private val keyUnit: NumericExpr, val xReturn: NumericVariable, val yReturn: NumericVariable) :
-    Statement, Command {
-    override val name = "JOYST"
-    override fun listText() = "CALL $name(${keyUnit.listText()},${xReturn.listText()},${yReturn.listText()})"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val state = machine.getJoystickState(keyUnit.value())
-        println("CALL JOYST: $state")
-        val x = when (state.horizontalDirection) {
-            StickHorizontalDirection.LEFT -> -4
-            StickHorizontalDirection.RIGHT -> 4
-            StickHorizontalDirection.NONE -> 0
-        }
-        machine.setNumericVariable(xReturn.name, NumericConstant(x))
-        val y = when (state.verticalDirection) {
-            StickVerticalDirection.UP -> 4
-            StickVerticalDirection.DOWN -> -4
-            StickVerticalDirection.NONE -> 0
-        }
-        machine.setNumericVariable(yReturn.name, NumericConstant(y))
-    }
+   Statement, Command {
+
+   override val name = "JOYST"
+   override fun listText() = "CALL $name(${keyUnit.listText()},${xReturn.listText()},${yReturn.listText()})"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val state = machine.getJoystickState(keyUnit.value())
+      println("CALL JOYST: $state")
+      val x = when (state.horizontalDirection) {
+         StickHorizontalDirection.LEFT -> -4
+         StickHorizontalDirection.RIGHT -> 4
+         StickHorizontalDirection.NONE -> 0
+      }
+      machine.setNumericVariable(xReturn.name, NumericConstant(x))
+      val y = when (state.verticalDirection) {
+         StickVerticalDirection.UP -> 4
+         StickVerticalDirection.DOWN -> -4
+         StickVerticalDirection.NONE -> 0
+      }
+      machine.setNumericVariable(yReturn.name, NumericConstant(y))
+   }
 }
 
 /**
@@ -267,15 +271,16 @@ class JoystSubprogram(private val keyUnit: NumericExpr, val xReturn: NumericVari
  * @param statusVar numeric variable name where to save the key character code
  */
 class KeySubprogram(
-    private val keyUnit: NumericExpr,
-    private val returnVar: NumericVariable,
-    private val statusVar: NumericVariable
+   private val keyUnit: NumericExpr,
+   private val returnVar: NumericVariable,
+   private val statusVar: NumericVariable
 ) : Statement, Command {
-    override val name = "KEY"
-    override fun listText() = "CALL $name()"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.acceptKeyboardInput(programLineNumber, keyUnit.value(), returnVar, statusVar)
-    }
+
+   override val name = "KEY"
+   override fun listText() = "CALL $name()"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.acceptKeyboardInput(programLineNumber, keyUnit.value(), returnVar, statusVar)
+   }
 }
 
 /**
@@ -311,11 +316,12 @@ class KeySubprogram(
  * program after a breakpoint, the screen is reset to the standard color (light green).
  */
 class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command {
-    override val name = "SCREEN"
-    override fun listText() = "CALL $name(${colorCode.listText()})"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.screen.colors.backgroundColor = TiColor.fromCode(colorCode.value().toNative().roundToInt())
-    }
+
+   override val name = "SCREEN"
+   override fun listText() = "CALL $name(${colorCode.listText()})"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.screen.colors.backgroundColor = TiColor.fromCode(colorCode.value().toNative().roundToInt())
+   }
 }
 
 /**
@@ -358,22 +364,23 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
  *   ```
  */
 class SoundSubprogram(
-    private val duration: NumericExpr,
-    private val frequency1: NumericExpr, private val volume1: NumericExpr,
-    private val frequency2: NumericExpr? = null, private val volume2: NumericExpr? = null,
-    private val frequency3: NumericExpr? = null, private val volume3: NumericExpr? = null,
-    private val noise: NumericExpr? = null, private val volumeNoise: NumericExpr? = null
+   private val duration: NumericExpr,
+   private val frequency1: NumericExpr, private val volume1: NumericExpr,
+   private val frequency2: NumericExpr? = null, private val volume2: NumericExpr? = null,
+   private val frequency3: NumericExpr? = null, private val volume3: NumericExpr? = null,
+   private val noise: NumericExpr? = null, private val volumeNoise: NumericExpr? = null
 ) : Statement, Command {
-    override val name = "SOUND"
-    override fun listText() = "CALL $name($duration,$frequency1,$volume1)"
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        machine.sound.play(
-            duration.value(),
-            frequency1.value(), volume1.value(),
-            frequency2?.value(), volume2?.value(),
-            frequency3?.value(), volume3?.value()
-        )
-    }
+
+   override val name = "SOUND"
+   override fun listText() = "CALL $name($duration,$frequency1,$volume1)"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.sound.play(
+         duration.value(),
+         frequency1.value(), volume1.value(),
+         frequency2?.value(), volume2?.value(),
+         frequency3?.value(), volume3?.value()
+      )
+   }
 }
 
 /**
@@ -384,23 +391,24 @@ class SoundSubprogram(
  * [HcharSubprogram] for more details.
  */
 class VcharSubprogram(
-    private val row: NumericExpr, private val column: NumericExpr,
-    private val charCode: NumericExpr, private val repetitions: NumericExpr = NumericConstant.ONE
+   private val row: NumericExpr, private val column: NumericExpr,
+   private val charCode: NumericExpr, private val repetitions: NumericExpr = NumericConstant.ONE
 ) : Statement, Command {
-    override val name = "VCHAR"
-    override fun listText(): String {
-        val rowPart = row.listText().trim()
-        val columnPart = column.listText().trim()
-        val codePart = charCode.listText().trim()
-        val optionalRepetitionPart = if (repetitions != NumericConstant.ONE) ",${repetitions.listText().trim()}" else ""
-        return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
-    }
 
-    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-        val row = row.value().toNative().toInt()
-        val column = column.value().toNative().toInt()
-        val characterCode = charCode.value().toNative().toInt()
-        val repetition = repetitions.value().toNative().toInt()
-        machine.screen.vchar(row, column, characterCode, repetition)
-    }
+   override val name = "VCHAR"
+   override fun listText(): String {
+      val rowPart = row.listText().trim()
+      val columnPart = column.listText().trim()
+      val codePart = charCode.listText().trim()
+      val optionalRepetitionPart = if (repetitions != NumericConstant.ONE) ",${repetitions.listText().trim()}" else ""
+      return "CALL $name($rowPart,$columnPart,$codePart$optionalRepetitionPart)"
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      val row = row.value().toNative().toInt()
+      val column = column.value().toNative().toInt()
+      val characterCode = charCode.value().toNative().toInt()
+      val repetition = repetitions.value().toNative().toInt()
+      machine.screen.vchar(row, column, characterCode, repetition)
+   }
 }
