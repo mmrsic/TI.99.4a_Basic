@@ -480,8 +480,7 @@ class TiBasicModule : TiModule {
       if (characterPatterns.containsKey(characterCode)) {
          return characterPatterns[characterCode]!!
       }
-      val defaultPattern = CharacterPattern.Default.forAsciiCode(characterCode)
-      return defaultPattern
+      return CharacterPattern.Default.forAsciiCode(characterCode)
    }
 
    /** Set the color of any of the available character sets to given foreground and background colors. */
