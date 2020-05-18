@@ -2,6 +2,7 @@ package com.github.mmrsic.ti99.basic
 
 import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
+import com.github.mmrsic.ti99.basic.expr.StringConstant
 
 /** Instance which is able to recognize a TI file contents type. */
 interface TiFileContentsRecognizer {
@@ -58,24 +59,47 @@ object TiFileContentRecognizerTiFiles : TiFileContentsRecognizer {
       if (isRecognized(bytes)) TiFileContentsBytes(bytes.copyOfRange(0, headerLength)) else null
 }
 
+/**
+ * A [TiFileContentMetaData] for th TI FILES format.
+ */
 class TiFileContentMetaDataTiFiles(contents: ByteArray) : TiFileContentMetaData {
+
    private val bytes: ByteArray = contents.copyOf()
+
    override fun getBytes(): ByteArray {
       return bytes.copyOf()
    }
 }
 
+/**
+ * A [TiFileContents] where the contents is represented by a byte array.
+ */
 open class TiFileContentsBytes(contents: ByteArray) : TiFileContents {
 
    companion object {
-      fun create(constants: List<Constant>, fileType: FileType = FileType.INTERNAL): TiFileContentsBytes {
-         val byteArrayList = constants.map { constant -> constant.toFileRepresentation(fileType) }
-         val overallSize = byteArrayList.map { array -> array.size }.sum()
+      /**
+       * Create a [TiFileContentsBytes] from a list of records consisting of a list on [Constant]s where each record is of a
+       * given fixed size.
+       * @param constants the list of records consisting of a list of constants for each record
+       * @param recordSize fixed size of each record
+       * @param fileType file type used to encode the constants
+       */
+      fun createFixed(constants: List<List<Constant>>, recordSize: Int = 64, fileType: FileType = FileType.INTERNAL): TiFileContentsBytes {
+         val overallSize = constants.size * recordSize
          val resultContents = ByteArray(overallSize)
-         var overallOffset = 0
-         for (byteArray in byteArrayList) {
-            byteArray.copyInto(resultContents, overallOffset)
-            overallOffset += byteArray.size
+         constants.withIndex().forEach {
+            val recordByteArrayList = it.value.map { constant ->
+               when (constant) {
+                  is NumericConstant -> fileType.encoder().encode(constant)
+                  is StringConstant -> fileType.encoder().encode(constant)
+                  else -> error("Don't know hou to map constant $constant to byte array")
+               }
+            }
+            var overallOffset = it.index * recordSize
+            for (byteArray in recordByteArrayList) {
+               byteArray.copyInto(resultContents, overallOffset)
+               overallOffset += byteArray.size
+            }
          }
          return TiFileContentsBytes(resultContents)
       }
@@ -111,40 +135,3 @@ open class TiFileContentsBytes(contents: ByteArray) : TiFileContents {
       if (offset !in bytes.indices) throw InputError()
    }
 }
-
-private fun Constant.toFileRepresentation(fileType: FileType): ByteArray {
-   if (fileType == FileType.DISPLAY) TODO("Not yet implemented: $fileType")
-   return toInternal()
-}
-
-private fun Constant.toInternal(): ByteArray {
-   return when (constant) {
-      is String -> {
-         val string = constant as String
-         ByteArray(string.length + 1) { byteOffset ->
-            when (byteOffset) {
-               0 -> string.length.toByte()
-               in 1..string.length -> string[byteOffset - 1].toByte()
-               else -> error("Illegal string byte representation offset: $byteOffset")
-            }
-         }
-      }
-      is Number -> {
-         val numberValue = constant as Number
-         val zeroExponent: Byte = 0x40
-         val numberBytes = ByteArray(8)
-         numberBytes[0] = zeroExponent
-         // TODO: Enhance to real representation of all bytes
-         numberBytes[1] = numberValue.toByte()
-         val result = numberBytes.copyInto(ByteArray(numberBytes.size + 1), 1)
-         result[0] = numberBytes.size.toByte()
-         return result
-      }
-      else -> throw NotImplementedError("Cannot represent constant in file: $constant")
-   }
-}
-
-private fun NumericConstant.Companion.fromInternal(bytes: ByteArray): NumericConstant {
-   return NumericConstant(bytes[1]) // TODO: Enhance to real representation of all bytes
-}
-

@@ -80,3 +80,12 @@ fun toChar(asciiCode: Int): String {
 fun unquote(text: String?): String? {
    return text?.removePrefix("\"")?.removeSuffix("\"")
 }
+
+/**
+ * Quote a native text so it represents a TI Basic string with surrounding quotation marks where all inner quotation marks are
+ * doubled.
+ */
+fun quote(text: String?): String? {
+   if (text == null) return null
+   return '"' + text.replace("\"", "\"\"") + '"'
+}

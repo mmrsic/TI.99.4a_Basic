@@ -18,10 +18,13 @@ interface Expression {
    fun listText(): String
 }
 
+/** A constant which may be printed to a device. */
+interface PrintConstant : Expression
+
 /**
  * A constant may be converted to a native value, that is, a Kotlin value.
  */
-interface Constant : Expression {
+interface Constant : PrintConstant {
 
    /** The original constant of this instance. */
    val constant: Any
@@ -31,7 +34,7 @@ interface Constant : Expression {
 }
 
 /** Separators used for formatting in PRINT statement. */
-enum class PrintSeparator : Expression {
+enum class PrintSeparator : PrintConstant {
 
    /** Print next value adjacent to previous one. */
    Adjacent,

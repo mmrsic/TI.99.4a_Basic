@@ -1,18 +1,14 @@
 package com.github.mmrsic.ti99.hw
 
 import com.github.mmrsic.ti99.basic.AccessoryDevice
-import com.github.mmrsic.ti99.basic.FileError
 import com.github.mmrsic.ti99.basic.FileOpenOptions
 import com.github.mmrsic.ti99.basic.FileOrganization
 import com.github.mmrsic.ti99.basic.FileType
-import com.github.mmrsic.ti99.basic.InputError
 import com.github.mmrsic.ti99.basic.OpenMode
 import com.github.mmrsic.ti99.basic.RecordType
-import com.github.mmrsic.ti99.basic.TiBasicFile
-import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
-import com.github.mmrsic.ti99.basic.expr.Constant
+import com.github.mmrsic.ti99.basic.TiBasicEncoding
+import com.github.mmrsic.ti99.basic.TiDataFile
 import com.github.mmrsic.ti99.basic.expr.Expression
-import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.PrintSeparator
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 
@@ -20,7 +16,7 @@ import com.github.mmrsic.ti99.basic.expr.StringConstant
  * Cassette Recorder [AccessoryDevice], connected to a [TiBasicModule].
  * @param id ID of the cassette recorder - must be either "CS1" or "CS2"
  */
-class AccessoryDeviceCassetteRecorder(override val id: String, private val machine: TiBasicModule) : AccessoryDevice {
+class CassetteRecorderAccessoryDevice(override val id: String, private val machine: TiBasicModule) : AccessoryDevice {
 
    companion object {
       const val PREFIX: String = "CS"
@@ -36,7 +32,7 @@ class AccessoryDeviceCassetteRecorder(override val id: String, private val machi
       if (id !in allowedDeviceNames) throw  IllegalArgumentException("Illegal cassette recorder ID: $id")
    }
 
-   override fun open(fileName: String, options: FileOpenOptions): TiBasicFile {
+   override fun open(fileName: String, options: FileOpenOptions): TiDataFile {
       checkFileName(fileName)
       checkOrganization(options.organization.type)
       checkFileType(options.fileType)
@@ -54,18 +50,18 @@ class AccessoryDeviceCassetteRecorder(override val id: String, private val machi
    }
 
    /** Currently inserted tape. */
-   private var tape: TiBasicFileCassetteRecorder? = null
+   private var tape: TiCassetteRecorderDataFile? = null
 
    /**
-    * Insert a cassette tape with its data given as String into this [AccessoryDeviceCassetteRecorder]. Any previously
+    * Insert a cassette tape with its data given as String into this [CassetteRecorderAccessoryDevice]. Any previously
     * inserted tape will be removed.
     */
    fun insertTape(tapeDisplayData: String) {
-      tape = TiBasicFileCassetteRecorder(id, tapeDisplayData, machine)
+      tape = TiCassetteRecorderDataFile(id, tapeDisplayData, machine)
       println("$id: Inserted tape: $tapeDisplayData")
    }
 
-   /** Remove any previously inserted tape from this [AccessoryDeviceCassetteRecorder]. */
+   /** Remove any previously inserted tape from this [CassetteRecorderAccessoryDevice]. */
    fun removeTape() {
       tape = null
       println("$id: Removed tape")
@@ -98,40 +94,23 @@ class AccessoryDeviceCassetteRecorder(override val id: String, private val machi
 }
 
 /**
- * A [TiBasicFile] on a [AccessoryDeviceCassetteRecorder].
+ * A [TiDataFile] on a [CassetteRecorderAccessoryDevice].
  * @param id either "CS1" or "CS2", as the device also represents the "file"
  */
-class TiBasicFileCassetteRecorder(val id: String, displayData: String = "", private val machine: TiBasicModule) :
-   TiBasicFile {
-
-   private var options: FileOpenOptions? = null
-
-   private val data: List<Constant> by lazy { TiBasicParser(machine).parseConstantsList(displayData) }
-   private var dataIndex = 0
+class TiCassetteRecorderDataFile(val id: String, displayData: String = "", private val machine: TiBasicModule)
+   : TiDataFile(displayData.toByteArray(TiBasicEncoding.CHARSET)) {
 
    override fun open(options: FileOpenOptions) {
-      this.options = options
+      println("Opened $id: $options")
    }
-
-   override fun getNextString() = getNextConstant() as? StringConstant ?: throw InputError()
-   override fun getNextNumber() = getNextConstant() as? NumericConstant ?: throw InputError()
-   override fun isEndOfFile() = NumericConstant.ZERO
 
    override fun close() {
       machine.printTokens(listOf(PrintSeparator.NextRecord))
       machine.printTokens(printTokensForRecorderAction(id, "PRESS CASSETTE STOP"))
-      options = null
+      print("Closed $id")
    }
 
-   override fun delete() = println("Delete is ignored for Cassette Recorder")
-
-   // HELPERS //
-
-   private fun getNextConstant(): Constant {
-      if (dataIndex !in data.indices) throw FileError()
-      return data[dataIndex++]
-   }
-
+   override fun delete() = println("Delete is ignored for $id")
 }
 
 /**

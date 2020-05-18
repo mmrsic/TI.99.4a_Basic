@@ -1,12 +1,13 @@
 package com.github.mmrsic.ti99.usersrefguide
 
+import com.github.mmrsic.ti99.TestHelperFile
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.basic.TiFileContentsBytes
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.hw.TiBasicModule
-import com.github.mmrsic.ti99.hw.TiDiskDriveFile
+import com.github.mmrsic.ti99.hw.TiDiskDriveDataFile
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -248,10 +249,16 @@ class FileProcessingTest {
       )
    }
 
+   /**
+    * Test case for first example on page II-129.
+    */
    @Test
    fun testInputNumericAndStringVariables() {
       val machine = TiBasicModule()
-      machine.attachCassetteTape("CS1", "1,2,\"3\",\"FOUR\",5,6,\"7\",99,99,\"99\",\"99\",99,99,\"99\"")
+      machine.attachCassetteTape("CS1",
+         listOf("1,2,\"3\",\"FOUR\",5,6,\"7\"", "99,99,\"99\",\"99\",99,99,\"99\"").joinToString("") {
+            it.padEnd(64)
+         })
 
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpretAll(
@@ -338,7 +345,8 @@ class FileProcessingTest {
    @Test
    fun testDisplayInputWithoutAndWithInputError() {
       val machine = TiBasicModule()
-      machine.attachCassetteTape("CS1", "22,97.6,TEXAS,\"AUTO LICENSE \",22000,-.07,JG,22,TEXAS,PROPERTY TAX,42,15")
+      machine.attachCassetteTape("CS1", listOf("22,97.6,TEXAS,\"AUTO LICENSE \",22000,-.07",
+         "JG,22,TEXAS,PROPERTY TAX,42,15").joinToString("") { recordString -> recordString.padEnd(64) })
 
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpretAll(
@@ -414,22 +422,23 @@ class FileProcessingTest {
       )
    }
 
+   /** Last example on page II-127. */
    @Test
    fun testUpdateFileWithoutRecClause() {
       val records = listOf(
-         StringConstant("1A"), StringConstant("1B"), StringConstant("1C"), NumericConstant(11), NumericConstant(12),
-         StringConstant("2A"), StringConstant("2B"), StringConstant("2C"), NumericConstant(21), NumericConstant(22),
-         StringConstant("3A"), StringConstant("3B"), StringConstant("3C"), NumericConstant(31), NumericConstant(32),
-         StringConstant("4A"), StringConstant("4B"), StringConstant("4C"), NumericConstant(41), NumericConstant(42),
-         StringConstant("5A"), StringConstant("5B"), StringConstant("5C"), NumericConstant(51), NumericConstant(52),
-         StringConstant("6A"), StringConstant("6B"), StringConstant("6C"), NumericConstant(61), NumericConstant(62),
-         StringConstant("7A"), StringConstant("7B"), StringConstant("7C"), NumericConstant(71), NumericConstant(72),
-         StringConstant("8A"), StringConstant("8B"), StringConstant("8C"), NumericConstant(81), NumericConstant(82)
+         listOf(StringConstant("1A"), StringConstant("1B"), StringConstant("1C"), NumericConstant(11), NumericConstant(12)),
+         listOf(StringConstant("2A"), StringConstant("2B"), StringConstant("2C"), NumericConstant(21), NumericConstant(22)),
+         listOf(StringConstant("3A"), StringConstant("3B"), StringConstant("3C"), NumericConstant(31), NumericConstant(32)),
+         listOf(StringConstant("4A"), StringConstant("4B"), StringConstant("4C"), NumericConstant(41), NumericConstant(42)),
+         listOf(StringConstant("5A"), StringConstant("5B"), StringConstant("5C"), NumericConstant(51), NumericConstant(52)),
+         listOf(StringConstant("6A"), StringConstant("6B"), StringConstant("6C"), NumericConstant(61), NumericConstant(62)),
+         listOf(StringConstant("7A"), StringConstant("7B"), StringConstant("7C"), NumericConstant(71), NumericConstant(72)),
+         listOf(StringConstant("8A"), StringConstant("8B"), StringConstant("8C"), NumericConstant(81), NumericConstant(82))
       )
-      val numRecords = records.size / 5 // Used instead of 10 in example in order to reduce test overhead
+      val numRecords = records.size / 5 // Five instead of ten used in example in order to reduce test overhead
 
       val machine = TiBasicModule()
-      machine.attachDiskDrive(1, listOf(TiDiskDriveFile("FILE", TiFileContentsBytes.create(records))))
+      machine.attachDiskDrive(1, listOf(TiDiskDriveDataFile("FILE", TiFileContentsBytes.createFixed(records))))
 
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpret("10 NAME$=\"DSK1.FILE\"", machine) // Defined in order to make example run without error
@@ -576,6 +585,106 @@ class FileProcessingTest {
             21 to "  \",\";D$",
             22 to " >200 CLOSE #6",
             23 to " >210 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   /** Test case for example on page II-132. */
+   @Test
+   fun testPrintCassetteRecorderInternalFixed() {
+      val machine = TiBasicModule()
+      machine.attachCassetteTape("CS1", "")
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #5:"CS1",SEQUENTIAL,INTERNAL,OUTPUT,FIXED 128
+         110 A$="TEXAS INSTRUMENTS "
+         120 B$="COMPUTER "
+         130 READ X,Y,Z
+         140 IF X=99 THEN 190
+         150 A=X*Y*Z
+         160 PRINT #5:A$,X,Y,Z,B$,A
+         170 GOTO 130
+         180 DATA 5,6,7,1,2,3,10,20,30,20,40,60,1.5,2.3,7.6,99,99,99
+         190 CLOSE #5
+         200 END
+         RUN
+         """.trimIndent(), machine
+      )
+
+      TestHelperFile.assertFileRecords(listOf(
+         // First record should contain the values for 5,6,7
+         listOf(
+            byteArrayOf(0x12, 0x54, 0x45, 0x58, 0x41, 0x53, 0x20, 0x49, 0x4e, 0x53, 0x54, 0x52, 0x55, 0x4d, 0x45, 0x4e, 0x54,
+               0x53, 0x20),
+            byteArrayOf(0x8, 0x40, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x9, 0x43, 0x4f, 0x4d, 0x50, 0x55, 0x54, 0x45, 0x52, 0x20),
+            byteArrayOf(0x8, 0x41, 0x2, 0xa, 0x0, 0x0, 0x0, 0x0, 0x0)
+         ),
+         // Second record should contain the values for 1,2,3
+         listOf(
+            byteArrayOf(0x12, 0x54, 0x45, 0x58, 0x41, 0x53, 0x20, 0x49, 0x4e, 0x53, 0x54, 0x52, 0x55, 0x4d, 0x45, 0x4e, 0x54,
+               0x53, 0x20),
+            byteArrayOf(0x8, 0x40, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x3, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x9, 0x43, 0x4f, 0x4d, 0x50, 0x55, 0x54, 0x45, 0x52, 0x20),
+            byteArrayOf(0x8, 0x40, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
+         ),
+         // Third record should contain the values for 10,20,30
+         listOf(
+            byteArrayOf(0x12, 0x54, 0x45, 0x58, 0x41, 0x53, 0x20, 0x49, 0x4e, 0x53, 0x54, 0x52, 0x55, 0x4d, 0x45, 0x4e, 0x54,
+               0x53, 0x20),
+            byteArrayOf(0x8, 0x40, 0xa, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x14, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x1e, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x9, 0x43, 0x4f, 0x4d, 0x50, 0x55, 0x54, 0x45, 0x52, 0x20),
+            byteArrayOf(0x8, 0x41, 0x3c, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
+         ),
+         // Forth record should contain the values for 20,40,60
+         listOf(
+            byteArrayOf(0x12, 0x54, 0x45, 0x58, 0x41, 0x53, 0x20, 0x49, 0x4e, 0x53, 0x54, 0x52, 0x55, 0x4d, 0x45, 0x4e, 0x54,
+               0x53, 0x20),
+            byteArrayOf(0x8, 0x40, 0x14, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x28, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x3c, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x9, 0x43, 0x4f, 0x4d, 0x50, 0x55, 0x54, 0x45, 0x52, 0x20),
+            byteArrayOf(0x8, 0x42, 0x4, 0x50, 0x0, 0x0, 0x0, 0x0, 0x0)
+         ),
+         // Fifth record should contain the values for 1.5,2.3,7.6
+         listOf(
+            byteArrayOf(0x12, 0x54, 0x45, 0x58, 0x41, 0x53, 0x20, 0x49, 0x4e, 0x53, 0x54, 0x52, 0x55, 0x4d, 0x45, 0x4e, 0x54,
+               0x53, 0x20),
+            byteArrayOf(0x8, 0x40, 0x1, 0x32, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x2, 0x1e, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x8, 0x40, 0x7, 0x3c, 0x0, 0x0, 0x0, 0x0, 0x0),
+            byteArrayOf(0x9, 0x43, 0x4f, 0x4d, 0x50, 0x55, 0x54, 0x45, 0x52, 0x20),
+            byteArrayOf(0x8, 0x40, 0x1a, 0x16, 0x0, 0x0, 0x0, 0x0, 0x0)
+         )
+      ), machine, 5)
+
+      // TODO: Adjust expected screen contents
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            1 to " >150 A=X*Y*Z",
+            2 to " >160 PRINT #5:A$,X,Y,Z,B$,A",
+            3 to " >170 GOTO 130",
+            4 to " >180 DATA 5,6,7,1,2,3,10,20,3",
+            5 to "  0,20,40,60,1.5,2.3,7.6,99,99",
+            6 to "  ,99",
+            7 to " >190 CLOSE #5",
+            8 to " >200 END",
+            9 to " >RUN",
+            12 to "  * REWIND CASSETTE TAPE   CS1",
+            13 to "    THEN PRESS ENTER",
+            15 to "  * PRESS CASSETTE RECORD  CS1",
+            16 to "    THEN PRESS ENTER",
+            19 to "  * PRESS CASSETTE STOP    CS1",
+            20 to "    THEN PRESS ENTER",
+            22 to "  ** DONE **",
             24 to " >"
          ), machine.screen
       )
