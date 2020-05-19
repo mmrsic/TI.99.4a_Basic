@@ -666,7 +666,6 @@ class FileProcessingTest {
          )
       ), machine, 5)
 
-      // TODO: Adjust expected screen contents
       TestHelperScreen.assertPrintContents(
          mapOf(
             1 to " >150 A=X*Y*Z",
@@ -685,6 +684,32 @@ class FileProcessingTest {
             19 to "  * PRESS CASSETTE STOP    CS1",
             20 to "    THEN PRESS ENTER",
             22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   /** Example found on page II-133. */
+   @Test
+   fun testPrintWithDisplayFixed() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(listOf(
+         "100 OPEN #10:\"CS1\",SEQUENTIAL,DISPLAY,OUTPUT,FIXED 128",
+         "170 PRINT #10:\"\"\"\";A$;\"\"\",\";X;\",\";Y;\",\";Z;\",\"\"\";B$;\"\"\",\";A",
+         "300 CLOSE #10",
+         "310 END"), machine)
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            15 to "  TI BASIC READY",
+            17 to " >100 OPEN #10:\"CS1\",SEQUENTIA",
+            18 to "  L,DISPLAY,OUTPUT,FIXED 128",
+            19 to " >170 PRINT #10:\"\"\"\";A$;\"\"\",\";",
+            20 to "  X;\",\";Y;\",\";Z;\",\"\"\";B$;\"\"\",\"",
+            21 to "  ;A",
+            22 to " >300 CLOSE #10",
+            23 to " >310 END",
             24 to " >"
          ), machine.screen
       )
