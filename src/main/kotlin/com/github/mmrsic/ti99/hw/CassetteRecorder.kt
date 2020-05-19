@@ -107,7 +107,7 @@ class TiCassetteRecorderDataFile(val id: String, displayData: String = "", priva
    override fun close() {
       machine.printTokens(listOf(PrintSeparator.NextRecord))
       machine.printTokens(printTokensForRecorderAction(id, "PRESS CASSETTE STOP"))
-      print("Closed $id")
+      println("Closed $id")
    }
 
    override fun delete() = println("Delete is ignored for $id")
