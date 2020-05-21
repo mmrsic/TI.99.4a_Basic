@@ -29,9 +29,7 @@ enum class Encoder {
 
       override fun encode(stringConstant: StringConstant): ByteArray {
          val originalString = stringConstant.constant
-         val quotationMarksNeeded = originalString.any { " \",".contains(it) }
-         val displayString = if (quotationMarksNeeded) quote(originalString)!! else originalString
-         return displayString.toByteArray(TiBasicEncoding.CHARSET)
+         return originalString.toByteArray(TiBasicEncoding.CHARSET)
       }
    },
 

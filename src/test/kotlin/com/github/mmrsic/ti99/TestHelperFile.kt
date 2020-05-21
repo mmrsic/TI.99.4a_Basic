@@ -15,16 +15,25 @@ class TestHelperFile {
          val actualFileRecordBytes = machine.getFileHandlerRecords(fileNumber).map { byteArray ->
             readAllLengthPrecededByteArrays(byteArray)
          }
-         assertEquals(expectedFileRecordBytes.size, actualFileRecordBytes.size)
+         assertEquals(expectedFileRecordBytes.size, actualFileRecordBytes.size, "Number of records")
          for (recordIdx in expectedFileRecordBytes.indices) {
             val expectedAtIdx = expectedFileRecordBytes[recordIdx]
             val actualAtIdx = actualFileRecordBytes[recordIdx]
-            assertEquals(expectedAtIdx.size, actualAtIdx.size)
-            for (itemIdx in expectedAtIdx.indices) {
-               val expectedBytes = expectedAtIdx[itemIdx].toList()
-               val actualBytes = actualAtIdx[itemIdx].toList()
-               assertEquals(expectedBytes, actualBytes, "File #$fileNumber, record=${recordIdx + 1}, item=${itemIdx + 1}")
+            try {
+               assertEqualByteArrayLists(expectedAtIdx, actualAtIdx)
+            } catch (e: AssertionError) {
+               throw AssertionError("File $fileNumber: Byte array list at record no. $recordIdx")
             }
+         }
+      }
+
+      /** Assert that two given lists contain equals byte arrays. */
+      fun assertEqualByteArrayLists(expectedAtIdx: List<ByteArray>, actualAtIdx: List<ByteArray>) {
+         assertEquals(expectedAtIdx.size, actualAtIdx.size, "Number of record byte arrays")
+         for (itemIdx in expectedAtIdx.indices) {
+            val expectedBytes = expectedAtIdx[itemIdx].toList()
+            val actualBytes = actualAtIdx[itemIdx].toList()
+            assertEquals(expectedBytes, actualBytes)
          }
       }
 

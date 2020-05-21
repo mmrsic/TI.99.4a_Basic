@@ -159,7 +159,9 @@ class TiDataFileHandler(val file: TiDataFile, val openOptions: FileOpenOptions) 
          val oldFileSize = file.size
          val nextRecordSize = openOptions.recordType.length ?: 64
          file.setLength(oldFileSize + nextRecordSize)
-         currRec.add(TiDataRecord(file, oldFileSize, nextRecordSize))
+         val newRecord = TiDataRecord(file, oldFileSize, nextRecordSize)
+         newRecord.write(ByteArray(nextRecordSize) { openOptions.fileType.fillerByte })
+         currRec.add(newRecord)
          currRec.previous()
       }
       writer.write(currRec.next(), encoder.encodeAll(recordData))
@@ -331,6 +333,7 @@ enum class FileType : FileOpenOption {
 
       override fun encoder() = Encoder.DISPLAY
       override fun decoder() = Decoder.DISPLAY
+      override val fillerByte = ' '.toByte()
    },
 
    /**
@@ -341,10 +344,12 @@ enum class FileType : FileOpenOption {
 
       override fun encoder() = Encoder.INTERNAL
       override fun decoder() = Decoder.INTERNAL
+      override val fillerByte = 0.toByte()
    };
 
    abstract fun encoder(): Encoder
    abstract fun decoder(): Decoder
+   abstract val fillerByte: Byte
 }
 
 /** Whether to process a file in [INPUT], [OUTPUT], [UPDATE], or [APPEND] mode. */

@@ -713,6 +713,20 @@ class FileProcessingTest {
             24 to " >"
          ), machine.screen
       )
+
+      interpreter.interpret("110 A$=\"A$\"", machine)
+      interpreter.interpret("120 B$=\"B$\"", machine)
+      interpreter.interpret("130 X=1", machine)
+      interpreter.interpret("140 Y=2", machine)
+      interpreter.interpret("150 A=3", machine)
+      interpreter.interpret("RUN", machine)
+      val records = machine.getFileHandlerRecords(10)
+      assertEquals(1, records.size, "Number of file handler records")
+      val expectedDisplayBytes = byteArrayOf(0x22, 0x41, 0x24, 0x22, 0x2c, 0x20, 0x31, 0x20, 0x2c, 0x20, 0x32, 0x20, 0x2c, 0x20,
+         0x30, 0x20, 0x2c, 0x22, 0x42, 0x24, 0x22, 0x2c, 0x20, 0x33, 0x20)
+      val expectedFileRecordBytes = listOf(expectedDisplayBytes + ByteArray(128 - expectedDisplayBytes.size) { 0x20 })
+      val actualFileRecordBytes = machine.getFileHandlerRecords(10)
+      TestHelperFile.assertEqualByteArrayLists(expectedFileRecordBytes, actualFileRecordBytes)
    }
 
 }
