@@ -729,4 +729,60 @@ class FileProcessingTest {
       TestHelperFile.assertEqualByteArrayLists(expectedFileRecordBytes, actualFileRecordBytes)
    }
 
+   /** Test for first example on page II-134. */
+   @Test
+   fun testPrintToRelativeOutputFile() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #3:NAME$,RELATIVE,INTERNAL,OUTPUT,FIXED 128
+         150 PRINT #3:A$,B$,C$,X,Y,Z
+         200 CLOSE #3
+         210 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            17 to "  TI BASIC READY",
+            19 to " >100 OPEN #3:NAME$,RELATIVE,I",
+            20 to "  NTERNAL,OUTPUT,FIXED 128",
+            21 to " >150 PRINT #3:A$,B$,C$,X,Y,Z",
+            22 to " >200 CLOSE #3",
+            23 to " >210 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   @Test
+   fun testPrintToRelativeUpdateFile() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #3:NAME$,RELATIVE,INTERNAL,UPDATE,FIXED 128
+         110 INPUT K
+         120 PRINT #3,REC K:A$,B$,C$,X,Y,Z
+         300 CLOSE #3
+         310 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            15 to "  TI BASIC READY",
+            17 to " >100 OPEN #3:NAME$,RELATIVE,I",
+            18 to "  NTERNAL,UPDATE,FIXED 128",
+            19 to " >110 INPUT K",
+            20 to " >120 PRINT #3,REC K:A$,B$,C$,",
+            21 to "  X,Y,Z",
+            22 to " >300 CLOSE #3",
+            23 to " >310 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }
