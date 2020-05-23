@@ -19,7 +19,7 @@ sealed class TiBasicException(msg: String) : Exception(msg) {
 
    /** Display this exception on a given [TiBasicScreen].*/
    fun displayOn(screen: TiBasicScreen) {
-      screen.scroll()
+      if (this !is IncorrectStatement) screen.scroll()
       val excText = "$message${if (lineNumber != null) " $lineNumberPrefix $lineNumber" else ""}"
       if (isWarning) {
          screen.print("* WARNING:")

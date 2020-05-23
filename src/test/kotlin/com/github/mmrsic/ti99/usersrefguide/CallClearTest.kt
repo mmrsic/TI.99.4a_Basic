@@ -5,6 +5,9 @@ import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import org.junit.Test
 
+/**
+ * Test cases for examples found in User's Reference Guide on page II-72.
+ */
 class CallClearTest {
 
    @Test

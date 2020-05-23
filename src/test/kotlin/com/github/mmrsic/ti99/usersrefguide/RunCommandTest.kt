@@ -16,15 +16,15 @@ class RunCommandTest {
       val interpreter = TiBasicCommandLineInterpreter(machine)
       interpreter.interpretAll(
          """
-                RUN
-                100 A=-16
-                110 B=25
-                120 PRINT A;B
-                130 END
-                RUN
-                RUN 110
-                RUN 115
-            """.trimIndent(), machine
+         RUN
+         100 A=-16
+         110 B=25
+         120 PRINT A;B
+         130 END
+         RUN
+         RUN 110
+         RUN 115
+         """.trimIndent(), machine
       )
 
       TestHelperScreen.assertPrintContents(

@@ -87,6 +87,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val new by token("\\bNEW\\b")
    private val next by token("NEXT")
    private val number by token("""NUM(BER)?""")
+   private val old by token("OLD\\b")
    private val on by token("ON")
    private val open by token("OPEN")
    private val optionBase by token("OPTION\\s+BASE")
@@ -104,6 +105,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val returnToken by token("RETURN")
    private val rnd by token("\\bRND\\b")
    private val run by token("\\bRUN\\b")
+   private val save by token("SAVE\\b")
    private val screen by token("SCREEN")
    private val sequential by token("SEQUENTIAL")
    private val sgn by token("\\bSGN\\b")
@@ -246,7 +248,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
    // COMMAND PARSERS
 
-   private val newCmd = new and optional(ws and optional(numericExpr or name)) asJust NewCommand()
+   private val newCmd by new and optional(ws and optional(numericExpr or name)) asJust NewCommand()
    private val runCmd by skip(run) and optional(positiveIntConst) map { RunCommand(it) }
    private val byeCmd by bye asJust ByeCommand()
    private val listRangeCmd by skip(list) and positiveIntConst and skip(minus) and positiveIntConst use { ListCommand(t1, t2) }
@@ -282,6 +284,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    }
    private val traceCmd by trace asJust TraceCommand()
    private val untraceCmd by untrace asJust UntraceCommand()
+   private val saveCmd by skip(save) and stringExpr use { SaveCommand(this) }
+   private val oldCmd by skip(old) and stringExpr use { OldCommand(this) }
+   private val deleteCmd by skip(delete) and stringExpr use { DeleteCommand(this) }
 
    // STATEMENT PARSERS
 
@@ -463,12 +468,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    // PARSER HIERARCHY
 
    private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or breakCmd or continueCmd or unbreakCmd or
-      traceCmd or untraceCmd or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
+      traceCmd or untraceCmd or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd or saveCmd or oldCmd or
+      deleteCmd
    private val stmtParser by assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
       callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or inputStmt or
       gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or dataStmt or readStmt or restoreFileStmt or
       restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or optionBaseStmt or openStmt or
-      closeStmt or inputFileStmt or printFileStmt or printStmt
+      closeStmt or inputFileStmt or printFileStmt or printStmt or untraceCmd or deleteCmd
 
    private val programLineParser by positiveIntConst and stmtParser use { StoreProgramLineCommand(ProgramLine(t1, listOf(t2))) }
    private val removeProgramLineParser by positiveIntConst use { RemoveProgramLineCommand(this) }

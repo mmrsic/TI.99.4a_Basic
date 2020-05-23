@@ -1,5 +1,6 @@
 package com.github.mmrsic.ti99.basic
 
+import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 
 /**
@@ -149,7 +150,9 @@ class BreakCommand(private val lineNumberList: List<Int>) : Command {
 
    override val name = "BREAK"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      if (programLineNumber != null) throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
+      if (programLineNumber != null) {
+         throw IllegalArgumentException("Break command may not be used in program: $programLineNumber")
+      }
       machine.addBreakpoints(lineNumberList)
    }
 }
@@ -157,7 +160,9 @@ class BreakCommand(private val lineNumberList: List<Int>) : Command {
 class ContinueCommand : Command {
    override val name = "CONTINUE"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      if (programLineNumber != null) throw IllegalArgumentException("Continue command may not be used in program: $programLineNumber")
+      if (programLineNumber != null) {
+         throw IllegalArgumentException("Continue command may not be used in program: $programLineNumber")
+      }
       machine.continueProgram()
    }
 
@@ -200,5 +205,36 @@ class UntraceCommand : Command, Statement {
    override fun listText() = name
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       machine.traceProgramExecution = false
+   }
+}
+
+class SaveCommand(private val deviceAndFile: StringExpr) : Command {
+   override val name: String
+      get() = TODO("Not yet implemented")
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      TODO("not implemented")
+   }
+}
+
+class OldCommand(private val deviceAndFile: StringExpr) : Command {
+   override val name: String
+      get() = TODO("Not yet implemented")
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      TODO("not implemented")
+   }
+}
+
+class DeleteCommand(private val deviceAndFile: StringExpr) : Command, Statement {
+   override val name: String
+      get() = TODO("Not yet implemented")
+
+   override fun listText(): String {
+      TODO("not implemented")
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      TODO("not implemented")
    }
 }
