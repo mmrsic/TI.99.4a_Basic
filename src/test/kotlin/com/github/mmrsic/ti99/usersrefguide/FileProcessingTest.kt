@@ -785,4 +785,35 @@ class FileProcessingTest {
       )
    }
 
+   /** First example on page II-136. */
+   @Test
+   fun testRestore() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #2:"CS1",SEQUENTIAL,INTERNAL,INPUT,FIXED 64
+         110 INPUT #2:A,B,C$,D$,X
+         400 RESTORE #2
+         410 INPUT #2:A,B,C$,D$,X
+         500 CLOSE #2
+         510 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            15 to "  TI BASIC READY",
+            17 to " >100 OPEN #2:\"CS1\",SEQUENTIAL",
+            18 to "  ,INTERNAL,INPUT,FIXED 64",
+            19 to " >110 INPUT #2:A,B,C$,D$,X",
+            20 to " >400 RESTORE #2",
+            21 to " >410 INPUT #2:A,B,C$,D$,X",
+            22 to " >500 CLOSE #2",
+            23 to " >510 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }

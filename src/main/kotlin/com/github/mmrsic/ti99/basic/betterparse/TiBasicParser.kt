@@ -172,11 +172,13 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
    private val stringConst by quoted use { StringConstant(text.drop(1).dropLast(1).replace("\"\"", "\"")) }
    private val chrFun by skip(chr) and singleNumericArg use { ChrFunction(this) }
-   private val segFun by skip(seg) and skip(openParenthesis) and parser(::stringExpr) and skip(comma) and parser(::numericExpr) and
-      skip(comma) and parser(::numericExpr) and skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
+   private val segFun by skip(seg) and skip(openParenthesis) and parser(::stringExpr) and skip(comma) and
+      parser(::numericExpr) and skip(comma) and parser(::numericExpr) and skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
    private val strFun by skip(str) and singleNumericArg use { StrFunction(this) }
    private val stringFun by chrFun or segFun or strFun
-   private val stringArrVarRef by stringVarName and (singleNumericArg or singleStringArg) use { StringArrayAccess(t1.text, t2, machine) }
+   private val stringArrVarRef by stringVarName and (singleNumericArg or singleStringArg) use {
+      StringArrayAccess(t1.text, t2, machine)
+   }
    private val stringVarRef by stringVarName use { StringVariable(text) { varName -> machine.getStringVariableValue(varName) } }
    private val stringTerm: Parser<StringExpr> by stringConst or stringArrVarRef or stringVarRef or stringFun or
       (skip(openParenthesis) and parser(::stringExpr) and skip(closeParenthesis))
@@ -202,8 +204,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val valFun by skip(valToken) and singleStringArg use { ValFunction(this) }
    private val numericFun by absFun or ascFun or atnFun or cosFun or eofFun or expFun or intFun or lenFun or logFun or posFun or
       rndFun or sgnFun or sinFun or sqrFun or tanFun or valFun
+
    private val numericArrRef by name and skip(openParenthesis) and parser(::numericExpr) and
-      optional(skip(comma) and parser(::numericExpr) and optional(skip(comma) and parser(::numericExpr))) and skip(closeParenthesis) use {
+      optional(skip(comma) and parser(::numericExpr) and optional(skip(comma) and parser(::numericExpr))) and
+      skip(closeParenthesis) use {
       val baseName = t1.text
       val indexList = mutableListOf(t2)
       if (t3 != null) {
@@ -213,7 +217,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       }
       NumericArrayAccess(baseName, indexList, machine)
    }
-   private val numericVarRef by name use { NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() } }
+   private val numericVarRef by name use {
+      NumericVariable(text) { varName -> machine.getNumericVariableValue(varName).value() }
+   }
    private val term by numericConst or numericArrRef or numericVarRef or numericFun or
       (skip(minus) and parser(::numericExpr) map { NegatedExpression(it) }) or
       (skip(openParenthesis) and parser(::numericExpr) and skip(closeParenthesis))
@@ -224,11 +230,14 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val plusMinusChain by leftAssociative(mulDivChain, plus or minus use { type }) { a, op, b ->
       if (op == plus) Addition(a, b) else Subtraction(a, b)
    }
-   private val relationalOperator = equals or notEquals or lessThanOrEqualTo or lessThan or greaterThanOrEqualTo or greaterThan use {
-      RelationalExpr.Operator.fromSymbol(text)
-   }
+   private val relationalOperator =
+      equals or notEquals or lessThanOrEqualTo or lessThan or greaterThanOrEqualTo or greaterThan use {
+         RelationalExpr.Operator.fromSymbol(text)
+      }
 
-   private val numericExpr by leftAssociative(plusMinusChain, relationalOperator) { a, op, b -> RelationalNumericExpr(a, op, b) } or
+   private val numericExpr by leftAssociative(plusMinusChain, relationalOperator) { a, op, b ->
+      RelationalNumericExpr(a, op, b)
+   } or
       ((stringExpr and relationalOperator and stringExpr) use {
          RelationalStringExpr(t1, t2, t3)
       })
@@ -254,7 +263,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
          else -> throw NotImplementedError("Missing branch implementation for combination: t1=$t1 / t2=$t2")
       }
    }
-   private val resequenceCmd by skip(resequence) and optional(positiveIntConst) and optional(skip(comma) and positiveIntConst) use {
+   private val resequenceCmd by skip(resequence) and optional(positiveIntConst) and
+      optional(skip(comma) and positiveIntConst) use {
       when {
          t1 == null && t2 == null -> ResequenceCommand()
          t1 != null && t2 == null -> ResequenceCommand(initialLine = t1!!)
@@ -292,9 +302,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       printArgs.addAll(t4.map { PrintSeparator.fromString(it)!! })
       PrintStatement(printArgs)
    }
-   private val assignNumberArrayElementStmt by skip(optional(let)) and name and skip(openParenthesis) and
-      numericExpr and optional(skip(comma) and numericExpr and optional(skip(comma) and numericExpr)) and
-      skip(closeParenthesis) and skip(assign) and numericExpr use {
+   private val assignNumberArrayElementStmt by skip(optional(let)) and name and skip(openParenthesis) and numericExpr and
+      optional(skip(comma) and numericExpr and optional(skip(comma) and numericExpr)) and skip(closeParenthesis) and
+      skip(assign) and numericExpr use {
       val subscripts = mutableListOf(t2)
       t3?.let { additionalSubscripts ->
          subscripts.add(additionalSubscripts.t1)
@@ -302,19 +312,22 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       }
       LetNumberArrayElementStatement(t1.text, subscripts.toList(), t4)
    }
-   private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and numericExpr use { LetNumberStatement(t1.name, t2) }
-   private val assignStringStmt by skip(optional(let)) and stringVarRef and skip(assign) and stringExpr use { LetStringStatement(t1.name, t2) }
-   private val defNumericFunStmt by skip(def) and numericVarRef and optional(singleNumericArg or singleStringArg) and skip(equals) and numericExpr use {
-      DefineFunctionStatement(t1.name, t2?.listText(), t3)
+   private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and numericExpr use {
+      LetNumberStatement(t1.name, t2)
    }
-   private val defStringFunStmt by skip(def) and stringVarRef and optional(singleNumericArg or singleStringArg) and skip(equals) and stringExpr use {
+   private val assignStringStmt by skip(optional(let)) and stringVarRef and skip(assign) and stringExpr use {
+      LetStringStatement(t1.name, t2)
+   }
+   private val defNumericFunStmt by skip(def) and numericVarRef and optional(singleNumericArg or singleStringArg) and
+      skip(equals) and numericExpr use { DefineFunctionStatement(t1.name, t2?.listText(), t3) }
+   private val defStringFunStmt by skip(def) and stringVarRef and optional(singleNumericArg or singleStringArg) and skip(
+      equals) and stringExpr use {
       DefineFunctionStatement(t1.name, t2?.listText(), t3)
    }
    private val endStmt by end asJust EndStatement()
    private val stopStmt by stop asJust StopStatement()
-   private val forToStepStmt by skip(forToken) and assignNumberStmt and skip(to) and numericExpr and optional(skip(step) and numericExpr) use {
-      ForToStepStatement(t1, t2, t3)
-   }
+   private val forToStepStmt by skip(forToken) and assignNumberStmt and skip(to) and numericExpr and
+      optional(skip(step) and numericExpr) use { ForToStepStatement(t1, t2, t3) }
    private val nextStmt by skip(next) and numericVarRef use { NextStatement(name) }
    private val remarkStmt by remark use {
       when {
@@ -325,24 +338,31 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    }
    private val optionBaseStmt by skip(optionBase) and positiveIntConst use { OptionBaseStatement(this) }
    private val gotoStmt by skip(goto) and (positiveIntConst) map { lineNum -> GoToStatement(lineNum) }
-   private val onGotoStmt by skip(on) and numericExpr and skip(goto) and separatedTerms(positiveIntConst, comma) use { OnGotoStatement(t1, t2) }
+   private val onGotoStmt by skip(on) and numericExpr and skip(goto) and separatedTerms(positiveIntConst, comma) use {
+      OnGotoStatement(t1, t2)
+   }
    private val gosubStmt by skip(gosub) and positiveIntConst map { programLine -> GosubStatement(programLine) }
-   private val onGosubStmt by skip(on) and numericExpr and skip(gosub) and separatedTerms(positiveIntConst, comma) use { OnGosubStatement(t1, t2) }
+   private val onGosubStmt by skip(on) and numericExpr and skip(gosub) and separatedTerms(positiveIntConst, comma) use {
+      OnGosubStatement(t1, t2)
+   }
    private val returnStmt by returnToken asJust ReturnStatement()
    private val breakStmt by skip(breakToken) and separated(positiveIntConst, comma, true) use { BreakStatement(terms) }
    private val unbreakStmt by skip(unbreak) and separated(positiveIntConst, comma, true) use { UnbreakStatement(terms) }
-   private val ifStmt by skip(ifToken) and numericExpr and skip(then) and positiveIntConst and optional(skip(elseToken) and positiveIntConst) use { IfStatement(t1, t2, t3) }
+   private val ifStmt by skip(ifToken) and numericExpr and skip(then) and positiveIntConst and optional(skip(elseToken) and
+      positiveIntConst) use { IfStatement(t1, t2, t3) }
    private val varRef by numericArrRef or numericVarRef or stringArrVarRef or stringVarRef
    private val inputStmt by skip(input) and optional(stringExpr and skip(colon)) and separatedTerms(varRef, comma) use {
       val prompt: StringExpr? = t1
       val varNameList: List<Variable> = t2.map { it as Variable }
       InputStatement(prompt, varNameList)
    }
-   private val dimStmt: Parser<Statement> by skip(dim) and separatedTerms(name and skip(openParenthesis) and positiveIntConst and optional(skip(comma) and
-      positiveIntConst and optional(skip(comma) and positiveIntConst)) and skip(closeParenthesis), comma, acceptZero = false) use {
+   private val dimStmt: Parser<Statement> by skip(dim) and separatedTerms(name and skip(openParenthesis) and
+      positiveIntConst and optional(skip(comma) and positiveIntConst and optional(skip(comma) and positiveIntConst)) and
+      skip(closeParenthesis), comma, acceptZero = false) use {
       val declarations = mutableListOf<DimStatement.ArrayDimensions>()
       for (declaration in this) {
-         declarations.add(DimStatement.ArrayDimensions(declaration.t1.text, declaration.t2, declaration.t3?.t1, declaration.t3?.t2))
+         declarations.add(
+            DimStatement.ArrayDimensions(declaration.t1.text, declaration.t2, declaration.t3?.t1, declaration.t3?.t2))
       }
       DimStatement(declarations)
    }
@@ -358,7 +378,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       }
       DataStatement(data)
    }
-   private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use { ReadStatement(this.map { it as Variable }) }
+   private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use {
+      ReadStatement(this.map { it as Variable })
+   }
    private val restoreStmt by skip(restore) and optional(positiveIntConst) use { RestoreStatement(this) }
    private val randomizeStmt by skip(randomize) and optional(numericExpr) use { RandomizeStatement(this) }
    private val fileOrganization by sequential or relative
@@ -372,19 +394,25 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       val options = createFileOptions(t3)
       OpenStatement(t1, t2, options)
    }
-   private val closeStmt by skip(close) and skip(numberSign) and numericExpr and optional(skip(colon) and delete) use { CloseStatement(t1, t2 != null) }
-   private val inputFileStmt by skip(input) and skip(numberSign) and numericExpr and optional(skip(comma and rec) and numericExpr) and
-      skip(colon) and separatedTerms(varRef, comma) and optional(comma) use {
+   private val closeStmt by skip(close) and skip(numberSign) and numericExpr and optional(skip(colon) and delete) use {
+      CloseStatement(t1, t2 != null)
+   }
+   private val inputFileStmt by skip(input) and skip(numberSign) and numericExpr and
+      optional(skip(comma and rec) and numericExpr) and skip(colon) and separatedTerms(varRef, comma) and optional(comma) use {
       InputFromFileStatement(t1, t2, t3.map { it as Variable }, t4 != null)
    }
    private val printFileStmt by skip(print) and skip(numberSign) and numericExpr and
       optional(skip(comma and rec) and numericExpr) and skip(colon) and separatedTerms(expr, comma or semicolon) use {
       PrintToFileStatement(t1, t2, t3)
    }
+   private val restoreFileStmt by skip(restore and numberSign) and numericExpr use {
+      RestoreFileStatement(this)
+   }
 
    // CALL SUBPROGRAM PARSERS
 
-   private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and numericExpr and skip(comma) and stringExpr and skip(closeParenthesis) use {
+   private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and numericExpr and skip(comma) and
+      stringExpr and skip(closeParenthesis) use {
       CharSubprogram(t1, t2)
    }
    private val callClear: Parser<Statement> by skip(call) and clear asJust ClearSubprogram()
@@ -396,25 +424,28 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       numericExpr and skip(comma) and numericExpr and skip(comma) and numericVarRef and skip(closeParenthesis) use {
       GcharSubprogram(t1, t2, t3)
    }
-   private val callHchar: Parser<Statement> by skip(call and hchar and openParenthesis) and numericExpr and skip(comma) and numericExpr and
-      skip(comma) and numericExpr and optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
+   private val callHchar: Parser<Statement> by skip(call and hchar and openParenthesis) and numericExpr and
+      skip(comma) and numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr) and
+      skip(closeParenthesis) use {
       val repetition = t4
       if (repetition != null) HcharSubprogram(t1, t2, t3, repetition) else HcharSubprogram(t1, t2, t3)
    }
-   private val callJoyst: Parser<Statement> by skip(joyst and openParenthesis) and numericExpr and skip(comma) and numericVarRef and
-      skip(comma) and numericVarRef and skip(closeParenthesis) use {
+   private val callJoyst: Parser<Statement> by skip(joyst and openParenthesis) and numericExpr and skip(comma) and
+      numericVarRef and skip(comma) and numericVarRef and skip(closeParenthesis) use {
       JoystSubprogram(t1, t2, t3)
    }
-   private val callKey: Parser<Statement> by skip(key and openParenthesis) and numericExpr and
-      skip(comma) and numericVarRef and skip(comma) and numericVarRef and skip(closeParenthesis) use {
+   private val callKey: Parser<Statement> by skip(key and openParenthesis) and numericExpr and skip(comma) and numericVarRef and
+      skip(comma) and numericVarRef and skip(closeParenthesis) use {
       KeySubprogram(t1, t2, t3)
    }
-   private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and numericExpr and skip(closeParenthesis) use {
+   private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and numericExpr and
+      skip(closeParenthesis) use {
       ScreenSubprogram(this)
    }
-   private val callSound: Parser<Statement> by skip(call and sound and openParenthesis) and numericExpr and skip(comma) and numericExpr and
-      skip(comma) and numericExpr and optional(skip(comma) and numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr
-      and skip(comma) and numericExpr and optional(skip(comma) and numericExpr and skip(comma) and numericExpr))) and skip(closeParenthesis) use {
+   private val callSound: Parser<Statement> by skip(call and sound and openParenthesis) and numericExpr and skip(comma) and
+      numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr and skip(comma) and numericExpr and
+      optional(skip(comma) and numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr and
+         skip(comma) and numericExpr))) and skip(closeParenthesis) use {
       when {
          t4 == null -> SoundSubprogram(t1, t2, t3)
          t4?.t3 == null -> SoundSubprogram(t1, t2, t3, t4?.t1, t4?.t2)
@@ -422,8 +453,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
          else -> SoundSubprogram(t1, t2, t3, t4?.t1, t4?.t2, t4?.t3?.t1, t4?.t3?.t2, t4?.t3?.t3?.t1, t4?.t3?.t3?.t2)
       }
    }
-   private val callVchar: Parser<Statement> by skip(call and vchar and openParenthesis) and numericExpr and skip(comma) and numericExpr and
-      skip(comma) and numericExpr and optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
+   private val callVchar: Parser<Statement> by skip(call and vchar and openParenthesis) and numericExpr and skip(comma) and
+      numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
       val repetition = t4
       if (repetition != null) VcharSubprogram(t1, t2, t3, repetition) else VcharSubprogram(t1, t2, t3)
    }
@@ -436,9 +467,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       traceCmd or untraceCmd or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd
    private val stmtParser by assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
       callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or inputStmt or
-      gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or dataStmt or readStmt or restoreStmt or randomizeStmt or
-      defNumericFunStmt or defStringFunStmt or dimStmt or optionBaseStmt or openStmt or closeStmt or inputFileStmt or
-      printFileStmt or printStmt
+      gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or dataStmt or readStmt or restoreFileStmt or
+      restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or optionBaseStmt or openStmt or
+      closeStmt or inputFileStmt or printFileStmt or printStmt
 
    private val programLineParser by positiveIntConst and stmtParser use { StoreProgramLineCommand(ProgramLine(t1, listOf(t2))) }
    private val removeProgramLineParser by positiveIntConst use { RemoveProgramLineCommand(this) }
@@ -454,9 +485,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val constListParser: Parser<List<Constant>> by separatedTerms(numericConst or stringConst or unquoted, comma, true)
 
    /** Parse a given String as a list of comma-separated [Constant]s. */
-   fun parseConstantsList(input: String): List<Constant> {
-      return constListParser.parseToEnd(tokenizer.tokenize(input))
-   }
+   fun parseConstantsList(input: String): List<Constant> = constListParser.parseToEnd(tokenizer.tokenize(input))
 }
 
 private class ParsedFileOpenOptions : FileOpenOptions {

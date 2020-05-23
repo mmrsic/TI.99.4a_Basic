@@ -618,3 +618,13 @@ class PrintToFileStatement(val fileNumber: NumericExpr, val recordNum: NumericEx
       machine.printToFile(fileNumber, printList)
    }
 }
+
+class RestoreFileStatement(private val fileNumber: NumericExpr) : Statement {
+   override fun listText(): String {
+      TODO("not implemented")
+   }
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      TODO("not implemented")
+   }
+}
