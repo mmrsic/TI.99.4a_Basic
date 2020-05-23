@@ -222,12 +222,12 @@ class ListCommandTest {
 
       TestHelperScreen.assertPrintContents(
          mapOf(
-            14 to "  TI BASIC READY",
-            16 to " >100 A=279.3",
-            17 to " >120 PRINT A;B",
-            18 to " >110 B=-456.8",
-            19 to " >130 END",
-            20 to " >LIST 32.7",
+            15 to "  TI BASIC READY",
+            17 to " >100 A=279.3",
+            18 to " >120 PRINT A;B",
+            19 to " >110 B=-456.8",
+            20 to " >130 END",
+            21 to " >LIST 32.7",
             22 to "  * INCORRECT STATEMENT",
             24 to " >"
          ),
@@ -254,7 +254,6 @@ class ListCommandTest {
       )
    }
 
-   @Ignore("Not yet implemented")
    @Test
    fun testListProgramToThermalPrinter() {
       val machine = TiBasicModule()

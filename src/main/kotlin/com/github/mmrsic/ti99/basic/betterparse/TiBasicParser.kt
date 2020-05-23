@@ -252,10 +252,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val runCmd by skip(run) and optional(positiveIntConst) map { RunCommand(it) }
    private val byeCmd by bye asJust ByeCommand()
    private val listRangeCmd by skip(list) and positiveIntConst and skip(minus) and positiveIntConst use { ListCommand(t1, t2) }
-   private val listFromCmd by skip(list) and positiveIntConst and skip(minus) use { ListCommand(this, null) }
-   private val listToCmd by skip(list) and skip(minus) and positiveIntConst use { ListCommand(null, this) }
+   private val listFromCmd by skip(list) and positiveIntConst and skip(minus) use { ListCommand(start = this, isRange = true) }
+   private val listToCmd by skip(list) and skip(minus) and positiveIntConst use { ListCommand(end = this, isRange = true) }
    private val listLineCmd by skip(list) and positiveIntConst use { ListCommand(this) }
-   private val listCmd by list asJust ListCommand(null)
+   private val listCmd by list asJust ListCommand()
+   private val listDevice by skip(list) and stringConst use { ListCommand(device = this) }
    private val numberCmd by skip(number) and optional(positiveIntConst) and optional(skip(comma) and positiveIntConst) use {
       when {
          t1 == null && t2 == null -> NumberCommand()
@@ -468,8 +469,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    // PARSER HIERARCHY
 
    private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or breakCmd or continueCmd or unbreakCmd or
-      traceCmd or untraceCmd or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd or saveCmd or oldCmd or
-      deleteCmd
+      traceCmd or untraceCmd or listDevice or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd or
+      saveCmd or oldCmd or deleteCmd
    private val stmtParser by assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
       callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or inputStmt or
       gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or dataStmt or readStmt or restoreFileStmt or

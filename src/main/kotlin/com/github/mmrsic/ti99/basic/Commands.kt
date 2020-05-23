@@ -55,20 +55,14 @@ class NewCommand : Command {
  * * A hyphenated range of line numbers - all program lines with line numbers not less than the first line number
  * in the range and not greater than the second line number are displayed
  */
-class ListCommand(val start: Int?, val end: Int?) : Command {
+class ListCommand(val start: Int? = null, val end: Int? = null, val isRange: Boolean = false,
+                  private val device: StringExpr? = null) : Command {
 
    override val name: String = "LIST"
 
-   /** Whether a hyphenated range of line numbers was specified. */
-   var isRange = true
-      private set
-
-   constructor(line: Int?) : this(line, null) {
-      isRange = false
-   }
-
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       if (machine.program == null) throw CantDoThat()
+      if (device != null) throw InOutError("00")
       when {
          isRange -> machine.listProgram(start, end)
          start != null -> machine.listProgram(start, start)

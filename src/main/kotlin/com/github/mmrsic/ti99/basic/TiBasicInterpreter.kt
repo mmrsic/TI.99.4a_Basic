@@ -55,26 +55,8 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
          }
          screen.print("* ${e.message}")
          screen.scroll()
-      } catch (e: CantDoThat) {
-         screen.scroll()
-         screen.print("* ${e.message}")
-         screen.scroll()
-      } catch (e: BadArgument) {
-         screen.scroll()
-         screen.print("* ${e.message}")
-         screen.scroll()
-      } catch (e: BadValue) {
-         screen.scroll()
-         screen.print("* ${e.message}")
-         screen.scroll()
-      } catch (e: BadName) {
-         screen.print("* ${e.message}")
-         screen.scroll()
-      } catch (e: NumberTooBig) {
+      } catch (e: TiBasicException) {
          e.displayOn(screen)
-      } catch (e: CantContinue) {
-         screen.print("* ${e.message}")
-         screen.scroll()
       }
       if (parseResult is NewCommand) {
          machine.initCommandScreen()

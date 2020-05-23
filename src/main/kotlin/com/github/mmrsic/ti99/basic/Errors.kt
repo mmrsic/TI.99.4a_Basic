@@ -14,12 +14,15 @@ sealed class TiBasicException(msg: String) : Exception(msg) {
    /** Text used when optional [lineNumber] is displayed. */
    open val lineNumberPrefix: String = "IN"
 
+   /** Whether [displayOn] will scroll the screen's contents before displaying this exception. */
+   open val scrollBeforeDisplay: Boolean = true
+
    /** Whether [displayOn] will scroll the screen's contents after displaying this exception. */
    open val scrollAfterDisplay: Boolean = true
 
    /** Display this exception on a given [TiBasicScreen].*/
    fun displayOn(screen: TiBasicScreen) {
-      if (this !is IncorrectStatement) screen.scroll()
+      if (scrollBeforeDisplay) screen.scroll()
       val excText = "$message${if (lineNumber != null) " $lineNumberPrefix $lineNumber" else ""}"
       if (isWarning) {
          screen.print("* WARNING:")
@@ -59,7 +62,10 @@ class BadLineNumberWarning : TiBasicWarning("BAD LINE NUMBER") {
 }
 
 class BadArgument : TiBasicError("BAD ARGUMENT")
-class BadName : TiBasicError("BAD NAME")
+class BadName : TiBasicError("BAD NAME") {
+   override val scrollBeforeDisplay = false
+}
+
 class BadValue : TiBasicError("BAD VALUE")
 class BadSubscript : TiBasicError("BAD SUBSCRIPT")
 class Breakpoint : TiBasicError("BREAKPOINT") {
@@ -67,11 +73,21 @@ class Breakpoint : TiBasicError("BREAKPOINT") {
    override val scrollAfterDisplay = false
 }
 
-class CantContinue : TiBasicError("CAN'T CONTINUE")
+class CantContinue : TiBasicError("CAN'T CONTINUE") {
+   override val scrollBeforeDisplay = false
+}
+
 class CantDoThat : TiBasicError("CAN'T DO THAT")
 class DataError : TiBasicError("DATA ERROR")
 class FileError : TiBasicError("FILE ERROR")
-class IncorrectStatement : TiBasicError("INCORRECT STATEMENT")
+class IncorrectStatement : TiBasicError("INCORRECT STATEMENT") {
+   override val scrollBeforeDisplay = false
+}
+
+class InOutError(val number: String) : TiBasicError("I/O ERROR") {
+   override val message = super.message + " $number"
+}
+
 class InputError : TiBasicError("INPUT ERROR")
 class InputWarning : TiBasicWarning("INPUT ERROR") {
    override val scrollAfterDisplay = false
