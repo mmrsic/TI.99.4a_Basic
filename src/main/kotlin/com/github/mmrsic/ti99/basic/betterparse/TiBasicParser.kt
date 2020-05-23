@@ -405,9 +405,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       optional(skip(comma and rec) and numericExpr) and skip(colon) and separatedTerms(expr, comma or semicolon) use {
       PrintToFileStatement(t1, t2, t3)
    }
-   private val restoreFileStmt by skip(restore and numberSign) and numericExpr use {
-      RestoreFileStatement(this)
-   }
+   private val restoreFileStmt by skip(restore and numberSign) and numericExpr and
+      optional(skip(comma and rec) and numericExpr) use { RestoreFileStatement(t1, t2) }
 
    // CALL SUBPROGRAM PARSERS
 

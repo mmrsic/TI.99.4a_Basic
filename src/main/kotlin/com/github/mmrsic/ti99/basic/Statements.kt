@@ -619,12 +619,17 @@ class PrintToFileStatement(val fileNumber: NumericExpr, val recordNum: NumericEx
    }
 }
 
-class RestoreFileStatement(private val fileNumber: NumericExpr) : Statement {
+/**
+ * The RESTORE statement repositions an open file at its beginning record, or at a specific record if the file is RELATIVE.
+ * If the [fileNumber] specified is not already open, the program will terminate with the message FILE ERROR IN xx.
+ */
+class RestoreFileStatement(private val fileNumber: NumericExpr, private val recordNum: NumericExpr?) : Statement {
+
    override fun listText(): String {
       TODO("not implemented")
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      TODO("not implemented")
+      machine.restoreFileData(fileNumber, recordNum)
    }
 }

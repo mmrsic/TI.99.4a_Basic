@@ -677,6 +677,11 @@ class TiBasicModule : TiModule {
       variables.withIndex().forEach { setVariable(it.value, constants[it.index]) }
    }
 
+   fun restoreFileData(fileNumber: NumericExpr, recordNumber: NumericExpr?) {
+      val number = fileNumber.value().toNative().roundToInt()
+      val handler = getFileHandler(number)
+   }
+
    fun getFileHandlerRecords(fileNumber: Int): List<ByteArray> {
       val fileHandler = getFileHandler(fileNumber)
       return fileHandler.getRecordByteArrays()
@@ -689,6 +694,7 @@ class TiBasicModule : TiModule {
       return getFileHandler(key)
    }
 
+   /** The [TiDataFileHandler] assigned to a given file number. [FileError] if the specified number is not currently open. */
    private fun getFileHandler(fileNumber: Int): TiDataFileHandler {
       return openFiles[fileNumber] ?: throw FileError()
    }

@@ -816,4 +816,37 @@ class FileProcessingTest {
       )
    }
 
+   /** Second example on page II-136. */
+   @Test
+   fun testRestoreWithRecordNumber() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 OPEN #4:NAME$,RELATIVE,INTERNAL,UPDATE,FIXED 128
+         110 INPUT #4:A,B,C
+         200 PRINT #4:A,B,C
+         300 RESTORE #4,REC 10
+         310 INPUT #4:A,B,C
+         400 CLOSE #4
+         410 END
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            14 to "  TI BASIC READY",
+            16 to " >100 OPEN #4:NAME$,RELATIVE,I",
+            17 to "  NTERNAL,UPDATE,FIXED 128",
+            18 to " >110 INPUT #4:A,B,C",
+            19 to " >200 PRINT #4:A,B,C",
+            20 to " >300 RESTORE #4,REC 10",
+            21 to " >310 INPUT #4:A,B,C",
+            22 to " >400 CLOSE #4",
+            23 to " >410 END",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }
