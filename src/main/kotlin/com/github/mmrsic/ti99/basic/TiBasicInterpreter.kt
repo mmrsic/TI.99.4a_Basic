@@ -12,6 +12,7 @@ import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.TiColor
 import com.github.mmrsic.ti99.hw.TiFctnCode
+import com.github.mmrsic.ti99.hw.TiPlainCode
 import com.github.mmrsic.ti99.hw.Variable
 import com.github.mmrsic.ti99.hw.checkLineNumber
 import java.util.Stack
@@ -183,7 +184,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
    /** Accept user input from [keyboardInputProvider] into a given variable. */
    fun acceptUserInput(variableNames: List<Variable>, inputLineNumber: Int, prompt: String,
                        keyboardInputProvider: KeyboardInputProvider): String {
-      val inputEndingChars = listOf(TiFctnCode.Enter.toChar()) // TODO: Add character codes for navigation keys
+      val inputEndingChars = listOf(TiPlainCode.Enter.toChar()) // TODO: Add character codes for navigation keys
       acceptUserInputCtx.addCall(inputLineNumber, prompt)
       machine.printTokens(listOf(StringConstant(acceptUserInputCtx.prompt), PrintSeparator.Adjacent))
       val input = StringBuilder().apply {
