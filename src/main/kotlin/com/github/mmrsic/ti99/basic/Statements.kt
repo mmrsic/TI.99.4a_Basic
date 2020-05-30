@@ -6,6 +6,7 @@ import com.github.mmrsic.ti99.basic.expr.NumericExpr
 import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.Variable
+import com.github.mmrsic.ti99.hw.isCorrectLineNumber
 import kotlin.math.roundToInt
 
 /**
@@ -23,7 +24,7 @@ interface SkippedOnContinue
 /**
  * A [Statement] that may depend on at least one line number of a program
  */
-interface LineNumberDependentStatement : Statement {
+interface LineNumberDependentStatement : Statement, TiBasicModule.ExecutedOnStore {
 
    /** Change the line numbers of this [Statement] for a given mapping from old to new line numbers. */
    fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>)
@@ -182,6 +183,10 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
 
    private var lineNumber: Int = originalLineNum
 
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      if (!isCorrectLineNumber(this.lineNumber)) throw BadLineNumber()
+   }
+
    override fun listText(): String = "GO TO $lineNumber" // TODO: Implement GOTO variant
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       val interpreter =
@@ -199,6 +204,10 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
  * numeric expression.
  */
 class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int>) : LineNumberDependentStatement {
+
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      if (lineNumberList.any { !isCorrectLineNumber(it) }) throw BadLineNumber()
+   }
 
    override fun listText() = "ON ${numericExpr.listText()} GOTO $lineNumberList"
 
@@ -220,6 +229,10 @@ class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int
  * @param subprogramLineNumber program line number where to start the subroutine
  */
 class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStatement {
+
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      if (!isCorrectLineNumber(subprogramLineNumber)) throw BadLineNumber()
+   }
 
    override fun listText() = "GOSUB $subprogramLineNumber"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
@@ -247,6 +260,10 @@ class OnGosubStatement(val numericExpr: NumericExpr, val lineNumberList: List<In
 
    init {
       if (lineNumberList.isEmpty()) throw IllegalArgumentException("Line number must not be empty")
+   }
+
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      if (lineNumberList.any { !isCorrectLineNumber(it) }) throw BadLineNumber()
    }
 
    override fun listText() = "ON ${numericExpr.listText()} GOSUB $lineNumberList"
@@ -279,6 +296,10 @@ class ReturnStatement : Statement {
 }
 
 class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumberDependentStatement {
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      if (lineNumberList != null && lineNumberList.any { !isCorrectLineNumber(it) }) throw BadLineNumber()
+   }
+
    override fun listText() = if (lineNumberList != null) "UNBREAK $lineNumberList" else "UNBREAK"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       programLineNumber ?: throw IllegalArgumentException("Unbreak statement may not be used without program")
@@ -352,6 +373,10 @@ class NextStatement(val ctrlVarName: String) : Statement {
  */
 class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line2: Int? = null) :
    LineNumberDependentStatement {
+
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      if (listOf(line1, line2).any { it != null && !isCorrectLineNumber(it) }) throw BadLineNumber()
+   }
 
    override fun listText(): String = when {
       line2 != null -> "IF ${numericExpr.listText()} THEN $line1 ELSE $line2"
@@ -487,6 +512,10 @@ class ReadStatement(val variableList: List<Variable>) : Statement {
  * line number in the program, the program will stop running and the message "DATA ERROR IN xx" will be displayed.
  */
 class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStatement {
+
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) {
+      if (lineNumber != null && !isCorrectLineNumber(lineNumber)) throw BadLineNumber()
+   }
 
    override fun listText() = if (lineNumber != null) "RESTORE $lineNumber" else "RESTORE"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
