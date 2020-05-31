@@ -85,4 +85,124 @@ class ErrorMessagesTest {
       )
    }
 
+   @Test
+   fun testBadNameOnVariableWithTooManyCharacters() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         ABCDEFGHIJKLMNO$="HELLO"
+         ABCDEFGHIJKLMN$="HELLO"
+         ABCDEFGHIJKLMNO=13
+         ABCDEFGHIJKLMNOP=10
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            12 to "  TI BASIC READY",
+            14 to " >ABCDEFGHIJKLMNO$=\"HELLO\"",
+            15 to "  * BAD NAME",
+            17 to " >ABCDEFGHIJKLMN$=\"HELLO\"",
+            19 to " >ABCDEFGHIJKLMNO=13",
+            21 to " >ABCDEFGHIJKLMNOP=10",
+            22 to "  * BAD NAME",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   @Test
+   fun testCantContinue() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         CONTINUE
+         100 PRINT "PROGRAM RUN TEST"
+         CONTINUE
+         RUN
+         CONTINUE
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            6 to "  TI BASIC READY",
+            8 to " >CONTINUE",
+            9 to "  * CAN'T CONTINUE",
+            11 to " >100 PRINT \"PROGRAM RUN TEST\"",
+            13 to " >CONTINUE",
+            14 to "  * CAN'T CONTINUE",
+            16 to " >RUN",
+            17 to "  PROGRAM RUN TEST",
+            19 to "  ** DONE **",
+            21 to " >CONTINUE",
+            22 to "  * CAN'T CONTINUE",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   @Test
+   fun testCantDoThatWhenStatementIsUsedAsCommand() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         OPTION BASE 1
+         DATA 18,0
+         DEF PI=3.1428
+         FOR I=1 TO 10
+         NEXT I
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            2 to "  TI BASIC READY",
+            4 to " >OPTION BASE 1",
+            6 to "  * CAN'T DO THAT",
+            8 to " >DATA 18,0",
+            10 to "  * CAN'T DO THAT",
+            12 to " >DEF PI=3.1428",
+            14 to "  * CAN'T DO THAT",
+            16 to " >FOR I=1 TO 10",
+            18 to "  * CAN'T DO THAT",
+            20 to " >NEXT I",
+            22 to "  * CAN'T DO THAT",
+            24 to " >"
+         ), machine.screen
+      )
+      interpreter.interpretAll(
+         """
+         100 REM
+         CALL CLEAR
+         GOTO 100
+         GOSUB 100
+         IF 0=0 THEN 100
+         INPUT A$
+         ON X GOTO 100
+         RETURN
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            2 to "  * CAN'T DO THAT",
+            4 to " >GOSUB 100",
+            6 to "  * CAN'T DO THAT",
+            8 to " >IF 0=0 THEN 100",
+            10 to "  * CAN'T DO THAT",
+            12 to " >INPUT A$",
+            14 to "  * CAN'T DO THAT",
+            16 to " >ON X GOTO 100",
+            18 to "  * CAN'T DO THAT",
+            20 to " >RETURN",
+            22 to "  * CAN'T DO THAT",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }

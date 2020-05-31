@@ -167,6 +167,7 @@ class OptionBaseStatement(val lowerLimit: Int) : Statement {
 
    override fun listText() = "OPTION BASE $lowerLimit"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (programLineNumber == null) throw CantDoThat()
       machine.setArrayLowerLimit(lowerLimit)
    }
 }
@@ -189,8 +190,7 @@ class GoToStatement(originalLineNum: Int) : LineNumberDependentStatement {
 
    override fun listText(): String = "GO TO $lineNumber" // TODO: Implement GOTO variant
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      val interpreter =
-         machine.programInterpreter ?: throw IllegalArgumentException("GO TO must not be used without program")
+      val interpreter = machine.programInterpreter ?: throw CantDoThat()
       interpreter.jumpTo(lineNumber)
    }
 
@@ -212,8 +212,7 @@ class OnGotoStatement(val numericExpr: NumericExpr, val lineNumberList: List<Int
    override fun listText() = "ON ${numericExpr.listText()} GOTO $lineNumberList"
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      val interpreter =
-         machine.programInterpreter ?: throw IllegalArgumentException("ON GOTO must not be used without program")
+      val interpreter = machine.programInterpreter ?: throw CantDoThat()
       val lineNumberIdx = numericExpr.value().toNative().roundToInt()
       if (lineNumberIdx !in 1..lineNumberList.size) throw BadValue()
       interpreter.jumpTo(lineNumberList[lineNumberIdx - 1])
@@ -236,8 +235,7 @@ class GosubStatement(val subprogramLineNumber: Int) : LineNumberDependentStateme
 
    override fun listText() = "GOSUB $subprogramLineNumber"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      val interpreter = machine.programInterpreter
-         ?: throw IllegalArgumentException("GOSUB can be used only within a program")
+      val interpreter = machine.programInterpreter ?: throw CantDoThat()
       interpreter.gosub(subprogramLineNumber, programLineNumber!!)
    }
 
@@ -289,8 +287,7 @@ class ReturnStatement : Statement {
 
    override fun listText() = "RETURN"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      val interpreter = machine.programInterpreter
-         ?: throw IllegalArgumentException("RETURN can be used only within a program")
+      val interpreter = machine.programInterpreter ?: throw CantDoThat()
       interpreter.returnFromGosub()
    }
 }
@@ -327,21 +324,21 @@ class ForToStepStatement(val initializer: LetNumberStatement, val limit: Numeric
    Statement {
 
    override fun listText(): String {
+      val forToPart = "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
       return when (increment) {
-         null -> "FOR ${initializer.listText().trim()} TO ${limit.listText()}"
-         else -> "FOR ${initializer.listText().trim()} TO ${limit.listText()} STEP ${increment.listText()}"
+         null -> forToPart
+         else -> "$forToPart STEP ${increment.listText()}"
       }
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      val pln = programLineNumber ?: throw IllegalArgumentException("$this can be used as a statement only")
-      val interpreter = machine.programInterpreter
-         ?: throw IllegalArgumentException("Machine program interpreter must be present for $this")
+      if (programLineNumber == null) throw CantDoThat()
+      val interpreter = machine.programInterpreter ?: throw CantDoThat()
       // Limit and increment must be evaluated before the initializer is executed!
       val limitConst = limit.value()
       val incrementConst = increment?.value()
       initializer.execute(machine, programLineNumber)
-      interpreter.beginForLoop(pln, initializer.varName, limitConst, incrementConst)
+      interpreter.beginForLoop(programLineNumber, initializer.varName, limitConst, incrementConst)
    }
 
    override fun requiresEmptyLineAfterExecution() = false
@@ -356,8 +353,7 @@ class NextStatement(val ctrlVarName: String) : Statement {
 
    override fun listText() = "NEXT $ctrlVarName"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      val interpreter =
-         machine.programInterpreter ?: throw IllegalArgumentException("Cannot use $this without program")
+      val interpreter = machine.programInterpreter ?: throw CantDoThat()
       interpreter.nextForLoopStep(ctrlVarName)
    }
 
@@ -385,9 +381,7 @@ class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       val interpreter = machine.programInterpreter
-      if (programLineNumber == null || interpreter == null) {
-         throw IllegalArgumentException("Cannot use IF-THEN-ELSE without program")
-      }
+      if (programLineNumber == null || interpreter == null) throw CantDoThat()
       val currVal = numericExpr.value()
       val isTrue = currVal.toNative() != 0.0
       if (isTrue) interpreter.jumpTo(line1)
@@ -413,7 +407,7 @@ class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Variable
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      if (programLineNumber == null) throw IllegalArgumentException("Input statement must be used within program")
+      if (programLineNumber == null) throw CantDoThat()
       if (promptExpr != null) {
          machine.acceptUserInput(varNameList, programLineNumber, promptExpr.value().toNative())
       } else {
@@ -480,6 +474,7 @@ class DataStatement(val dataList: List<Constant>) : Statement, TiBasicModule.Exe
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (programLineNumber == null) throw CantDoThat()
       // Nothing to do: Everything is done on store
    }
 }
@@ -561,6 +556,7 @@ class DefineFunctionStatement(private val functionName: String, private val para
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (programLineNumber == null) throw CantDoThat()
       if (machine.hasUserFunctionParameterNameConflict(functionName)) throw NameConflict()
    }
 }
