@@ -267,4 +267,30 @@ class ErrorMessagesTest {
       )
    }
 
+   @Test
+   fun testCantDoThatWhenNoProgramIsPresent() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         LIST
+         RUN
+         SAVE "CS1"
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            10 to "  TI BASIC READY",
+            12 to " >LIST",
+            14 to "  * CAN'T DO THAT",
+            16 to " >RUN",
+            18 to "  * CAN'T DO THAT",
+            20 to " >SAVE \"CS1\"",
+            22 to "  * CAN'T DO THAT",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }

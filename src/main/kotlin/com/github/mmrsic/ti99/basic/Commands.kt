@@ -234,7 +234,8 @@ class SaveCommand(private val deviceAndFile: StringExpr) : Command {
    override val name = "SAVE"
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      TODO("not implemented")
+      val program = machine.program ?: throw CantDoThat()
+      TODO("Not yet implemented: Save program $program")
    }
 }
 
