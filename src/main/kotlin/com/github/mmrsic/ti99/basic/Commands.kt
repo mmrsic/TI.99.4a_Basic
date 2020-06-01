@@ -73,6 +73,21 @@ class ListCommand(val start: Int? = null, val end: Int? = null, val isRange: Boo
    override fun requiresEmptyLineAfterExecution() = false
 }
 
+/**
+ * Existing program lines may be changed by entering Edit Mode.
+ */
+class EditCommand(val lineNumber: Int) : Command {
+
+   override val name = "EDIT"
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      if (programLineNumber != null) throw  CantDoThat()
+      val program = machine.program ?: throw CantDoThat()
+      if (!program.hasLineNumber(lineNumber)) throw BadLineNumber()
+      TODO("Not yet implemented: EDIT program line")
+   }
+}
+
 class RunCommand(val line: Int?) : Command {
    override val name: String = "RUN"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.runProgram(line)
@@ -99,6 +114,14 @@ class RemoveProgramLineCommand(private val lineNumber: Int) : Command {
    override val name = "-- IMPLICIT REMOVAL --"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.removeProgramLine(lineNumber)
    override fun requiresEmptyLineAfterExecution() = false
+}
+
+/** A dummy command executed on storing  */
+class CantDoThatProgramLineCommand : TiBasicModule.ExecutedOnStore, Command {
+
+   override fun onStore(lineNumber: Int, machine: TiBasicModule) = throw CantDoThat()
+   override val name = "-- CAN'T DO THAT ERROR --"
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) = throw CantDoThat()
 }
 
 class NumberCommand(val initialLine: Int = 100, val increment: Int = 10) : Command {
@@ -202,16 +225,24 @@ class UntraceCommand : Command, Statement {
    }
 }
 
+/**
+ * The SAVE command allows you to copy the current program in the computer's memory onto an accessory device. By using
+ * [OldCommand], you can later put the program into memory for running or editing.
+ */
 class SaveCommand(private val deviceAndFile: StringExpr) : Command {
-   override val name: String
-      get() = TODO("Not yet implemented")
+
+   override val name = "SAVE"
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       TODO("not implemented")
    }
 }
 
+/**
+ * The OLD command copies a previously saved program into the computer's memory. You can then run, list, or change the program.
+ */
 class OldCommand(private val deviceAndFile: StringExpr) : Command {
+
    override val name: String
       get() = TODO("Not yet implemented")
 

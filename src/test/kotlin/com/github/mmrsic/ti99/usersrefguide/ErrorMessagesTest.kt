@@ -205,4 +205,66 @@ class ErrorMessagesTest {
       )
    }
 
+   @Test
+   fun testCantDoThatWhenCommandIsUsedAsStatement() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         1 BYE
+         2 NEW
+         3 OLD "CS1"
+         100 REM
+         4 LIST
+         5 RUN
+         6 SAVE "CS1"
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            1 to "  * CAN'T DO THAT",
+            3 to " >2 NEW",
+            5 to "  * CAN'T DO THAT",
+            7 to " >3 OLD \"CS1\"",
+            9 to "  * CAN'T DO THAT",
+            11 to " >100 REM",
+            12 to " >4 LIST",
+            14 to "  * CAN'T DO THAT",
+            16 to " >5 RUN",
+            18 to "  * CAN'T DO THAT",
+            20 to " >6 SAVE \"CS1\"",
+            22 to "  * CAN'T DO THAT",
+            24 to " >"
+         ), machine.screen
+      )
+
+      interpreter.interpretAll(
+         """
+         NEW
+         100 BREAK
+         RUN
+         1 CONTINUE
+         1 EDIT 100
+         1 NUMBER 1000
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            6 to "  TI BASIC READY",
+            8 to " >100 BREAK",
+            9 to " >RUN",
+            11 to "  * BREAKPOINT AT 100",
+            12 to " >1 CONTINUE",
+            14 to "  * CAN'T DO THAT",
+            16 to " >1 EDIT 100",
+            18 to "  * CAN'T DO THAT",
+            20 to " >1 NUMBER 1000",
+            22 to "  * CAN'T DO THAT",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }

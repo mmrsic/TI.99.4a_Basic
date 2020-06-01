@@ -66,6 +66,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val delete by token("DELETE\\b")
    private val dim by token("DIM")
    private val display by token("DISPLAY")
+   private val edit by token("EDIT\\b")
    private val elseToken by token("ELSE")
    private val end by token("\\bEND\\b")
    private val eof by token("\\bEOF\\b")
@@ -257,6 +258,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val listLineCmd by skip(list) and positiveIntConst use { ListCommand(this) }
    private val listCmd by list asJust ListCommand()
    private val listDevice by skip(list) and stringConst use { ListCommand(device = this) }
+   private val editCmd by skip(edit) and positiveIntConst use { EditCommand(this) }
    private val numberCmd by skip(number) and optional(positiveIntConst) and optional(skip(comma) and positiveIntConst) use {
       when {
          t1 == null && t2 == null -> NumberCommand()
@@ -469,7 +471,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    // PARSER HIERARCHY
 
    private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or breakCmd or continueCmd or unbreakCmd or
-      traceCmd or untraceCmd or listDevice or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd or
+      traceCmd or untraceCmd or listDevice or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd or editCmd or
       saveCmd or oldCmd or deleteCmd
    private val stmtParser by assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
       callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or inputStmt or
@@ -479,8 +481,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
    private val programLineParser by positiveIntConst and stmtParser use { StoreProgramLineCommand(ProgramLine(t1, listOf(t2))) }
    private val removeProgramLineParser by positiveIntConst use { RemoveProgramLineCommand(this) }
+   private val forbiddenAsStatementParser by byeCmd or continueCmd or editCmd or listCmd or newCmd or numberCmd or oldCmd or
+      runCmd or saveCmd
+   private val cantDoThatProgramLineParser by positiveInt and forbiddenAsStatementParser asJust CantDoThatProgramLineCommand()
 
-   override val rootParser by cmdParser or stmtParser or programLineParser or removeProgramLineParser
+   override val rootParser by cmdParser or stmtParser or cantDoThatProgramLineParser or programLineParser or removeProgramLineParser
 
    // SPECIAL PARSERS
 
