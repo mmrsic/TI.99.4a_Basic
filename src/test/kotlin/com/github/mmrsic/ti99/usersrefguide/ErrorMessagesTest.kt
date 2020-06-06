@@ -293,4 +293,26 @@ class ErrorMessagesTest {
       )
    }
 
+   @Test
+   fun testIncorrectStatementForVariables() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(listOf("ABC A", "A\$A", "N 257", "PRINT \""), machine)
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            10 to "  TI BASIC READY",
+            12 to " >ABC A",
+            13 to "  * INCORRECT STATEMENT",
+            15 to " >A\$A",
+            16 to "  * INCORRECT STATEMENT",
+            18 to " >N 257",
+            19 to "  * INCORRECT STATEMENT",
+            21 to " >PRINT \"",
+            22 to "  * INCORRECT STATEMENT",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }
