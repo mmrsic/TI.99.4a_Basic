@@ -96,10 +96,11 @@ class TiBasicProgram : Program() {
 
    /** Find the minimum line satisfying a given predicate for its statements. */
    fun findLineWithStatement(minLine: Int, predicate: (Statement) -> Boolean): Int? {
-      var candidate = lines[minLine]
+      var candidate = lines[minLine] ?: lines[nextLineNumber(minLine)]
       while (candidate != null) {
          if (candidate.statements.find(predicate) != null) return candidate.lineNumber
-         candidate = lines[nextLineNumber(candidate.lineNumber)]
+         val nextCandidateLineNum = nextLineNumber(candidate.lineNumber) ?: return null
+         candidate = lines[nextCandidateLineNum]
       }
       return null
    }

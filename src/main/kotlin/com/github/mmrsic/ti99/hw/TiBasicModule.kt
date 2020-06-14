@@ -795,7 +795,7 @@ class TiBasicModule : TiModule {
    private fun interpretProgram(interpreter: TiBasicProgramInterpreter, startLine: Int?) {
       try {
          val programToExecute = program ?: throw CantDoThat()
-         generateSymbolTable(programToExecute)
+         ProgramRunPreScanner(programToExecute).executeScan()
          interpreter.interpretAll(startLine)
          screen.scroll()
          screen.print("** DONE **")
@@ -811,13 +811,6 @@ class TiBasicModule : TiModule {
          e.displayOn(screen)
       }
    }
-
-   private fun generateSymbolTable(program: TiBasicProgram) {
-      program.findLineWithStatement(0) { stmt -> false }?.also { badLineNumber ->
-         throw TiBasicProgramException(badLineNumber, BadValue())
-      }
-   }
-
 }
 
 /** Check whether a given line number is in the allowed range. */
@@ -949,4 +942,34 @@ class CharacterPattern(val hex: String) {
          }
       }
    }
+}
+
+/**
+ * Instances of this class are able to execute a pre RUN scan of a given [TiBasicProgram].
+ */
+private class ProgramRunPreScanner(val program: TiBasicProgram) {
+
+   fun executeScan() {
+      checkOptionBase()
+   }
+
+   // HELPERS //
+
+   /** Check whether the OPTION BASE statement is present at most once in the [program]. */
+   private fun checkOptionBase() {
+      val firstOptionBaseLine = program.findLineWithStatement(0) { stmt -> stmt is OptionBaseStatement } ?: return
+      program.findLineWithStatement(0) { stmt -> stmt is DimStatement }?.let { firstDimensionLine ->
+         if (firstDimensionLine < firstOptionBaseLine) throwException(firstOptionBaseLine, CantDoThat())
+      }
+      val minLineForSecondStmt = program.nextLineNumber(firstOptionBaseLine)
+      if (minLineForSecondStmt != null) {
+         val secondOptionBaseLine = program.findLineWithStatement(minLineForSecondStmt) { stmt -> stmt is OptionBaseStatement }
+         if (secondOptionBaseLine != null)
+            throw TiBasicProgramException(secondOptionBaseLine, CantDoThat())
+      }
+   }
+
+   private fun throwException(lineNumber: Int, exception: TiBasicError): Nothing =
+      throw TiBasicProgramException(lineNumber, exception)
+
 }
