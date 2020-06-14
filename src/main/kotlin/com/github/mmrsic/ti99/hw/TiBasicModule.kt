@@ -110,22 +110,19 @@ class TiBasicModule : TiModule {
    }
 
    /** Either [setStringVariable] or [setNumericVariable] depending on the variable name. */
-   fun setVariable(variableName: String, value: String) {
-      if (variableName.last() == '$') {
-         setStringVariable(variableName, StringConstant(value))
-      } else {
-         setNumericVariable(variableName, NumericConstant(value.toDouble()))
+   fun setVariable(variableName: String, value: String = if (variableName.last() == '$') "" else "0") {
+      when {
+         variableName.last() == '$' -> setStringVariable(variableName, StringConstant(value))
+         else -> setNumericVariable(variableName, NumericConstant(value.toDouble()))
       }
    }
 
    /** Set a given [Variable] to a given [Constant] value. */
    fun setVariable(variable: Variable, value: Constant) {
-      if (variable.isNumeric()) {
-         setNumericVariable(variable.name, value as NumericConstant)
-      } else if (variable.isString()) {
-         setStringVariable(variable.name, value as StringConstant)
-      } else {
-         throw IllegalArgumentException("Cannot set $variable to $value")
+      when {
+         variable.isNumeric() -> setNumericVariable(variable.name, value as NumericConstant)
+         variable.isString() -> setStringVariable(variable.name, value as StringConstant)
+         else -> throw IllegalArgumentException("Cannot set $variable to $value")
       }
    }
 
@@ -156,6 +153,12 @@ class TiBasicModule : TiModule {
       stringVariables[name] = result
       println("$name=$result")
       return result
+   }
+
+   /** Change the value of a string array variable of this module. */
+   fun setStringArrayVariable(name: String, indices: List<NumericConstant>, newValue: StringExpr) {
+      val nn = getArrayVariableName(name, indices)
+      setStringVariable(nn, newValue)
    }
 
    /** All the string variable names and their string constant values currently known by this instance. */
@@ -791,6 +794,8 @@ class TiBasicModule : TiModule {
 
    private fun interpretProgram(interpreter: TiBasicProgramInterpreter, startLine: Int?) {
       try {
+         val programToExecute = program ?: throw CantDoThat()
+         generateSymbolTable(programToExecute)
          interpreter.interpretAll(startLine)
          screen.scroll()
          screen.print("** DONE **")
@@ -806,6 +811,13 @@ class TiBasicModule : TiModule {
          e.displayOn(screen)
       }
    }
+
+   private fun generateSymbolTable(program: TiBasicProgram) {
+      program.findLineWithStatement(0) { stmt -> false }?.also { badLineNumber ->
+         throw TiBasicProgramException(badLineNumber, BadValue())
+      }
+   }
+
 }
 
 /** Check whether a given line number is in the allowed range. */

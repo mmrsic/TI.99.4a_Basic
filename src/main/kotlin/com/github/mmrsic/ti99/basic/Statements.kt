@@ -2,7 +2,9 @@ package com.github.mmrsic.ti99.basic
 
 import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.Expression
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.NumericExpr
+import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.Variable
@@ -438,7 +440,17 @@ class DimStatement(val arrayDeclarations: List<ArrayDimensions>) : Statement {
    }
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      // Nothing to do
+      for (arrayDeclaration in arrayDeclarations) {
+         val indices = arrayDeclaration.indices.map { NumericConstant(it) }
+         try {
+            when {
+               arrayDeclaration.isString -> machine.setStringArrayVariable(arrayDeclaration.name, indices, StringConstant.EMPTY)
+               else -> machine.setNumericArrayVariable(arrayDeclaration.name, indices, NumericConstant.ZERO)
+            }
+         } catch (e: BadSubscript) {
+            throw BadValue()
+         }
+      }
    }
 
    /** Declaration of an TI Basic array with one to three dimensions. */
@@ -450,6 +462,16 @@ class DimStatement(val arrayDeclarations: List<ArrayDimensions>) : Statement {
             if (thirdDim != null) append(thirdDim)
             append(')')
          }.toString()
+      }
+
+      /** Whether this instance represents a string variable. */
+      val isString: Boolean = name.last() == '$'
+
+      /** All the (at least one and up to three) dimension indices of this instance. */
+      val indices: List<Int> = when {
+         secondDim == null -> listOf(firstDim)
+         thirdDim == null -> listOf(firstDim, secondDim)
+         else -> listOf(firstDim, secondDim, thirdDim)
       }
    }
 }
