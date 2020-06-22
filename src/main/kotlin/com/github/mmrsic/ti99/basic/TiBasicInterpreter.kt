@@ -139,6 +139,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
 
    /** Start the next for-loop step, or end the loop. */
    fun nextForLoopStep(varName: String) {
+      if (forLoopStack.isEmpty()) throw ForNextError()
       val loop = forLoopStack.peek()
       val nestedLoopError = forLoopError[loop]
       if (nestedLoopError != null) throw nestedLoopError

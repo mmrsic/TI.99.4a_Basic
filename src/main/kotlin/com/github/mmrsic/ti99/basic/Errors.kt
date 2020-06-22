@@ -80,6 +80,7 @@ class CantContinue : TiBasicError("CAN'T CONTINUE") {
 class CantDoThat : TiBasicError("CAN'T DO THAT")
 class DataError : TiBasicError("DATA ERROR")
 class FileError : TiBasicError("FILE ERROR")
+class ForNextError : TiBasicError("FOR-NEXT ERROR")
 class IncorrectStatement : TiBasicError("INCORRECT STATEMENT") {
    override val scrollBeforeDisplay = false
 }

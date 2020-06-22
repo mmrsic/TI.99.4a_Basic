@@ -951,6 +951,7 @@ private class ProgramRunPreScanner(val program: TiBasicProgram) {
 
    fun executeScan() {
       checkOptionBase()
+      checkForNextLoop()
    }
 
    // HELPERS //
@@ -971,5 +972,16 @@ private class ProgramRunPreScanner(val program: TiBasicProgram) {
 
    private fun throwException(lineNumber: Int, exception: TiBasicError): Nothing =
       throw TiBasicProgramException(lineNumber, exception)
+
+   private fun checkForNextLoop() {
+      var minLine: Int? = 0
+      do {
+         val loopStartLine = program.findLineWithStatement(minLine!!) { stmt -> stmt is ForToStepStatement }
+         if (loopStartLine != null) {
+            val loopEndLine = program.findLineWithStatement(minLine) { stmt -> stmt is NextStatement } ?: throw ForNextError()
+            minLine = program.nextLineNumber(loopEndLine)
+         }
+      } while (minLine != null && minLine > 0 && loopStartLine != null)
+   }
 
 }

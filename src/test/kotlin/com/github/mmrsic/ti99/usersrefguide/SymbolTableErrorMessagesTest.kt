@@ -84,4 +84,36 @@ class SymbolTableErrorMessagesTest {
       )
    }
 
+   @Test
+   fun testForNextError() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         1 FOR I=1 TO 2
+         RUN
+         2 NEXT I
+         RUN
+         3 NEXT I
+         RUN
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            7 to "  TI BASIC READY",
+            9 to " >1 FOR I=1 TO 2",
+            10 to " >RUN",
+            12 to "  * FOR-NEXT ERROR",
+            14 to " >2 NEXT I",
+            15 to " >RUN",
+            17 to "  ** DONE **",
+            19 to " >3 NEXT I",
+            20 to " >RUN",
+            22 to "  * FOR-NEXT ERROR IN 3",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }
