@@ -189,12 +189,11 @@ class VariablesTest {
       )
    }
 
-   @Ignore("Not yet implemented")
    @Test
    fun testListIsNotAllowedAsNumericVariable_programPresent() {
       val machine = TiBasicModule()
       val interpreter = TiBasicCommandLineInterpreter(machine)
-      interpreter.interpret("10 A=0", machine)
+      interpreter.interpret("10 REM TEST LIST", machine)
       interpreter.interpret("LIST=1", machine)
 
       TestHelperScreen.assertPrintContents(
