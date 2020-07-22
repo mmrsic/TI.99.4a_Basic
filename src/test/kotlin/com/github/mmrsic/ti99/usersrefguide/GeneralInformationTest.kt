@@ -69,7 +69,6 @@ class GeneralInformationTest {
       TestHelperScreen.assertCursorAt(24, 3, machine.screen)
    }
 
-   @Ignore("Not yet implemented")
    @Test
    fun testSpaceWithinReservedWord() {
       val machine = TiBasicModule()
@@ -94,7 +93,6 @@ class GeneralInformationTest {
       TestHelperScreen.assertCursorAt(24, 3, machine.screen)
    }
 
-   @Ignore("Not yet implemented")
    @Test
    fun testSpaceWithinNumericConstant() {
       val machine = TiBasicModule()
@@ -119,18 +117,17 @@ class GeneralInformationTest {
       TestHelperScreen.assertCursorAt(24, 3, machine.screen)
    }
 
-   @Ignore("Not yet implemented")
    @Test
    fun testSpaceWithinVariableName() {
       val machine = TiBasicModule()
       val interpreter = TiBasicCommandLineInterpreter(machine)
 
-      interpreter.interpret("120 LET CO ST=24.95", machine)
+      interpreter.interpret("130 LET CO ST=24.95", machine)
 
       TestHelperScreen.assertPrintContents(
          mapOf(
             19 to "  TI BASIC READY",
-            21 to " >130 LET A=1 00",
+            21 to " >130 LET CO ST=24.95",
             22 to "  * INCORRECT STATEMENT",
             24 to " >"
          ), machine.screen
