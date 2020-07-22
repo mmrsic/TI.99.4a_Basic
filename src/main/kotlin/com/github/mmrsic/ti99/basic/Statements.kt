@@ -163,10 +163,6 @@ class RemarkStatement(val text: String) : Statement {
  */
 class OptionBaseStatement(val lowerLimit: Int) : Statement {
 
-   init {
-      if (lowerLimit !in 0..1) throw IncorrectStatement()
-   }
-
    override fun listText() = "OPTION BASE $lowerLimit"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       if (programLineNumber == null) throw CantDoThat()

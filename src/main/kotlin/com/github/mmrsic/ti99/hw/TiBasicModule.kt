@@ -958,7 +958,11 @@ private class ProgramRunPreScanner(val program: TiBasicProgram) {
 
    /** Check whether the OPTION BASE statement is present at most once in the [program]. */
    private fun checkOptionBase() {
-      val firstOptionBaseLine = program.findLineWithStatement(0) { stmt -> stmt is OptionBaseStatement } ?: return
+      val firstOptionBaseLine = program.findLineWithStatement(0) { stmt ->
+         val result = stmt is OptionBaseStatement
+         if (result && ((stmt as OptionBaseStatement).lowerLimit !in listOf(0, 1))) throw IncorrectStatement()
+         result
+      } ?: return
       program.findLineWithStatement(0) { stmt -> stmt is DimStatement }?.let { firstDimensionLine ->
          if (firstDimensionLine < firstOptionBaseLine) throwException(firstOptionBaseLine, CantDoThat())
       }
