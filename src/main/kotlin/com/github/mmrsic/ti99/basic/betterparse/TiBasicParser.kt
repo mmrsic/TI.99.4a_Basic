@@ -53,10 +53,10 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val breakToken by token("BREAK")
    private val bye by token("\\bBYE\\b")
    private val cos by token("\\bCOS\\b")
+   private val char by token("CALL\\s+CHAR")
    private val joyst by token("CALL\\s+JOYST\\b")
    private val key by token("CALL\\s+KEY\\b")
    private val call by token("CALL")
-   private val char by token("CHAR")
    private val clear by token("CLEAR")
    private val close by token("CLOSE")
    private val color by token("COLOR")
@@ -418,7 +418,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
    // CALL SUBPROGRAM PARSERS
 
-   private val callChar: Parser<Statement> by skip(call and char and openParenthesis) and numericExpr and skip(comma) and
+   private val callChar: Parser<Statement> by skip(char and openParenthesis) and numericExpr and skip(comma) and
       stringExpr and skip(closeParenthesis) use {
       CharSubprogram(t1, t2)
    }

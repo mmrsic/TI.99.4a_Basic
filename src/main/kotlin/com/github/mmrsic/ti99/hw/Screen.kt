@@ -87,7 +87,8 @@ abstract class Screen(getCharPattern: (Int) -> CharacterPattern, defaultCharColo
 /**
  * TI Basic's representation of the [Screen].
  */
-class TiBasicScreen(getCharPattern: (Int) -> CharacterPattern) : Screen(getCharPattern, DEFAULT_CHAR_COLORS, DEFAULT_BACKGROUND_COLOR) {
+class TiBasicScreen(getCharPattern: (Int) -> CharacterPattern) : Screen(getCharPattern, DEFAULT_CHAR_COLORS,
+   DEFAULT_BACKGROUND_COLOR) {
 
    companion object {
       const val NUM_ROWS = 24
@@ -180,14 +181,20 @@ class CodeScreen {
 
 }
 
+/**
+ * A TI Basic screen representation where the currently presented codes are interpreted as string characters.
+ */
 class StringScreen(private val codes: CodeScreen) {
 
+   /**
+    * A (part) of a screen row given by row and column indices (starting at 1), where trailing blanks are always left out of the
+    * result.
+    */
    fun withoutTrailingBlanks(row: Int, column: Int) = buildString {
       for (col in column..TiBasicScreen.NUM_COLUMNS) {
          append(toChar(codes.codeAt(row, col)))
       }
-      trimEnd()
-   }
+   }.trimEnd()
 
    /**
     * The non-empty string lines of the screen where all leading and trailing spaces are trimmed.

@@ -27,7 +27,7 @@ class TestHelperScreen {
 
       fun assertPatterns(validateCell: (Int, Int, String) -> Boolean, screen: Screen) {
          screen.patterns.forEachCellDo { row, col, actualPattern ->
-            assert(validateCell(row, col, actualPattern.hex)) { "Wrong pattern at row $row, column $col: $actualPattern" }
+            assert(validateCell(row, col, actualPattern.hex)) { "Wrong pattern at row $row, column $col: ${actualPattern.hex}" }
          }
       }
 
