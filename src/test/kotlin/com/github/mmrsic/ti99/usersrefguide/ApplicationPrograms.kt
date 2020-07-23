@@ -1,6 +1,5 @@
 package com.github.mmrsic.ti99.usersrefguide
 
-import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.Breakpoint
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.basic.TiBasicProgramException
