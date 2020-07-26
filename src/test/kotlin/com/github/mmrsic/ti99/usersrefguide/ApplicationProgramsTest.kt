@@ -14,6 +14,10 @@ import kotlin.test.assertEquals
  */
 class ApplicationProgramsTest {
 
+   /**
+    * This program places random color dots in random locations on the screen. In addition, a random sound is generated and
+    * played when the dot is placed on the screen.
+    */
    @Test
    fun testRandomColorDots() {
       val machine = TiBasicModule()
@@ -44,9 +48,13 @@ class ApplicationProgramsTest {
       }
       interpreter.interpret("RUN", machine)
 
-      assertEquals("  * BREAKPOINT AT 230", machine.screen.strings.withoutTrailingBlanks(23, 1))
+      assertEquals("  * BREAKPOINT AT $breakLineNumber", machine.screen.strings.withoutTrailingBlanks(23, 1))
    }
 
+   /**
+    * This program creates an inchworm that moves back and forth across the screen. When the inchworm reaches the edge of the
+    * screen, an "uh-oh" sounds, and the inchworm turns around to go in the opposite direction.
+    */
    @Test
    fun testInchworm() {
       val machine = TiBasicModule()
@@ -94,6 +102,55 @@ class ApplicationProgramsTest {
             24 to " >"
          ), machine.screen
       )
+   }
+
+   /**
+    * This program puts a marquee on the screen. The colors are produced randomly, and a tone sounds each time a color bar is
+    * placed on the screen.
+    */
+   @Test
+   fun testMarquee() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 REM MARQUEE
+         110 RANDOMIZE
+         120 CALL CLEAR
+         130 FOR S=2 TO 16
+         140 CALL COLOR(S,S,S)
+         150 NEXT S
+         160 CALL HCHAR(7,3,64,28)
+         170 CALL HCHAR(16,3,64,28)
+         180 CALL VCHAR(7,2,64,10)
+         190 CALL VCHAR(7,31,64,10)
+         200 FOR A=3 TO 30
+         210 GOSUB 310
+         220 CALL VCHAR(8,A,C,4)
+         230 CALL SOUND(-150,Y,2)
+         240 NEXT A
+         250 FOR A=30 TO 3 STEP -1
+         260 GOSUB 310
+         270 CALL VCHAR(12,A,C,4)
+         280 CALL SOUND(-150,Y,2)
+         290 NEXT A
+         300 GOTO 200
+         310 C=INT(120*RND)+40
+         320 N=INT(24*RND)+1
+         330 Y=220*(2^(1/12))^N
+         340 RETURN
+         """.trimIndent(), machine
+      )
+
+      var loops = 0
+      val breakLineNumber = 290
+      machine.addProgramLineHookAfterLine(breakLineNumber) {
+         loops++
+         if (loops == 2) throw TiBasicProgramException(breakLineNumber, Breakpoint())
+      }
+      interpreter.interpret("RUN", machine)
+
+      assertEquals("  * BREAKPOINT AT $breakLineNumber", machine.screen.strings.withoutTrailingBlanks(23, 1))
    }
 
 }
