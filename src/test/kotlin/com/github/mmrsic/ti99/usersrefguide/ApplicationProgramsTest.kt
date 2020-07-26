@@ -153,4 +153,79 @@ class ApplicationProgramsTest {
       assertEquals("  * BREAKPOINT AT $breakLineNumber", machine.screen.strings.withoutTrailingBlanks(23, 1))
    }
 
+   /**
+    * This program is a secret number game. The object is to guess the randomly chosen number between 1 and an upper limit you
+    * input. For each guess, you enter two numbers: a low and a high guess. The computer will tell you if the secret number is
+    * less than, greater than, or between the two numbers you enter. When you think you know the number, enter the same value
+    * for both the low and high guesses.
+    */
+   @Test
+   fun testSecretNumber() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 REM SECRET NUMBER
+         110 RANDOMIZE
+         120 MSG1$="SECRET NUMBER IS"
+         130 MSG2$="YOUR TWO NUMBERS"
+         140 CALL CLEAR
+         150 INPUT "ENTER LIMIT? ":LIMIT
+         160 SECRET=INT(LIMIT*RND)+1
+         170 CALL CLEAR
+         180 N=N+1
+         190 INPUT "LOW,HIGH GUESSES: ":LOW,HIGH
+         200 IF LOW<>HIGH THEN 220
+         210 IF SECRET=LOW THEN 300
+         220 IF SECRET<LOW THEN 260
+         230 IF SECRET>HIGH THEN 280
+         240 PRINT MSG1$&" BETWEEN":MSG2$
+         250 GOTO 180
+         260 PRINT MSG1$&" LESS THAN":MSG2$
+         270 GOTO 180
+         280 PRINT MSG1$&" LARGER THAN":MSG2$
+         290 GOTO 180
+         300 PRINT "YOU GUESSED THE SECRET"
+         310 PRINT "NUMBER IN ";N;"TRIES"
+         320 PRINT "WANT TO PLAY AGAIN?"
+         330 INPUT "ENTER Y OR N: ":A$
+         340 IF A$<>"Y" THEN 390
+         350 N=0
+         360 PRINT "WANT TO SET A NEW LIMIT?"
+         370 INPUT "ENTER Y OR N: ":B$
+         380 IF B$="Y" THEN 140 ELSE 160
+         390 END
+         """.trimIndent(), machine
+      )
+      machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+         override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+            val numberOfGuess = machine.getNumericVariableValue("N").toNative().toInt()
+            val secret = machine.getNumericVariableValue("SECRET").toNative().toInt()
+            return when (ctx.prompt) {
+               "ENTER LIMIT? " -> "100\r"
+               "LOW,HIGH GUESSES: " -> if (numberOfGuess == 1) "${secret - 1},${secret + 1}\r" else "$secret,$secret\r"
+               "ENTER Y OR N: " -> "N\r"
+               else -> error("Don't know how to answer prompt '${ctx.prompt}'")
+            }.asSequence()
+         }
+      })
+
+      interpreter.interpret("RUN", machine)
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            13 to "  LOW,HIGH GUESSES: 52,54",
+            14 to "  SECRET NUMBER IS BETWEEN",
+            15 to "  YOUR TWO NUMBERS",
+            16 to "  LOW,HIGH GUESSES: 53,53",
+            17 to "  YOU GUESSED THE SECRET",
+            18 to "  NUMBER IN  2 TRIES",
+            19 to "  WANT TO PLAY AGAIN?",
+            20 to "  ENTER Y OR N: N",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }
