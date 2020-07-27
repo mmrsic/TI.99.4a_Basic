@@ -13,7 +13,7 @@ enum class TiColor {
    }
 }
 
-fun TiColor.toCode(): Int = mapping().values.indexOf(this)
+fun TiColor.toCode(): Int = mapping().filterValues { it==this }.keys.first()
 fun TiColor.replaceTransparentBy(replacementColor: TiColor): TiColor {
    return if (this != TiColor.Transparent) this else replacementColor
 }

@@ -4,8 +4,11 @@ import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.Breakpoint
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.basic.TiBasicProgramException
+import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiColor
+import com.github.mmrsic.ti99.hw.toCode
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -226,6 +229,75 @@ class ApplicationProgramsTest {
             24 to " >"
          ), machine.screen
       )
+   }
+
+   /**
+    * This program moves a ball and bounces it off the edges of he screen. Each time the ball hits any side, a tone sounds,
+    * and the ball is deflected.
+    */
+   @Test
+   fun testBouncingBall() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 REM BOUNCING BALL
+         110 CALL CLEAR
+         120 CALL CHAR(96,"3C7EFFFFFFFF7E3C")
+         130 INPUT "BALL COLOR? ":C
+         140 INPUT "SCREEN COLOR? ":S
+         150 CALL CLEAR
+         160 CALL COLOR(9,C,S)
+         170 CALL COLOR(1,S,S)
+         180 X=16
+         190 Y=12
+         200 XDIR=1
+         210 YDIR=1
+         220 X=X+XDIR
+         230 Y=Y+YDIR
+         240 IF X<1 THEN 310
+         250 IF X>32 THEN 310
+         260 IF Y<1 THEN 360
+         270 IF Y>24 THEN 360
+         280 CALL CLEAR
+         290 CALL HCHAR(Y,X,96)
+         300 GOTO 220
+         310 XDIR=-XDIR
+         320 CALL SOUND(30,380,2)
+         330 IF Y<1 THEN 360
+         340 IF Y>24 THEN 360
+         350 GOTO 220
+         360 YDIR=-YDIR
+         370 CALL SOUND(30,380,2)
+         380 GOTO 220
+         """.trimIndent(), machine
+      )
+      machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+         override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+            return when (ctx.prompt) {
+               "BALL COLOR? " -> TiColor.MediumRed.toCode().toString() + "\r"
+               "SCREEN COLOR? " -> TiColor.Gray.toCode().toString() + "\r"
+               else -> error("Don't know what input to provide for prompt '${ctx.prompt}' at line ${ctx.programLine}")
+            }.asSequence()
+         }
+      })
+
+      val breakpointLine = 230
+      var steps = 1
+      machine.addProgramLineHookAfterLine(breakpointLine) {
+         if (steps == 100) throw TiBasicProgramException(breakpointLine, Breakpoint())
+         steps++
+      }
+      interpreter.interpret("RUN", machine)
+
+      assertEquals(mapOf(
+         "X" to NumericConstant(16.0),
+         "Y" to NumericConstant(12.0),
+         "XDIR" to NumericConstant(-1.0),
+         "YDIR" to NumericConstant(1.0),
+         "C" to NumericConstant(TiColor.MediumRed.toCode().toDouble()),
+         "S" to NumericConstant(TiColor.Gray.toCode().toDouble())
+      ).toSortedMap(), machine.getAllNumericVariableValues().toSortedMap(), "Numeric variable values")
    }
 
 }
