@@ -300,4 +300,100 @@ class ApplicationProgramsTest {
       ).toSortedMap(), machine.getAllNumericVariableValues().toSortedMap(), "Numeric variable values")
    }
 
+   @Test
+   fun testCheckbookBalance() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 REM CHECKBOOK BALANCE
+         110 CALL CLEAR
+         120 INPUT "BANK BALANCE? ":BALANCE
+         130 DISPLAY "ENTER EACH OUTSTANDING"
+         140 DISPLAY "CHECK NUMBER AND AMOUNT."
+         150 DISPLAY
+         160 DISPLAY "ENTER A ZERO FOR THE"
+         170 DISPLAY "CHECK NUMBER WHEN FINISHED."
+         180 DISPLAY
+         190 N=N+1
+         200 INPUT "CHECK NUMBER? ":CNUM(N)
+         210 IF CNUM(N)=0 THEN 250
+         220 INPUT "CHECK AMOUNT? ":CAMT(N)
+         230 CTOTAL=CTOTAL+CAMT(N)
+         240 GOTO 190
+         250 DISPLAY "ENTER EACH OUTSTANDING"
+         260 DISPLAY "DEPOSIT AMOUNT."
+         270 DISPLAY
+         280 DISPLAY "ENTER A ZERO AMOUNT"
+         290 DISPLAY "WHEN FINISHED."
+         300 DISPLAY
+         310 M=M+1
+         320 INPUT "DEPOSIT AMOUNT? ":DAMT(M)
+         330 IF DAMT(M)=0 THEN 360
+         340 DTOTAL=DTOTAL+DAMT(M)
+         350 GOTO 310
+         360 NBAL=BALANCE-CTOTAL+DTOTAL
+         370 DISPLAY "NEW BALANCE= ";NBAL
+         380 INPUT "CHECKBOOK BALANCE? ":CBAL
+         390 DISPLAY "CORRECTION= ";NBAL-CBAL
+         400 END
+         """.trimIndent(), machine
+      )
+      assertEquals((100..400 step 10).toList(), machine.program!!.listing.map { it.lineNumber }, "Program line numbers")
+
+      machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+         override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+            return (when (ctx.prompt) {
+               "BANK BALANCE? " -> "940.26"
+               "CHECK NUMBER? " -> when (ctx.programLineCalls) {
+                  1 -> "212"
+                  2 -> "213"
+                  3 -> "216"
+                  4 -> "218"
+                  5 -> "219"
+                  6 -> "220"
+                  else -> "0"
+               }
+               "CHECK AMOUNT? " -> when (ctx.programLineCalls) {
+                  1 -> "76.83"
+                  2 -> "122.87"
+                  3 -> "219.50"
+                  4 -> "397.31"
+                  5 -> "231.00"
+                  6 -> "138.25"
+                  else -> error("Unable to provide input at line ${ctx.programLine} (call no. ${ctx.programLineCalls})")
+               }
+               "DEPOSIT AMOUNT? " -> if (ctx.programLineCalls == 1) "450" else "0"
+               "CHECKBOOK BALANCE? " -> "209.15"
+               else -> error("Unable to provide input for prompt '${ctx.prompt}'")
+            } + '\r').asSequence()
+         }
+      })
+      interpreter.interpret("RUN", machine)
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            1 to "  CHECK NUMBER? 216",
+            2 to "  CHECK AMOUNT? 219.50",
+            3 to "  CHECK NUMBER? 218",
+            4 to "  CHECK AMOUNT? 397.31",
+            5 to "  CHECK NUMBER? 219",
+            6 to "  CHECK AMOUNT? 231.00",
+            7 to "  CHECK NUMBER? 220",
+            8 to "  CHECK AMOUNT? 138.25",
+            9 to "  CHECK NUMBER? 0",
+            10 to "  ENTER EACH OUTSTANDING",
+            11 to "  DEPOSIT AMOUNT.",
+            13 to "  ENTER A ZERO AMOUNT",
+            14 to "  WHEN FINISHED.",
+            16 to "  DEPOSIT AMOUNT? 450",
+            17 to "  DEPOSIT AMOUNT? 0",
+            18 to "  NEW BALANCE=  204.5",
+            19 to "  CHECKBOOK BALANCE? 209.15",
+            20 to "  CORRECTION= -4.65",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
 }
