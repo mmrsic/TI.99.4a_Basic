@@ -82,6 +82,7 @@ class CallHcharTest {
       }
       interpreter.interpret("RUN", machine)
 
+      println("\n >>> Checking colors after program end <<<")
       TestHelperScreen.assertAllColorsEqual(TiCharacterColor(TiColor.Black, TiColor.Cyan), machine.screen)
    }
 

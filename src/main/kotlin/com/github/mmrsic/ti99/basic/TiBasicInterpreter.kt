@@ -93,7 +93,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
    /** Interpret the current program of this interpreter's [machine], optionally starting at a given start line number. */
    fun interpretAll(startLineNum: Int? = null) {
       val program = machine.program ?: throw CantDoThat()
-      machine.screen.colors.backgroundColor = RUN_BACKGROUND_COLOR
+      machine.colors.background = RUN_BACKGROUND_COLOR
       println("Executing $program")
       var pc: Int? = startLineNum ?: program.firstLineNumber()
       while (pc != null && machine.programInterpreter != null) {
@@ -120,18 +120,24 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
       }
    }
 
+   // TODO: Use program line hooks instead of For-Loop-Stack?
+
    /** Begin a new for-loop. */
    fun beginForLoop(lineNumber: Int, varName: String, limit: NumericConstant, givenIncrement: NumericConstant?) {
       val program = machine.program ?: throw IllegalArgumentException("Can't begin for-loop without program")
+      if (forLoopStack.isNotEmpty() && forLoopStack.peek().forLineNumber == lineNumber) {
+         val removedElem = forLoopStack.pop()
+         println("Removed: $removedElem")
+      }
       val increment = givenIncrement ?: NumericConstant.ONE
       if (increment.isZero()) throw BadValue()
       val jumpLineNumber = program.nextLineNumber(lineNumber)
          ?: throw IllegalArgumentException("Line number has no successor: $lineNumber")
-      val loop = ForLoop(jumpLineNumber, varName, limit, increment)
+      val loop = ForLoop(lineNumber, jumpLineNumber, varName, limit, increment)
       forLoopStack.push(loop)
       println("Started: $loop")
       if (!loop.checkCtrlVariableValue(machine.getNumericVariableValue(varName))) {
-         jumpTo(program.findLineWithStatement(loop.startLineNumber) { stmt ->
+         jumpTo(program.findLineWithStatement(loop.forLineNumber) { stmt ->
             stmt is NextStatement && stmt.ctrlVarName == loop.varName
          }!!)
       }
@@ -143,11 +149,11 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
       val loop = forLoopStack.peek()
       val nestedLoopError = forLoopError[loop]
       if (nestedLoopError != null) throw nestedLoopError
-      if (loop.varName != varName) throw IllegalArgumentException("Expected: ${loop.varName}, got $varName")
+      if (loop.varName != varName) throw IllegalArgumentException("Expected loop variable '${loop.varName}', got $varName")
       val oldConst = machine.getNumericVariableValue(loop.varName)
       val newConst = machine.setNumericVariable(loop.varName, Addition(oldConst, loop.increment))
       if (loop.checkCtrlVariableValue(newConst)) {
-         jumpTo(loop.startLineNumber)
+         jumpTo(loop.jumpLineNumber)
       } else {
          val oldElem = forLoopStack.pop()
          forLoopStack.filter { stackElem -> stackElem.varName == oldElem.varName }.forEach {
@@ -289,8 +295,11 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
    private val gosubStack: Stack<Gosub> = Stack()
    private var jumpToLineNumber: Int? = null
 
+   /** A FOR-LOOP statement. */
    private data class ForLoop(
-      val startLineNumber: Int,
+      /** Start line of the loop, that is the program line number with the FOR statement*/
+      val forLineNumber: Int,
+      val jumpLineNumber: Int,
       val varName: String,
       val limit: NumericConstant,
       val increment: NumericConstant

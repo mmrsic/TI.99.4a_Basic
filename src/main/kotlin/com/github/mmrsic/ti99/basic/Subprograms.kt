@@ -13,7 +13,6 @@ import kotlin.math.roundToInt
 /**
  * The CHAR subprogram allows you to define special graphics characters. You can redefine the standard sets of
  * characters (ASCII codes 32-127) and the undefined characters, ASCII codes 128-159.
- * The CHAR subprogram is the inverse of the [CharpatSubprogram].
  *
  * @param code The char-code specifies the code of the character you wish to define and must be a numeric expression
  * with a value between 32 and 159, inclusive. If the character you are defining is in the range 128-159 and there is
@@ -320,7 +319,7 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
    override val name = "SCREEN"
    override fun listText() = "CALL $name(${colorCode.listText()})"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
-      machine.screen.colors.backgroundColor = TiColor.fromCode(colorCode.value().toNative().roundToInt())
+      machine.colors.background = TiColor.fromCode(colorCode.value().toNative().roundToInt())
    }
 }
 

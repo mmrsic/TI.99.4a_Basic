@@ -6,7 +6,7 @@ import com.github.mmrsic.ti99.basic.expr.toChar
 /**
  * Representation of the TI 99/4a's screen (graphics chip) where codes, strings, and patterns may be printed.
  */
-abstract class Screen(getCharPattern: (Int) -> CharacterPattern, defaultCharColors: TiCharacterColor, defaultBackgroundColor: TiColor) {
+abstract class Screen(getCharPattern: (Int) -> CharacterPattern, colorSets: TiBasicColors) {
 
    /** Screen representation with ASCII codes for all cells of 24 rows * 32 columns. */
    val codes: CodeScreen = CodeScreen()
@@ -18,7 +18,7 @@ abstract class Screen(getCharPattern: (Int) -> CharacterPattern, defaultCharColo
    val patterns: PatternScreen = PatternScreen(codes, getCharPattern)
 
    /** Screen representation where the [codes] are interpreted as rows of foreground/background pairs. */
-   val colors: ColorScreen = ColorScreen(codes, defaultCharColors, defaultBackgroundColor)
+   val colors: ColorScreen = ColorScreen(codes, colorSets)
 
    /** The optional cursor currently placed on this screen. */
    var cursor: Cursor? = null
@@ -87,8 +87,7 @@ abstract class Screen(getCharPattern: (Int) -> CharacterPattern, defaultCharColo
 /**
  * TI Basic's representation of the [Screen].
  */
-class TiBasicScreen(getCharPattern: (Int) -> CharacterPattern) : Screen(getCharPattern, DEFAULT_CHAR_COLORS,
-   DEFAULT_BACKGROUND_COLOR) {
+class TiBasicScreen(getCharPattern: (Int) -> CharacterPattern, colors: TiBasicColors) : Screen(getCharPattern, colors) {
 
    companion object {
       const val NUM_ROWS = 24
@@ -241,14 +240,7 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
 
 }
 
-class ColorScreen(private val codes: CodeScreen, val defaultCharColors: TiCharacterColor, val defaultBackgroundColor: TiColor) {
-   var backgroundColor: TiColor = defaultBackgroundColor
-   private val definedColors: MutableMap<Int, TiCharacterColor> = mutableMapOf()
-
-   internal fun setCharacterSet(charSetNumber: Int, charSetColors: TiCharacterColor) {
-      definedColors[charSetNumber] = charSetColors
-      println("New colors for character set #$charSetNumber: $charSetColors")
-   }
+class ColorScreen(private val codes: CodeScreen, private val colors: TiBasicColors) {
 
    fun forEachCellDo(execute: (Int, Int, TiCharacterColor) -> Unit) {
       for (row in 1..TiBasicScreen.NUM_ROWS) {
@@ -260,6 +252,11 @@ class ColorScreen(private val codes: CodeScreen, val defaultCharColors: TiCharac
    }
 
    // HELPERS //
+
+   private fun characterColorAt(row: Int, column: Int): TiCharacterColor {
+      val colorSet = colorSet(codes.codeAt(row, column))
+      return colors.getColor(TiColorSet.withNumber(colorSet)).replaceTransparentBy(colors.background)
+   }
 
    private fun colorSet(charCode: Int): Int {
       return when (charCode) {
@@ -281,17 +278,6 @@ class ColorScreen(private val codes: CodeScreen, val defaultCharColors: TiCharac
          in 152..159 -> 16
          else -> throw IllegalArgumentException("Illegal character code for color set: $charCode")
       }
-   }
-
-   private fun characterColorAt(row: Int, column: Int): TiCharacterColor {
-      val colorSet = colorSet(codes.codeAt(row, column))
-      val origColors = definedColors.getOrElse(colorSet) { defaultCharColors }
-      return origColors.replaceTransparentBy(backgroundColor)
-   }
-
-   fun reset() {
-      definedColors.clear()
-      backgroundColor = defaultBackgroundColor
    }
 
 }

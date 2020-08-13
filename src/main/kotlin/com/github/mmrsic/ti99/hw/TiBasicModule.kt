@@ -65,8 +65,10 @@ class TiBasicModule : TiModule {
 
    private val characterPatterns: MutableMap<Int, CharacterPattern> = sortedMapOf()
 
+   val colors = TiBasicColors()
+
    /** TI Basic screen component as a 32x24 characters grid of 8x8 pixels. */
-   val screen = TiBasicScreen { code -> getCharacterPattern(code) }
+   val screen = TiBasicScreen({ code -> getCharacterPattern(code) }, colors)
 
    init {
       enter()
@@ -99,7 +101,7 @@ class TiBasicModule : TiModule {
 
    /** Reset all color sets to the standard colors. */
    fun resetColors() {
-      screen.colors.reset()
+      colors.reset()
    }
 
    /** Reset [getAllNumericVariableValues] and [getAllStringVariableValues] of this instance to an empty map. */
@@ -501,7 +503,7 @@ class TiBasicModule : TiModule {
       val fCode = foreground.value().toNative().roundToInt()
       val bCode = background.value().toNative().roundToInt()
       val charSetColors = TiCharacterColor(TiColor.fromCode(fCode), TiColor.fromCode(bCode))
-      screen.colors.setCharacterSet(charSetNumber, charSetColors)
+      colors.setCharacterSet(TiColorSet.withNumber(charSetNumber), charSetColors)
    }
 
    /** Read the code of the character currently displayed at the [screen] of this module. */
