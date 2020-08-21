@@ -291,6 +291,7 @@ class ReturnStatement : Statement {
 }
 
 class UnbreakStatement(private val lineNumberList: List<Int>? = null) : LineNumberDependentStatement {
+
    override fun onStore(lineNumber: Int, machine: TiBasicModule) {
       if (lineNumberList != null && lineNumberList.any { !isCorrectLineNumber(it) }) throw BadLineNumber()
    }
@@ -524,17 +525,17 @@ class ReadStatement(val variableList: List<Variable>) : Statement {
  * condition and a "DATA ERROR" message will be displayed. If the line number specified is greater than the highest
  * line number in the program, the program will stop running and the message "DATA ERROR IN xx" will be displayed.
  */
-class RestoreStatement(val lineNumber: Int? = null) : LineNumberDependentStatement {
+class RestoreStatement(val restoreLineNumber: Int? = null) : LineNumberDependentStatement {
 
    override fun onStore(lineNumber: Int, machine: TiBasicModule) {
-      if (lineNumber != null && !isCorrectLineNumber(lineNumber)) throw BadLineNumber()
+      if (restoreLineNumber != null && !isCorrectLineNumber(restoreLineNumber)) throw BadLineNumber()
    }
 
-   override fun listText() = if (lineNumber != null) "RESTORE $lineNumber" else "RESTORE"
+   override fun listText() = if (restoreLineNumber != null) "RESTORE $restoreLineNumber" else "RESTORE"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       val interpreter =
          machine.programInterpreter ?: throw IllegalArgumentException("$this must be called from within a program")
-      interpreter.restore(lineNumber)
+      interpreter.restore(restoreLineNumber)
    }
 
    override fun changeLineNumbers(lineNumbersMapping: Map<Int, Int>) {
