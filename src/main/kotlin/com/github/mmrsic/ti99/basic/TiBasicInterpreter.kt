@@ -86,6 +86,7 @@ class TiBasicCommandLineInterpreter(machine: TiBasicModule) : TiBasicInterpreter
 class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, List<Constant>>) : TiBasicInterpreter(machine) {
 
    companion object {
+
       /** Background color used while interpreting a program. */
       val RUN_BACKGROUND_COLOR = TiColor.LightGreen
    }
@@ -200,7 +201,7 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
             if (inputPart.contains(TiFctnCode.Clear.toChar())) throw Breakpoint()
             for (char in inputPart.takeWhile { it !in inputEndingChars }) append(char)
             if (length > 10000) throw IllegalArgumentException("Endless loop detected")
-            machine.printTokens(listOf(StringConstant(toString()), PrintSeparator.Adjacent))
+            machine.printTokens(listOf(StringConstant(inputPart.joinToString(separator = "")), PrintSeparator.Adjacent))
          } while (inputPart.none { it in inputEndingChars })
       }.toString()
       val inputParts = parseInputParts(input)

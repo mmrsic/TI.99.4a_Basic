@@ -130,7 +130,7 @@ class TiDataFileHandler(val file: TiDataFile, val openOptions: FileOpenOptions) 
          }
          openOptions.fileType == INTERNAL -> {
             var fileOffset = 0
-            separateByInternalFormat(file.toByteArray()).forEachIndexed { recordNumber, bytes ->
+            separateByInternalFormat(file.toByteArray()).forEachIndexed { _, bytes ->
                add(TiDataRecord(file, fileOffset, bytes.size))
                fileOffset += bytes.size
             }
@@ -138,7 +138,7 @@ class TiDataFileHandler(val file: TiDataFile, val openOptions: FileOpenOptions) 
          else -> {
             var overallFileSize = 0
             TiBasicParser(TiBasicModule()).parseConstantsList(file.toByteArray().toString(TiBasicEncoding.CHARSET))
-               .forEachIndexed { recordNumber, constant ->
+               .forEachIndexed { _, constant ->
                   val recordSize = if (constant is StringConstant) constant.constant.length + 1 else 9
                   add(TiDataRecord(file, overallFileSize, recordSize))
                   overallFileSize += recordSize
