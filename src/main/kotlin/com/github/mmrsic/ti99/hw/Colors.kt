@@ -15,7 +15,7 @@ class TiBasicColors {
    fun getColor(charSet: TiColorSet) = colorSets.getOrDefault(charSet, defaultCharColor)
 
    /** [TiColorSet] for a given TI Basic character code. */
-   fun forCharacter(charCode: Int) = TiColorSet.forCharacterCode(charCode)
+   fun getCharacterColor(charCode: Int) = getColor(TiColorSet.forCharacterCode(charCode))
 
    /** Reset the colors of this instance to its default. */
    fun reset() {
