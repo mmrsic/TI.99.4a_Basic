@@ -199,12 +199,10 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
             val inputPart = keyboardInputProvider.provideInput(acceptUserInputCtx)
             if (inputPart.contains(TiFctnCode.Clear.toChar())) throw Breakpoint()
             for (char in inputPart.takeWhile { it !in inputEndingChars }) append(char)
-            if (length > 10000) {
-               throw IllegalArgumentException("Endless loop detected")
-            }
+            if (length > 10000) throw IllegalArgumentException("Endless loop detected")
+            machine.printTokens(listOf(StringConstant(toString()), PrintSeparator.Adjacent))
          } while (inputPart.none { it in inputEndingChars })
       }.toString()
-      machine.printTokens(listOf(StringConstant(input), PrintSeparator.Adjacent))
       val inputParts = parseInputParts(input)
       if (inputParts.size != variableNames.size) {
          println("Input error: Expecting ${variableNames.size} elements but got ${inputParts.size}")
