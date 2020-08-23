@@ -126,16 +126,12 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
    /** Begin a new for-loop. */
    fun beginForLoop(lineNumber: Int, varName: String, limit: NumericConstant, givenIncrement: NumericConstant?) {
       val program = machine.program ?: throw IllegalArgumentException("Can't begin for-loop without program")
-      if (forLoopStack.isNotEmpty() && forLoopStack.peek().forLineNumber == lineNumber) {
-         val removedElem = forLoopStack.pop()
-         println("Removed: $removedElem")
-      }
       val increment = givenIncrement ?: NumericConstant.ONE
       if (increment.isZero()) throw BadValue()
       val jumpLineNumber = program.nextLineNumber(lineNumber)
          ?: throw IllegalArgumentException("Line number has no successor: $lineNumber")
       val loop = ForLoop(lineNumber, jumpLineNumber, varName, limit, increment)
-      forLoopStack.push(loop)
+      activeForLoops.add(loop)
       println("Started: $loop")
       if (!loop.checkCtrlVariableValue(machine.getNumericVariableValue(varName))) {
          jumpTo(program.findLineWithStatement(loop.forLineNumber) { stmt ->
@@ -145,9 +141,12 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
    }
 
    /** Start the next for-loop step, or end the loop. */
-   fun nextForLoopStep(varName: String) {
-      if (forLoopStack.isEmpty()) throw ForNextError()
-      val loop = forLoopStack.peek()
+   fun nextForLoopStep(varName: String, lineNumber: Int) {
+      val loop = try {
+         activeForLoops.getLoop(varName, lineNumber)
+      } catch (e: IllegalArgumentException) {
+         throw ForNextError()
+      }
       val nestedLoopError = forLoopError[loop]
       if (nestedLoopError != null) throw nestedLoopError
       if (loop.varName != varName) throw IllegalArgumentException("Expected loop variable '${loop.varName}', got $varName")
@@ -156,11 +155,9 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
       if (loop.checkCtrlVariableValue(newConst)) {
          jumpTo(loop.jumpLineNumber)
       } else {
-         val oldElem = forLoopStack.pop()
-         forLoopStack.filter { stackElem -> stackElem.varName == oldElem.varName }.forEach {
-            forLoopError[it] = CantDoThat()
-         }
+         activeForLoops.remove(loop)
          println("Ended: $loop")
+         activeForLoops.getLoops(loop.varName).forEach { forLoopError[it] = CantDoThat() }
       }
    }
 
@@ -289,10 +286,42 @@ class TiBasicProgramInterpreter(machine: TiBasicModule, programData: Map<Int, Li
     */
    fun restore(lineNumber: Int? = null) = programData.restore(lineNumber)
 
-   private val forLoopStack: Stack<ForLoop> = Stack()
+   private val activeForLoops = ForLoopCollection()
    private val forLoopError: MutableMap<ForLoop, TiBasicError> = mutableMapOf()
    private val gosubStack: Stack<Gosub> = Stack()
    private var jumpToLineNumber: Int? = null
+
+   /** Collection of [ForLoop]s grouped by [ForLoop.varName]. */
+   private class ForLoopCollection {
+
+      private val loops = mutableMapOf<String, MutableList<ForLoop>>()
+
+      /** The [ForLoop] for a given loop control variable name at a given next-statement line-number. */
+      fun getLoop(ctrlVarName: String, lineNumber: Int): ForLoop {
+         val candidates = loops[ctrlVarName] ?: throw IllegalArgumentException("Invalid control variable name: $ctrlVarName")
+         return candidates
+            .filter { stmt -> stmt.forLineNumber < lineNumber }
+            .maxBy { stmt -> stmt.forLineNumber }
+            ?: throw IllegalArgumentException("There is no loop start for variable '$ctrlVarName' at line $lineNumber")
+      }
+
+      /** All the loops of this collection with [ForLoop.varName] equal to a given control variable name. */
+      fun getLoops(ctrlVarName: String) = loops[ctrlVarName].orEmpty().toList()
+
+      /** Add a given for loop to this collection at its control variable name. */
+      fun add(forLoop: ForLoop) {
+         val targetList: MutableList<ForLoop> = loops.getOrPut(forLoop.varName) { mutableListOf() }
+         targetList.removeIf { it.forLineNumber == forLoop.forLineNumber }
+         targetList.add(forLoop)
+      }
+
+      /** Remove a given ForLoop from this collection. */
+      fun remove(loop: ForLoop) {
+         loops[loop.varName]?.apply {
+            remove(loop)
+         }
+      }
+   }
 
    /** A FOR-LOOP statement. */
    private data class ForLoop(

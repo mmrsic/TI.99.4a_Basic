@@ -353,7 +353,7 @@ class NextStatement(val ctrlVarName: String) : Statement {
    override fun listText() = "NEXT $ctrlVarName"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       val interpreter = machine.programInterpreter ?: throw CantDoThat()
-      interpreter.nextForLoopStep(ctrlVarName)
+      interpreter.nextForLoopStep(ctrlVarName, programLineNumber ?: throw CantDoThat())
    }
 
    override fun requiresEmptyLineAfterExecution() = false
@@ -366,8 +366,7 @@ class NextStatement(val ctrlVarName: String) : Statement {
  * follows the word THEN. If the condition is false, the computer will jump to [line2] following the word ELSE. If ELSE
  * is omitted, the computer continues with the next program line.
  */
-class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line2: Int? = null) :
-   LineNumberDependentStatement {
+class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line2: Int? = null) : LineNumberDependentStatement {
 
    override fun onStore(lineNumber: Int, machine: TiBasicModule) {
       if (listOf(line1, line2).any { it != null && !isCorrectLineNumber(it) }) throw BadLineNumber()
@@ -382,7 +381,8 @@ class IfStatement(private val numericExpr: NumericExpr, val line1: Int, val line
       val interpreter = machine.programInterpreter
       if (programLineNumber == null || interpreter == null) throw CantDoThat()
       val currVal = numericExpr.value()
-      val isTrue = currVal.toNative() != 0.0
+      val isTrue = !currVal.isZero()
+      println("${listText()} yields $currVal")
       if (isTrue) interpreter.jumpTo(line1)
       else if (line2 != null) interpreter.jumpTo(line2)
    }

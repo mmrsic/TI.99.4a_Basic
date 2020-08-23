@@ -36,7 +36,7 @@ abstract class NumericExpr : Expression {
 
    override fun displayValue(): String = value().displayValue()
 
-   abstract override fun value(visit: (value: Constant) -> Any): NumericConstant
+   abstract override fun value(lambda: (value: Constant) -> Any): NumericConstant
 
    /** Check whether this numeric expression equals zero. */
    fun isZero(): Boolean = value().toNative() == 0.0
@@ -47,9 +47,9 @@ abstract class TwoOpNumericExpr(val op1: NumericExpr, val op2: NumericExpr) : Nu
 
    override fun listText(): String = "${op1.listText()}${opSymbol()}${op2.listText().trim()}"
 
-   override fun value(visit: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(executeNatively(op1.value(visit).toNative(), op2.value(visit).toNative()))
-      visit(result)
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(executeNatively(op1.value(lambda).toNative(), op2.value(lambda).toNative()))
+      lambda(result)
       return result
    }
 
@@ -64,26 +64,31 @@ abstract class TwoOpNumericExpr(val op1: NumericExpr, val op2: NumericExpr) : Nu
 }
 
 class Addition(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
+
    override fun opSymbol(): String = "+"
    override fun executeNatively(op1: Number, op2: Number) = op1.toDouble() + op2.toDouble()
 }
 
 class Subtraction(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
+
    override fun opSymbol(): String = "-"
    override fun executeNatively(op1: Number, op2: Number) = op1.toDouble() - op2.toDouble()
 }
 
 class Multiplication(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
+
    override fun opSymbol(): String = "*"
    override fun executeNatively(op1: Number, op2: Number) = op1.toDouble() * op2.toDouble()
 }
 
 class Division(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
+
    override fun opSymbol(): String = "/"
    override fun executeNatively(op1: Number, op2: Number) = op1.toDouble() / op2.toDouble()
 }
 
 class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1, op2) {
+
    override fun opSymbol(): String = "^"
    override fun executeNatively(op1: Number, op2: Number): Double {
       val baseValue = op1.toDouble()
@@ -94,15 +99,17 @@ class Exponentiation(op1: NumericExpr, op2: NumericExpr) : TwoOpNumericExpr(op1,
 }
 
 data class NegatedExpression(val original: NumericExpr) : NumericExpr() {
+
    override fun listText(): String = "-${original.listText()}"
-   override fun value(visit: (value: Constant) -> Any): NumericConstant {
-      val result = NumericConstant(-original.value(visit).toNative())
-      visit(result)
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
+      val result = NumericConstant(-original.value(lambda).toNative())
+      lambda(result)
       return result
    }
 }
 
 data class NumericConstant(override val constant: Number) : NumericExpr(), Constant {
+
    /** Whether this [NumericConstant] represents a numeric overflow and will cause a warning. */
    val isOverflow = NumberRanges.isOverflow(constant)
 
@@ -114,14 +121,18 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
    /** Whether this [NumericConstant] represents an integer. */
    val isInteger = bigDecimal.scale() <= 0
 
-   override fun value(visit: (value: Constant) -> Any): NumericConstant {
-      visit(this)
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
+      lambda(this)
       return this
    }
 
    /** Always the native, that is, the [Double] value of this numeric constant. */
    override fun toNative(): Double =
-      sign(constant.toDouble()) * if (isOverflow) NumberRanges.MAX_VALUE else bigDecimal.toDouble()
+      sign(constant.toDouble()) * if (isOverflow) {
+         NumberRanges.MAX_VALUE
+      } else {
+         bigDecimal.setScale(12, RoundingMode.HALF_UP).toDouble()
+      }
 
    override fun displayValue(): String {
       val doubleValue = constant.toDouble()
@@ -134,6 +145,7 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
    override fun listText(): String = displayValue().trim()
 
    companion object {
+
       /** Numeric constant of value zero. */
       val ZERO = NumericConstant(0)
 
@@ -155,14 +167,15 @@ data class NumericConstant(override val constant: Number) : NumericExpr(), Const
       } else {
          val properScale = if (numDigits > 10 && scale > 0) scale + 10 - numDigits else bigDecimal.scale()
          val scaledDecimal = bigDecimal.setScale(properScale, RoundingMode.HALF_UP).toPlainString()
-         (if (properScale > 0) scaledDecimal.trimEnd('0') else scaledDecimal).replace(Regex("^0."), ".")
+         (if (properScale > 0) scaledDecimal.trimEnd('0').trimEnd('.') else scaledDecimal).replace(Regex("^0."), ".")
       }
    }
 }
 
 data class NumericVariable(override val name: String, val calcValue: (String) -> NumericConstant) : NumericExpr(), Variable {
+
    override fun listText(): String = name
-   override fun value(visit: (value: Constant) -> Any): NumericConstant = calcValue(name)
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant = calcValue(name)
 }
 
 class NumericArrayAccess(val baseName: String, val arrayIndexList: List<NumericExpr>, machine: TiBasicModule) :
@@ -179,7 +192,7 @@ class NumericArrayAccess(val baseName: String, val arrayIndexList: List<NumericE
       }.toString()
    }
 
-   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
       return basicModule.getNumericArrayVariableValue(baseName, arrayIndexList)
    }
 
@@ -201,6 +214,7 @@ object RelationalExpr {
       EQUAL_TO, NOT_EQUAL_TO, LESS_THAN, LESS_THAN_OR_EQUAL_TO, GREATER_THAN, GREATER_THAN_OR_EQUAL_TO;
 
       companion object {
+
          /** Create a [Operator] from a given symbol representing it. */
          fun fromSymbol(symbol: String): Operator {
             return when (symbol) {
@@ -236,9 +250,9 @@ class RelationalNumericExpr(val a: NumericExpr, val op: RelationalExpr.Operator,
 
 class RelationalStringExpr(val a: StringExpr, val op: RelationalExpr.Operator, val b: StringExpr) : NumericExpr() {
 
-   override fun value(visit: (value: Constant) -> Any): NumericConstant {
-      val aNative = a.value(visit).toNative()
-      val bNative = b.value(visit).toNative()
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
+      val aNative = a.value(lambda).toNative()
+      val bNative = b.value(lambda).toNative()
       val isTrue: Boolean = when (op) {
          RelationalExpr.Operator.EQUAL_TO -> aNative == bNative
          RelationalExpr.Operator.NOT_EQUAL_TO -> aNative != bNative
@@ -263,7 +277,7 @@ class RelationalStringExpr(val a: StringExpr, val op: RelationalExpr.Operator, v
  */
 data class TabFunction(private val numericExpr: NumericExpr) : NumericFunction("TAB") {
 
-   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
       val n = max(1, numericExpr.value().toNative().roundToInt())
       val result = (n - 1) % TiBasicScreen.NUM_PRINT_COLUMNS + 1
       return NumericConstant(result)
@@ -287,7 +301,7 @@ data class TabFunction(private val numericExpr: NumericExpr) : NumericFunction("
 class EofFunction(private val fileNumberExpr: NumericExpr,
                   private val isEof: (fileNumber: NumericExpr) -> NumericConstant) : NumericFunction("EOF") {
 
-   override fun value(visit: (value: Constant) -> Any): NumericConstant {
+   override fun value(lambda: (value: Constant) -> Any): NumericConstant {
       return isEof(fileNumberExpr)
    }
 
