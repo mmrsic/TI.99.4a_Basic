@@ -300,6 +300,11 @@ class ApplicationProgramsTest {
       ).toSortedMap(), machine.getAllNumericVariableValues().toSortedMap(), "Numeric variable values")
    }
 
+   /**
+    * On each month all of us have the opportunity to tackle "balancing" our checkbooks against our bank statements. Normally,
+    * the checkbook balance will not agree with the balance shown on the bank statement because there are checks and deposits
+    * that haven't cleared yet. This program will help you balance your checkbook quickly and easily.
+    */
    @Test
    fun testCheckbookBalance() {
       val machine = TiBasicModule()
@@ -390,6 +395,117 @@ class ApplicationProgramsTest {
             18 to "  NEW BALANCE=  204.5",
             19 to "  CHECKBOOK BALANCE? 209.15",
             20 to "  CORRECTION= -4.65",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   /**
+    * Codebreaker is a game in which the computer generates a four-digit code number, and you try to guess it. Zeros are not
+    * allowed, and no two digits may be the same.
+    */
+   @Test
+   fun testCodebreakerGame() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 REM CODEBREAKER GAME
+         110 RANDOMIZE
+         120 CALL CLEAR
+         130 FOR I=1 TO 4
+         140 N(I) = INT(9*RND)+1
+         150 IF I=1 THEN 190
+         160 FOR J=1 TO I-1
+         170 IF N(I)=N(J) THEN 140
+         180 NEXT J
+         190 NEXT I
+         200 TRIES = 0
+         210 INPUT "ENTER GUESS? ":GUESS
+         220 SCORE = 0
+         230 TRIES = TRIES+1
+         240 FOR K=4 TO 1 STEP -1
+         250 DIGIT = (GUESS/10-INT(GUESS/10))*10
+         260 IF DIGIT<>N(K) THEN 290
+         270 SCORE=SCORE+1
+         280 GOTO 340
+         290 FOR L=1 TO 4
+         300 IF N(L)<>DIGIT THEN 330
+         310 SCORE = SCORE+.1
+         320 GOTO 340
+         330 NEXT L
+         340 GUESS = INT(GUESS/10)
+         350 NEXT K
+         360 IF INT(SCORE)<>SCORE THEN 390
+         370 PRINT STR$(SCORE)&".0"
+         380 GOTO 430
+         390 IF SCORE>1 THEN 420
+         400 PRINT "0"&STR$(SCORE)
+         410 GOTO 430
+         420 PRINT STR$(SCORE)
+         430 IF SCORE<>4 THEN 210
+         440 PRINT "YOU TOOK "&STR$(TRIES)&" TRIES TO GUESS"
+         450 PRINT "THE CODE NUMBER."
+         460 DISPLAY "WOULD YOU LIKE TO PLAY AGAIN"
+         470 INPUT "ENTER Y OR N: ":A$
+         480 IF A$="Y" THEN 110
+         490 END
+         """.trimIndent(), machine
+      )
+
+      assertEquals((100..490 step 10).toList(), machine.program!!.listing.map { it.lineNumber }, "Program line numbers")
+      machine.addProgramLineHookAfterLine(200) {
+         val oldCode = with(StringBuilder()) {
+            (1..4).forEach { idx ->
+               append(machine.getNumericArrayVariableValue("N", listOf(NumericConstant(idx))).constant.toInt())
+            }
+            toString()
+         }
+         val newCode = "5718"
+         println("Changing code in order for test case: New code:$newCode, old code: $oldCode ")
+         newCode.withIndex().forEach {
+            machine.setNumericArrayVariable("N", listOf(NumericConstant(it.index + 1)), NumericConstant(it.value.toInt() - 48))
+         }
+      }
+
+      machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+         override fun provideInput(ctx: KeyboardInputProvider.InputContext): Sequence<Char> {
+            return (when (ctx.prompt) {
+               "ENTER GUESS? " -> when (ctx.programLineCalls) {
+                  1 -> "1234"
+                  2 -> "5678"
+                  3 -> "9238"
+                  4 -> "5694"
+                  5 -> "5198"
+                  6 -> "5718"
+                  else -> throw TiBasicProgramException(ctx.programLine, Breakpoint())
+               }
+               "ENTER Y OR N: " -> "N"
+               else -> error("Unable to provide input for prompt '${ctx.prompt}'")
+            } + '\r').asSequence()
+         }
+      })
+      interpreter.interpret("RUN", machine)
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            5 to "  ENTER GUESS? 1234",
+            6 to "  0.1",
+            7 to "  ENTER GUESS? 5678",
+            8 to "  2.1",
+            9 to "  ENTER GUESS? 9238",
+            10 to "  1.0",
+            11 to "  ENTER GUESS? 5694",
+            12 to "  1.0",
+            13 to "  ENTER GUESS? 5198",
+            14 to "  2.1",
+            15 to "  ENTER GUESS? 5718",
+            16 to "  4.0",
+            17 to "  YOU TOOK 6 TRIES TO GUESS",
+            18 to "  THE CODE NUMBER.",
+            19 to "  WOULD YOU LIKE TO PLAY AGAIN",
+            20 to "  ENTER Y OR N: N",
             22 to "  ** DONE **",
             24 to " >"
          ), machine.screen
