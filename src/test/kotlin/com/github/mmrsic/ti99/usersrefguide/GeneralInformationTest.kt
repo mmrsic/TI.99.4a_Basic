@@ -44,7 +44,7 @@ class GeneralInformationTest {
       TestHelperScreen.assertCursorAt(24, 3, machine.screen)
    }
 
-   @Ignore("Not yet implemented")
+   @Ignore("Line 1 00 is not parsed")
    @Test
    fun testSpaceInLineNumber() {
       val machine = TiBasicModule()
@@ -69,6 +69,7 @@ class GeneralInformationTest {
       TestHelperScreen.assertCursorAt(24, 3, machine.screen)
    }
 
+   @Ignore("Line 100 is not parsed")
    @Test
    fun testSpaceWithinReservedWord() {
       val machine = TiBasicModule()

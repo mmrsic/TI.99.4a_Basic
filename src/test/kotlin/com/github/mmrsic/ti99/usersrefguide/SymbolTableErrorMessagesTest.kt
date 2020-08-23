@@ -3,6 +3,7 @@ package com.github.mmrsic.ti99.usersrefguide
 import com.github.mmrsic.ti99.TestHelperScreen
 import com.github.mmrsic.ti99.basic.TiBasicCommandLineInterpreter
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -111,6 +112,41 @@ class SymbolTableErrorMessagesTest {
             19 to " >3 NEXT I",
             20 to " >RUN",
             22 to "  * FOR-NEXT ERROR IN 3",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   @Ignore("Not yet functional")
+   @Test
+   fun testDimStatementNameConflict() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         1 DIM A(9)
+         2 DIM A(7)
+         RUN
+         2 DIM A(7)
+         RUN
+         2 DIM B(7)
+         RUN
+         """.trimIndent(), machine
+      )
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            5 to "  TI BASIC READY",
+            7 to " >1 DIM A(9)",
+            8 to " >2 DIM A(7)",
+            10 to " >RUN",
+            12 to "  * NAME CONFLICT IN 2",
+            14 to " >2 DIM A(9)",
+            15 to " >RUN",
+            17 to "  * NAME CONFLICT IN 2",
+            19 to " >2 DIM B(7)",
+            20 to " >RUN",
+            22 to "  ** DONE **",
             24 to " >"
          ), machine.screen
       )

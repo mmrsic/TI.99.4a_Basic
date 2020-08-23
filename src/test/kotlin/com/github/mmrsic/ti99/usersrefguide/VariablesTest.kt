@@ -172,7 +172,7 @@ class VariablesTest {
       TestHelperScreen.assertCursorAt(24, 3, machine.screen)
    }
 
-   @Ignore("Not yet implemented")
+   @Ignore("Not yet functional: LIST ist not parsed when followed by equals sign")
    @Test
    fun testListIsNotAllowedAsNumericVariable_noProgram() {
       val machine = TiBasicModule()
