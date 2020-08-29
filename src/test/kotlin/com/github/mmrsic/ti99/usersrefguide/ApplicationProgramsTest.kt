@@ -7,7 +7,10 @@ import com.github.mmrsic.ti99.basic.TiBasicProgramException
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.hw.KeyboardInputProvider
 import com.github.mmrsic.ti99.hw.TiBasicModule
+import com.github.mmrsic.ti99.hw.TiCode
 import com.github.mmrsic.ti99.hw.TiColor
+import com.github.mmrsic.ti99.hw.TiPlainCode
+import com.github.mmrsic.ti99.hw.ti994aKeyForCode
 import com.github.mmrsic.ti99.hw.toCode
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -506,6 +509,150 @@ class ApplicationProgramsTest {
             18 to "  THE CODE NUMBER.",
             19 to "  WOULD YOU LIKE TO PLAY AGAIN",
             20 to "  ENTER Y OR N: N",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
+
+   /** Test case for example found on pages III-26 and III-27 of User's Reference Guide. */
+   @Test
+   fun testCharacterDefinition() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 REM CHARACTER DEFINITION
+         110 DIM B(8,8)
+         120 CALL CHAR(100,"")
+         130 CALL CHAR(101,"FFFFFFFFFFFFFFFF")
+         140 CALL COLOR(9,2,16)
+         150 CALL CLEAR
+         160 M$="AUTO CHARACTER DEFINITION"
+         170 Y=3
+         180 X=4
+         190 GOSUB 770
+         200 M$="12345678"
+         210 Y=8
+         220 GOSUB 770
+         230 GOSUB 820
+         240 M$="0=OFF=WHITE"
+         250 Y=22
+         260 X=4
+         270 GOSUB 770
+         280 M$="1=ON=BLACK"
+         290 Y=23
+         300 GOSUB 770
+         310 FOR R=1 TO 8
+         320 CALL HCHAR(8+R,5,100,8)
+         330 NEXT R
+         340 FOR R=1 TO 8
+         350 FOR C=1 TO 8
+         360 CALL HCHAR(8+R,4+C,30)
+         370 CALL KEY(0,KEY,STATUS)
+         380 IF STATUS=0 THEN 370
+         390 IF (KEY<>8)+(KEY<>9)=-2 THEN 420
+         400 GOSUB 870
+         410 GOTO 360
+         420 KEY=KEY-48
+         430 IF (KEY<0)+(KEY>1)<=-1 THEN 370
+         440 B(R,C)=KEY
+         450 CALL HCHAR(8+R,4+C,100+KEY)
+         460 NEXT C
+         470 NEXT R
+         480 HEX$="0123456789ABCDEF"
+         490 M$=""
+         500 FOR R=1 TO 8
+         510 LOW=B(R,5)*8+B(R,6)*4+B(R,7)*2+B(R,8)+1
+         520 HIGH=B(R,1)*8+B(R,2)*4+B(R,3)*2+B(R,4)+1
+         530 M$=M$&SEG$(HEX$,HIGH,1)&SEG$(HEX$,LOW,1)
+         540 NEXT R
+         550 CALL CHAR(102,M$)
+         560 CALL HCHAR(8,20,102)
+         570 FOR R=0 TO 2
+         580 CALL HCHAR(12+R,20,102,3)
+         590 NEXT R
+         600 Y=16
+         610 X=12
+         620 GOSUB 770
+         630 M$="PRESS Q TO QUIT"
+         640 Y=18
+         650 X=12
+         660 GOSUB 770
+         670 M$="PRESS ANY OTHER"
+         680 Y=19
+         690 GOSUB 770
+         700 M$="KEY TO CONTINUE"
+         710 Y=20
+         720 GOSUB 770
+         730 CALL KEY(0,KEY,STATUS)
+         740 IF STATUS=0 THEN 730
+         750 IF KEY<>81 THEN 140
+         760 STOP
+         770 FOR I=1 TO LEN(M$)
+         780 CODE=ASC(SEG$(M$,I,1))
+         790 CALL HCHAR(Y,X+I,CODE)
+         800 NEXT I
+         810 RETURN
+         820 FOR I=1 TO LEN(M$)
+         830 CODE=ASC(SEG$(M$,I,1))
+         840 CALL HCHAR(Y+I,X,CODE)
+         850 NEXT I
+         860 RETURN
+         870 CALL HCHAR(8+R,4+C,100+B(R,C))
+         880 IF KEY=9 THEN 960
+         890 C=C-1
+         900 IF C<>0 THEN 1020
+         910 C=8
+         920 R=R-1
+         930 IF R<>0 THEN 1020
+         940 R=8
+         950 GOTO 1020
+         960 C=C+1
+         970 IF C<>9 THEN 1020
+         980 C=1
+         990 R=R+1
+         1000 IF R<>9 THEN 1020
+         1010 R=1
+         1020 RETURN
+         """.trimIndent(), machine
+      )
+      assertEquals((100..1020 step 10).toList(), machine.program!!.listing.map { it.lineNumber }, "Accepted program lines")
+
+      var numCallsLine370 = 0
+      machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+         override fun currentlyPressedKeyCode(ctx: KeyboardInputProvider.CallKeyContext): TiCode? {
+            val lineNum = ctx.programLineNumber
+            println(lineNum)
+            return when (lineNum) {
+               370 -> {
+                  val result = if (numCallsLine370 % 8 < 4) TiPlainCode.Digit1 else TiPlainCode.Digit0
+                  numCallsLine370++
+                  result
+               }
+               730 -> ti994aKeyForCode(81)
+               else -> error("Cannot provide key input for program line $lineNum")
+            }
+         }
+      })
+      interpreter.interpret("RUN", machine)
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            5 to "    12345678       f",
+            6 to "   1eeeedddd",
+            7 to "   2eeeedddd",
+            8 to "   3eeeedddd",
+            9 to "   4eeeedddd       fff",
+            10 to "   5eeeedddd       fff",
+            11 to "   6eeeedddd       fff",
+            12 to "   7eeeedddd",
+            13 to "   8eeeeddddF0F0F0F0F0F0F0F0",
+            15 to "            PRESS Q TO QUIT",
+            16 to "            PRESS ANY OTHER",
+            17 to "            KEY TO CONTINUE",
+            19 to "    0=OFF=WHITE",
+            20 to "    1=ON=BLACK",
             22 to "  ** DONE **",
             24 to " >"
          ), machine.screen
