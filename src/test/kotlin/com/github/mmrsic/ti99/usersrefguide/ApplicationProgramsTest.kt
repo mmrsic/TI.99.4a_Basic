@@ -659,4 +659,149 @@ class ApplicationProgramsTest {
       )
    }
 
+   @Test
+   fun testGraphicsMatch() {
+      val machine = TiBasicModule()
+      val interpreter = TiBasicCommandLineInterpreter(machine)
+      interpreter.interpretAll(
+         """
+         100 REM GRAPHICS MATCH
+         110 CALL COLOR(9,7,16)
+         120 CALL COLOR(10,13,16)
+         130 CALL COLOR(11,2,16)
+         140 CALL COLOR(12,6,16)
+         150 CALL COLOR(13,11,16)
+         160 CALL COLOR(14,5,16)
+         170 CALL CHAR(96,"00001C3E7F7F7F7F")
+         180 CALL CHAR(97,"0000387CFEFEFEFE")
+         190 CALL CHAR(98,"3F1F0F070301")
+         200 CALL CHAR(99,"FCF8F0E0C080")
+         210 CALL CHAR(100,"00000000001F3F7F")
+         220 CALL CHAR(104,"0000060810204080")
+         230 CALL CHAR(101,"7F7F7F7F3F3F1F")
+         240 CALL CHAR(102,"E0F0F0F0F0E0C0")
+         250 CALL CHAR(112,"0000010101010101")
+         260 CALL CHAR(113,"0000808080808080")
+         270 CALL CHAR(120,"03070707070F0701")
+         280 CALL CHAR(121,"C0E0E0E0E0F0E080")
+         290 CALL CHAR(128,"000000030F1F3FFF")
+         300 CALL CHAR(129,"000000C0D0D8FCFF")
+         310 CALL CHAR(130,"FF3F1F0F03")
+         320 CALL CHAR(131,"FFFCF8F0C0")
+         330 CALL CHAR(105,"000103070F1F3F7F")
+         340 CALL CHAR(106,"0080C0E0F0F8FCFE")
+         350 CALL CHAR(107,"7F3F1F0F070301")
+         360 CALL CHAR(108,"FEFCF8F0E0C080")
+         370 CALL CHAR(136,"00000000003F3F3F")
+         380 CALL CHAR(137,"0000000000FCFCFC")
+         390 CALL CHAR(138,"3F3F3F")
+         400 CALL CHAR(139,"FCFCFC")
+         410 RANDOMIZE
+         420 CALL CLEAR
+         430 C=14
+         440 FOR I=1 TO 3
+         450 PIC(I)=INT(6*RND)+1
+         460 ON PIC(I) GOSUB 840,900,960,1020,1080,1140
+         470 C=C+2
+         480 NEXT I
+         490 REM SCORING
+         500 IF PIC(1)<>PIC(2) THEN 520
+         510 IF PIC(2)=PIC(3) THEN 700 ELSE 540
+         520 IF PIC(1)<>PIC(3) THEN 610
+         530 GOTO 650
+         540 IF PIC(1)/2<>INT(PIC(1)/2) THEN 650
+         550 TOTAL=TOTAL+40
+         560 CALL SOUND(100,440,2)
+         570 CALL SOUND(100,660,2)
+         580 CALL SOUND(100,550,2)
+         590 PRINT "BOUNS--40 POINTS"
+         600 GOTO 770
+         610 TOTAL=TOTAL-10
+         620 CALL SOUND(100,110,1)
+         630 PRINT "LOSE 10 POINTS"
+         640 GOTO 770
+         650 TOTAL=TOTAL+10
+         660 CALL SOUND(100,660,2)
+         670 CALL SOUND(100,770,2)
+         680 PRINT "WIN 10 POINTS"
+         690 GOTO 770
+         700 TOTAL=TOTAL+75
+         710 CALL SOUND(100,440,2)
+         720 CALL SOUND(100,550,2)
+         730 CALL SOUND(100,440,2)
+         740 CALL SOUND(100,660,2)
+         750 CALL SOUND(100,880,2)
+         760 PRINT "JACKPOT!--75 POINTS"
+         770 PRINT "CURRENT TOTAL POINTS: ";TOTAL
+         780 PRINT "WANT TO PLAY AGAIN?"
+         790 PRINT "PRESS Y FOR YES"
+         800 CALL KEY(0,KEY,STATUS)
+         810 IF STATUS=0 THEN 800
+         820 IF KEY=89 THEN 410
+         830 END
+         840 REM PRINT HEART
+         850 CALL HCHAR(12,C,96)
+         860 CALL HCHAR(12,C+1,97)
+         870 CALL HCHAR(13,C,98)
+         880 CALL HCHAR(13,C+1,99)
+         890 RETURN
+         900 REM PRINT CHERRY
+         910 CALL HCHAR(12,C,100)
+         920 CALL HCHAR(12,C+1,104)
+         930 CALL HCHAR(13,C,101)
+         940 CALL HCHAR(13,C+1,102)
+         950 RETURN
+         960 REM PRINT BELL
+         970 CALL HCHAR(12,C,112)
+         980 CALL HCHAR(12,C+1,113)
+         990 CALL HCHAR(13,C,120)
+         1000 CALL HCHAR(13,C+1,121)
+         1010 RETURN
+         1020 REM PRINT LEMON
+         1030 CALL HCHAR(12,C,128)
+         1040 CALL HCHAR(12,C+1,129)
+         1050 CALL HCHAR(13,C,130)
+         1060 CALL HCHAR(13,C+1,131)
+         1070 RETURN
+         1080 REM PRINT DIAMOND
+         1090 CALL HCHAR(12,C,105)
+         1100 CALL HCHAR(12,C+1,106)
+         1110 CALL HCHAR(13,C,107)
+         1120 CALL HCHAR(13,C+1,108)
+         1130 RETURN
+         1140 REM PRINT BAR
+         1150 CALL HCHAR(12,C,136)
+         1160 CALL HCHAR(12,C+1,137)
+         1170 CALL HCHAR(13,C,138)
+         1180 CALL HCHAR(13,C+1,139)
+         1190 RETURN
+         """.trimIndent(), machine
+      )
+      assertEquals((100..1190 step 10).toList(), machine.program!!.listing.map { it.lineNumber }, "Accepted program lines")
+
+      machine.setKeyboardInputProvider(object : KeyboardInputProvider {
+         override fun currentlyPressedKeyCode(ctx: KeyboardInputProvider.CallKeyContext): TiCode? {
+            val lineNum = ctx.programLineNumber
+            println(lineNum)
+            return when (lineNum) {
+               800 -> TiPlainCode.n
+               else -> error("Cannot provide key input for program line $lineNum")
+            }
+         }
+      })
+      interpreter.interpret("RUN", machine)
+
+      TestHelperScreen.assertPrintContents(
+         mapOf(
+            5 to "             " + 128.toChar() + 129.toChar() + 112.toChar() + 113.toChar() + 128.toChar() + 129.toChar(),
+            6 to "             " + 130.toChar() + 131.toChar() + 120.toChar() + 121.toChar() + 130.toChar() + 131.toChar(),
+            17 to "  WIN 10 POINTS",
+            18 to "  CURRENT TOTAL POINTS:  10",
+            19 to "  WANT TO PLAY AGAIN?",
+            20 to "  PRESS Y FOR YES",
+            22 to "  ** DONE **",
+            24 to " >"
+         ), machine.screen
+      )
+   }
 }
