@@ -54,12 +54,16 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val bye by token("\\bBYE\\b")
    private val cos by token("\\bCOS\\b")
    private val char by token("CALL\\s+CHAR")
+   private val clear by token("CALL\\s+CLEAR")
+   private val color by token("CALL\\s+COLOR")
+   private val gchar by token("CALL\\s+GCHAR\\b")
+   private val hchar by token("CALL\\s+HCHAR")
    private val joyst by token("CALL\\s+JOYST\\b")
    private val key by token("CALL\\s+KEY\\b")
-   private val call by token("CALL")
-   private val clear by token("CLEAR")
+   private val screen by token("CALL\\s+SCREEN")
+   private val sound by token("CALL\\s+SOUND")
+   private val vchar by token("CALL\\s+VCHAR")
    private val close by token("CLOSE")
-   private val color by token("COLOR")
    private val continueToken by token("""CON(TINUE)?""")
    private val data by token("DATA")
    private val def by token("\\bDEF\\b")
@@ -73,10 +77,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val exp by token("\\bEXP\\b")
    private val fixed by token("FIXED")
    private val forToken by token("FOR")
-   private val gchar by token("GCHAR\\b")
    private val gosub by token("GOSUB")
    private val goto by token("""GO\s?TO""")
-   private val hchar by token("HCHAR")
    private val ifToken by token("IF")
    private val input by token("INPUT")
    private val internal by token("INTERNAL")
@@ -107,11 +109,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val rnd by token("\\bRND\\b")
    private val run by token("\\bRUN\\b")
    private val save by token("SAVE\\b")
-   private val screen by token("SCREEN")
    private val sequential by token("SEQUENTIAL")
    private val sgn by token("\\bSGN\\b")
    private val sin by token("\\bSIN\\b")
-   private val sound by token("SOUND")
    private val sqr by token("\\bSQR\\b")
    private val step by token("STEP")
    private val stop by token("STOP")
@@ -125,7 +125,6 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val update by token("UPDATE")
    private val valToken by token("\\bVAL\\b")
    private val variable by token("VARIABLE\\b")
-   private val vchar by token("VCHAR")
 
    private val minus by token("-")
    private val plus by token("\\+")
@@ -422,16 +421,16 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       stringExpr and skip(closeParenthesis) use {
       CharSubprogram(t1, t2)
    }
-   private val callClear: Parser<Statement> by skip(call) and clear asJust ClearSubprogram()
-   private val callColor: Parser<Statement> by skip(call) and skip(color) and skip(openParenthesis) and numericExpr and
+   private val callClear: Parser<Statement> by clear asJust ClearSubprogram()
+   private val callColor: Parser<Statement> by skip(color) and skip(openParenthesis) and numericExpr and
       skip(comma) and numericExpr and skip(comma) and numericExpr and skip(closeParenthesis) use {
       ColorSubprogram(t1, t2, t3)
    }
-   private val callGchar: Parser<Statement> by skip(call and gchar and openParenthesis) and
+   private val callGchar: Parser<Statement> by skip(gchar and openParenthesis) and
       numericExpr and skip(comma) and numericExpr and skip(comma) and numericVarRef and skip(closeParenthesis) use {
       GcharSubprogram(t1, t2, t3)
    }
-   private val callHchar: Parser<Statement> by skip(call and hchar and openParenthesis) and numericExpr and
+   private val callHchar: Parser<Statement> by skip(hchar and openParenthesis) and numericExpr and
       skip(comma) and numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr) and
       skip(closeParenthesis) use {
       val repetition = t4
@@ -445,11 +444,11 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       skip(comma) and numericVarRef and skip(closeParenthesis) use {
       KeySubprogram(t1, t2, t3)
    }
-   private val callScreen: Parser<Statement> by skip(call and screen and openParenthesis) and numericExpr and
+   private val callScreen: Parser<Statement> by skip(screen and openParenthesis) and numericExpr and
       skip(closeParenthesis) use {
       ScreenSubprogram(this)
    }
-   private val callSound: Parser<Statement> by skip(call and sound and openParenthesis) and numericExpr and skip(comma) and
+   private val callSound: Parser<Statement> by skip(sound and openParenthesis) and numericExpr and skip(comma) and
       numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr and skip(comma) and numericExpr and
       optional(skip(comma) and numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr and
          skip(comma) and numericExpr))) and skip(closeParenthesis) use {
@@ -460,7 +459,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
          else -> SoundSubprogram(t1, t2, t3, t4?.t1, t4?.t2, t4?.t3?.t1, t4?.t3?.t2, t4?.t3?.t3?.t1, t4?.t3?.t3?.t2)
       }
    }
-   private val callVchar: Parser<Statement> by skip(call and vchar and openParenthesis) and numericExpr and skip(comma) and
+   private val callVchar: Parser<Statement> by skip(vchar and openParenthesis) and numericExpr and skip(comma) and
       numericExpr and skip(comma) and numericExpr and optional(skip(comma) and numericExpr) and skip(closeParenthesis) use {
       val repetition = t4
       if (repetition != null) VcharSubprogram(t1, t2, t3, repetition) else VcharSubprogram(t1, t2, t3)
@@ -500,6 +499,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 }
 
 private class ParsedFileOpenOptions : FileOpenOptions {
+
    override var organization: FileOrganization = FileOrganization(FileOrganization.Type.SEQUENTIAL, 0)
    override var fileType: FileType = FileType.DISPLAY
    override var mode: OpenMode = OpenMode.UPDATE
