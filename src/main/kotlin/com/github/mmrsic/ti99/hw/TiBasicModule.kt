@@ -610,11 +610,16 @@ class TiBasicModule : TiModule {
       })
       if (keyCode == null) {
          setNumericVariable(statusVar.name, NumericConstant.ZERO)
+         setNumericVariable(returnVar.name, NumericConstant(-1))
          return
       }
-      println("Keyboard codes: $keyCode")
+      println("Keyboard code: $keyCode")
+      val returnVariableValue: Int = when (val keyUnitId = keyUnit.constant.toInt()) {
+         0, 1, 2, 3, 4, 5 -> ti994aCodeForKeyUnitKey(keyUnitId, keyCode)
+         else -> error("Illegal key unit $keyUnitId")
+      }
       setNumericVariable(statusVar.name, NumericConstant.ONE) // TODO: May be -1 if same key is pressed again
-      setNumericVariable(returnVar.name, NumericConstant(keyCode.code))
+      setNumericVariable(returnVar.name, NumericConstant(returnVariableValue))
    }
 
    private val joysticks: MutableMap<Int, Joystick> = mutableMapOf()
@@ -838,12 +843,14 @@ interface Variable {
 }
 
 class CharacterPattern(val hex: String) {
+
    val binary = buildString {
       for (c in hex) append(Integer.toBinaryString(Integer.parseInt(c.toString(), 16)).padStart(4, '0'))
    }
 
    class Default {
       companion object {
+
          val EMPTY = CharacterPattern("0".repeat(16))
          fun forAsciiCode(code: Int) = asciiToPattern.getOrDefault(code, EMPTY)
 

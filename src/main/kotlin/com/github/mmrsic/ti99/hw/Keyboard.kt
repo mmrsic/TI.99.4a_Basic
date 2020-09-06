@@ -151,6 +151,60 @@ fun ti994aKeyForCode(wantedCode: Int): TiCode {
    throw IllegalArgumentException("No TI key code found for code=$wantedCode")
 }
 
+/** Get the code of the CALL KEY command for a given key unit >= 0 and a given [TiCode]. */
+fun ti994aCodeForKeyUnitKey(keyUnit: Int, code: TiCode): Int {
+   return when (keyUnit) {
+      0 -> code.code
+      1 -> when (code) {
+         TiPlainCode.x, TiShiftCode.X -> 0
+         TiPlainCode.a, TiShiftCode.A -> 1
+         TiPlainCode.s, TiShiftCode.S -> 2
+         TiPlainCode.d, TiShiftCode.D -> 3
+         TiPlainCode.w, TiShiftCode.W -> 4
+         TiPlainCode.e, TiShiftCode.E -> 5
+         TiPlainCode.r, TiShiftCode.R -> 6
+         TiPlainCode.Digit2, TiShiftCode.AtSign -> 7
+         TiPlainCode.Digit3, TiShiftCode.NumberSign -> 8
+         TiPlainCode.Digit4, TiShiftCode.Dollar -> 9
+         TiPlainCode.Digit5, TiShiftCode.Percent -> 10
+         TiPlainCode.t, TiShiftCode.T -> 11
+         TiPlainCode.f, TiShiftCode.F -> 12
+         TiPlainCode.v, TiShiftCode.V -> 13
+         TiPlainCode.c, TiShiftCode.C -> 14
+         TiPlainCode.z, TiShiftCode.Z -> 15
+         TiPlainCode.b, TiShiftCode.B -> 16
+         TiPlainCode.g, TiShiftCode.G -> 17
+         TiPlainCode.q, TiShiftCode.Q -> 18
+         TiPlainCode.Digit1, TiShiftCode.ExclamationPoint -> 19
+         else -> -1
+      }
+      2 -> when (code) {
+         TiPlainCode.m, TiShiftCode.M -> 0
+         TiPlainCode.h, TiShiftCode.H -> 1
+         TiPlainCode.j, TiShiftCode.J -> 2
+         TiPlainCode.k, TiShiftCode.K -> 3
+         TiPlainCode.u, TiShiftCode.U -> 4
+         TiPlainCode.i, TiShiftCode.I -> 5
+         TiPlainCode.o, TiShiftCode.O -> 6
+         TiPlainCode.Digit7, TiShiftCode.Ampersand -> 7
+         TiPlainCode.Digit8, TiShiftCode.Asterisk -> 8
+         TiPlainCode.Digit9, TiShiftCode.OpenParenthesis -> 9
+         TiPlainCode.Digit0, TiShiftCode.CloseParenthesis -> 10
+         TiPlainCode.p, TiShiftCode.P -> 11
+         TiPlainCode.l, TiShiftCode.L -> 12
+         TiPlainCode.Period, TiShiftCode.GreaterThan -> 13
+         TiPlainCode.Comma, TiShiftCode.LessThan -> 14
+         TiPlainCode.n, TiShiftCode.N -> 15
+         TiPlainCode.Slant, TiShiftCode.Minus -> 16
+         TiPlainCode.Semicolon, TiShiftCode.Colon -> 17
+         TiPlainCode.y, TiShiftCode.Y -> 18
+         TiPlainCode.Digit6, TiShiftCode.Exponentiation -> 19
+         else -> -1
+      }
+      else -> error("Don't know ASCII code for key unit $keyUnit and code $code")
+   }
+}
+
 /**
  * A provider of [Char] sequences which are interpreted as [TiCode]s.
  */
