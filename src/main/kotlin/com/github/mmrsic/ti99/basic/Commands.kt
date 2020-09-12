@@ -10,6 +10,8 @@ interface Command : TiBasicExecutable {
 
    /** Name of this command.*/
    val name: String
+
+   override fun changesScreen() = true
 }
 
 /**

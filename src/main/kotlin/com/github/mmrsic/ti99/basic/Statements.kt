@@ -70,6 +70,8 @@ class PrintStatement(val printList: List<Expression>) : Statement, Command {
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       machine.printTokens(printList, programLineNumber)
    }
+
+   override fun changesScreen() = true
 }
 
 /**
@@ -127,6 +129,8 @@ class EndStatement : Statement {
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       machine.endProgramRun()
    }
+
+   override fun changesScreen() = true
 }
 
 /**
@@ -140,6 +144,8 @@ class StopStatement : Statement {
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       machine.endProgramRun()
    }
+
+   override fun changesScreen() = true
 }
 
 /**
@@ -413,6 +419,8 @@ class InputStatement(val promptExpr: StringExpr?, val varNameList: List<Variable
          machine.acceptUserInput(varNameList, programLineNumber)
       }
    }
+
+   override fun changesScreen() = true
 }
 
 /**

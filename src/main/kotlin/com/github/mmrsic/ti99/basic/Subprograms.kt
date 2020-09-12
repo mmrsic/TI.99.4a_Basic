@@ -33,6 +33,8 @@ class CharSubprogram(private val code: NumericExpr, private val pattern: StringE
       val patternIdentifier = pattern.displayValue()
       machine.defineCharacter(characterCode, patternIdentifier)
    }
+
+   override fun changesScreen() = true
 }
 
 /**
@@ -45,6 +47,7 @@ class ClearSubprogram : Statement, Command {
    override fun listText() = "CALL $name"
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) = machine.screen.clear()
    override fun requiresEmptyLineAfterExecution() = false
+   override fun changesScreen() = true
 }
 
 /**
@@ -117,6 +120,8 @@ class ColorSubprogram(
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       machine.setColor(characterSetNumber.value(), foregrColorCode.value(), backgrColorCode.value())
    }
+
+   override fun changesScreen() = true
 }
 
 /**
@@ -183,6 +188,8 @@ class HcharSubprogram(
       val repetition = repetitions.value().toNative().roundToInt()
       machine.screen.hchar(row, column, characterCode, repetition)
    }
+
+   override fun changesScreen() = true
 }
 
 /**
@@ -321,6 +328,8 @@ class ScreenSubprogram(private val colorCode: NumericExpr) : Statement, Command 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       machine.colors.background = TiColor.fromCode(colorCode.value().toNative().roundToInt())
    }
+
+   override fun changesScreen() = true
 }
 
 /**
@@ -410,4 +419,6 @@ class VcharSubprogram(
       val repetition = repetitions.value().toNative().toInt()
       machine.screen.vchar(row, column, characterCode, repetition)
    }
+
+   override fun changesScreen() = true
 }

@@ -12,4 +12,7 @@ interface TiBasicExecutable {
 
    /** Whether this command requires an empty print line after execution. */
    fun requiresEmptyLineAfterExecution(): Boolean = true
+
+   /** Whether this [TiBasicExecutable] may change the TI Basic screen contents. */
+   fun changesScreen(): Boolean = false
 }
