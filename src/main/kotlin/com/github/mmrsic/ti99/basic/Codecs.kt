@@ -2,7 +2,6 @@ package com.github.mmrsic.ti99.basic
 
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.StringConstant
-import com.github.mmrsic.ti99.basic.expr.quote
 import com.github.mmrsic.ti99.basic.expr.unquote
 import java.lang.Integer.max
 import java.lang.Integer.min
