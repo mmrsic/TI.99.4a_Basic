@@ -1,5 +1,7 @@
 package com.github.mmrsic.ti99.hw
 
+import java.awt.Color
+
 class TiBasicColors {
 
    var background = TiColor.Cyan
@@ -25,9 +27,30 @@ class TiBasicColors {
 
 }
 
-enum class TiColor {
-   Transparent, Black, MediumGreen, LightGreen, DarkBlue, LightBlue, DarkRed, Cyan,
-   MediumRed, LightRed, DarkYellow, LightYellow, DarkGreen, Magenta, Gray, White;
+/**
+ * TI color representation.
+ * @param jvmColor JVM color value of the corresponding TI color.
+ */
+enum class TiColor(val jvmColor: Color) {
+   Transparent(Color(0x00, 0x00, 0x00, 0)),
+   Black(Color(0x00, 0x00, 0x00)),
+   MediumGreen(Color(0x21, 0xc8, 0x42)),
+   LightGreen(Color(0x5e, 0xdc, 0x78)),
+   DarkBlue(Color(0x54, 0x55, 0xed)),
+   LightBlue(Color(0x7d, 0x76, 0xfc)),
+   DarkRed(Color(0xd4, 0x52, 0x4d)),
+   Cyan(Color(0x42, 0xeb, 0xf5)),
+   MediumRed(Color(0xfc, 0x55, 0x54)),
+   LightRed(Color(0xff, 0x79, 0x78)),
+   DarkYellow(Color(0xd4, 0xc1, 0x54)),
+   LightYellow(Color(0xe6, 0xce, 0x80)),
+   DarkGreen(Color(0x21, 0xb0, 0x3b)),
+   Magenta(Color(0xc9, 0x5b, 0xba)),
+   Gray(Color(0xcc, 0xcc, 0xcc)),
+   White(Color(0xff, 0xff, 0xff));
+
+   /** RGB value of the [jvmColor]. */
+   val rgb: Int = jvmColor.rgb
 
    override fun toString(): String {
       return super.toString() + toCode()
@@ -42,6 +65,7 @@ enum class TiColor {
 /** Convert this [TiColor] to its TI Basic code. */
 fun TiColor.toCode(): Int = codeToColor().filterValues { it == this }.keys.first()
 
+/** Replace the transparent value of this [TiColor] with a given replacement color. */
 fun TiColor.replaceTransparentBy(replacementColor: TiColor): TiColor {
    return if (this != TiColor.Transparent) this else replacementColor
 }

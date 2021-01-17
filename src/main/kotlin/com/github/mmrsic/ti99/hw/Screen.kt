@@ -2,6 +2,8 @@ package com.github.mmrsic.ti99.hw
 
 import com.github.mmrsic.ti99.basic.expr.toAsciiCode
 import com.github.mmrsic.ti99.basic.expr.toChar
+import java.awt.Image
+import java.awt.image.BufferedImage
 
 /**
  * Representation of the TI 99/4a's screen (graphics chip) where codes, strings, and patterns may be printed.
@@ -82,6 +84,9 @@ abstract class Screen(getCharPattern: (Int) -> CharacterPattern, colorSets: TiBa
       cursor = Cursor(row, column + prompt.length)
    }
 
+   /** An image representing the current snapshot of the screen. */
+   abstract fun getSnapshot(): Image
+
 }
 
 /**
@@ -103,6 +108,28 @@ class TiBasicScreen(getCharPattern: (Int) -> CharacterPattern, colors: TiBasicCo
       val DEFAULT_BACKGROUND_COLOR = TiColor.Cyan
    }
 
+   /** An image representing the current snapshot of the screen. */
+   override fun getSnapshot(): Image {
+      val result = BufferedImage(PIXEL_WIDTH, PIXEL_HEIGHT, BufferedImage.TYPE_INT_ARGB)
+      patterns.forEachCellDo { row, col, pattern ->
+         val patternY = (row - 1) * CHAR_PIXELS_Y
+         val patternX = (col - 1) * CHAR_PIXELS_X
+         val patternColors = colors.characterColorAt(row, col)
+         val fgColor = patternColors.foreground
+         val bgColor = patternColors.background
+         pattern.binary.withIndex().forEach { indexedBit ->
+            val x = patternX + indexedBit.index % CHAR_PIXELS_X
+            val y = patternY + indexedBit.index / CHAR_PIXELS_X
+            val tiColor = if (indexedBit.value != '0') fgColor else bgColor
+            try {
+               result.setRGB(x, y, tiColor.rgb)
+            } catch (e: Exception) {
+               error("Failed to set pixel @$x/$y to ${tiColor.rgb}")
+            }
+         }
+      }
+      return result
+   }
 }
 
 class Cursor(val row: Int, val column: Int)
@@ -223,7 +250,7 @@ class PatternScreen(private val codes: CodeScreen, private val defaultPatterns: 
 
    private val definedPatterns: Map<Int, CharacterPattern> = mutableMapOf()
 
-   /** Execute a piece of code for all character patterns at each and every cell of this pattern screen. */
+   /** Row-wise execute a piece of code for all character patterns at each and every cell of this pattern screen. */
    fun forEachCellDo(execute: (Int, Int, CharacterPattern) -> Unit) {
       for (row in 1..TiBasicScreen.NUM_ROWS) {
          for (col in 1..TiBasicScreen.NUM_COLUMNS) {
@@ -251,12 +278,17 @@ class ColorScreen(private val codes: CodeScreen, private val colors: TiBasicColo
       }
    }
 
-   // HELPERS //
-
-   private fun characterColorAt(row: Int, column: Int): TiCharacterColor {
+   /**
+    * TI character color currently set at a given row/column combo.
+    * @param row row value on the screen - must be between 1 and 24
+    * @param column column value on the screen - must be between 1 and 32
+    */
+   fun characterColorAt(row: Int, column: Int): TiCharacterColor {
       val colorSet = colorSet(codes.codeAt(row, column))
       return colors.getColor(TiColorSet.withNumber(colorSet)).replaceTransparentBy(colors.background)
    }
+
+   // HELPERS //
 
    private fun colorSet(charCode: Int): Int {
       return when (charCode) {
