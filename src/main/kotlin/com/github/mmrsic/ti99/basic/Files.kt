@@ -1,18 +1,18 @@
 package com.github.mmrsic.ti99.basic
 
+import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.mmrsic.ti99.basic.FileType.DISPLAY
 import com.github.mmrsic.ti99.basic.FileType.INTERNAL
 import com.github.mmrsic.ti99.basic.OpenMode.APPEND
 import com.github.mmrsic.ti99.basic.OpenMode.INPUT
 import com.github.mmrsic.ti99.basic.OpenMode.OUTPUT
 import com.github.mmrsic.ti99.basic.OpenMode.UPDATE
-import com.github.mmrsic.ti99.basic.betterparse.TiBasicParser
+import com.github.mmrsic.ti99.basic.betterparse.DataParser
 import com.github.mmrsic.ti99.basic.expr.Constant
 import com.github.mmrsic.ti99.basic.expr.NumericConstant
 import com.github.mmrsic.ti99.basic.expr.PrintConstant
 import com.github.mmrsic.ti99.basic.expr.PrintSeparator
 import com.github.mmrsic.ti99.basic.expr.StringConstant
-import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.Variable
 import kotlin.math.ceil
 import kotlin.math.min
@@ -137,7 +137,7 @@ class TiDataFileHandler(val file: TiDataFile, val openOptions: FileOpenOptions) 
          }
          else -> {
             var overallFileSize = 0
-            TiBasicParser(TiBasicModule()).parseConstantsList(file.toByteArray().toString(TiBasicEncoding.CHARSET))
+            DataParser().parseToEnd(file.toByteArray().toString(TiBasicEncoding.CHARSET))
                .forEachIndexed { _, constant ->
                   val recordSize = if (constant is StringConstant) constant.constant.length + 1 else 9
                   add(TiDataRecord(file, overallFileSize, recordSize))
@@ -176,9 +176,7 @@ class TiDataFileHandler(val file: TiDataFile, val openOptions: FileOpenOptions) 
       if (!currRec.hasNext()) throw InputError()
       val recordByteList = when (openOptions.fileType) {
          INTERNAL -> reader.read(currRec.next())
-         DISPLAY -> encoder.encodeAll(
-            TiBasicParser(TiBasicModule()).parseConstantsList(
-               currRec.next().bytes.toString(TiBasicEncoding.CHARSET).trim(0.toChar())))
+         DISPLAY -> encoder.encodeAll(DataParser().parseToEnd(currRec.next().bytes.toString(TiBasicEncoding.CHARSET).trim(0.toChar())))
       }
       return variables.withIndex().map { indexedVariable ->
          when {

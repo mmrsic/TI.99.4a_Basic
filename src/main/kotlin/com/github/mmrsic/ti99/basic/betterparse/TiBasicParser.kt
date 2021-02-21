@@ -13,10 +13,10 @@ import com.github.h0tk3y.betterParse.combinators.skip
 import com.github.h0tk3y.betterParse.combinators.use
 import com.github.h0tk3y.betterParse.combinators.zeroOrMore
 import com.github.h0tk3y.betterParse.grammar.Grammar
+import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.lexer.TokenMatch
 import com.github.h0tk3y.betterParse.parser.Parser
-import com.github.h0tk3y.betterParse.parser.parseToEnd
 import com.github.h0tk3y.betterParse.utils.Tuple2
 import com.github.mmrsic.ti99.basic.*
 import com.github.mmrsic.ti99.basic.expr.*
@@ -65,7 +65,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val vchar by token("CALL\\s+VCHAR")
    private val close by token("CLOSE")
    private val continueToken by token("""CON(TINUE)?""")
-   private val data by token("DATA")
+   private val data by token("DATA\\s+.*")
    private val def by token("\\bDEF\\b")
    private val delete by token("DELETE\\b")
    private val dim by token("DIM")
@@ -131,7 +131,6 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val asterisk by token("\\*")
    private val slash by token("/")
    private val exponentiation by token("\\^")
-   private val arithmeticOperator by minus or plus or asterisk or slash or exponentiation
    private val ampersand by token("&")
    private val stringOperator by ampersand
    private val lessThanOrEqualTo by token("<=")
@@ -143,7 +142,6 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val openParenthesis by token("\\(")
    private val closeParenthesis by token("\\)")
    private val assign by equals
-   private val doubleComma by token(",,", ignore = true)
    private val comma by token(",")
    private val semicolon by token(";")
    private val colon by token(":")
@@ -154,8 +152,9 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
 
    private val positiveDecimal by token("[0-9]*\\.[0-9]+")
    private val positiveInt by token("[0-9]+")
-   private val numericConst: Parser<NumericConstant> by optional(minus or plus) and (positiveDecimal or positiveInt) and
-      optional(e and optional(minus or plus) and positiveInt) use {
+   private val numericDesc by optional(minus or plus) and (positiveDecimal or positiveInt) and
+           optional(e and optional(minus or plus) and positiveInt)
+   private val numericConst: Parser<NumericConstant> by numericDesc use {
       val factor = if (t1?.text == minus.pattern) -1 else 1
       val mantissa = t2.text
       val exponent = if (t3 != null) {
@@ -373,18 +372,7 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       }
       DimStatement(declarations)
    }
-   private val emptyDataString: Parser<Constant> by doubleComma asJust StringConstant.EMPTY
-   private val dataString: Parser<Constant> = name use { StringConstant(this.text) }
-   private val dataContent = (numericConst as Parser<Constant> or stringConst or emptyDataString or dataString)
-   private val dataStmt by skip(data) and separated(dataContent, doubleComma or comma, true) use {
-      val data = mutableListOf<Constant>()
-      for ((index, term) in terms.withIndex()) {
-         data.add(term)
-         val nextIndex = index + 1
-         if (nextIndex < terms.size && separators[index].text == ",,") data.add(StringConstant.EMPTY)
-      }
-      DataStatement(data)
-   }
+   private val dataStmt by data use { DataStatement(DataParser().parseToEnd(text.drop(data.name!!.length))) }
    private val readStmt by skip(read) and separatedTerms(varRef, comma, false) use {
       ReadStatement(this.map { it as Variable })
    }
@@ -485,17 +473,6 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val cantDoThatProgramLineParser by positiveInt and forbiddenAsStatementParser asJust CantDoThatProgramLineCommand()
 
    override val rootParser by cmdParser or stmtParser or cantDoThatProgramLineParser or programLineParser or removeProgramLineParser
-
-   // SPECIAL PARSERS
-
-   /** [Parser] for a comma-separated list of [Constant]s. */
-   private val unquoted: Parser<StringConstant> by separated(name, ws) use {
-      StringConstant(terms.joinToString(" ") { it.text })
-   }
-   private val constListParser: Parser<List<Constant>> by separatedTerms(numericConst or stringConst or unquoted, comma, true)
-
-   /** Parse a given String as a list of comma-separated [Constant]s. */
-   fun parseConstantsList(input: String): List<Constant> = constListParser.parseToEnd(tokenizer.tokenize(input))
 }
 
 private class ParsedFileOpenOptions : FileOpenOptions {

@@ -11,6 +11,8 @@ import com.github.mmrsic.ti99.basic.expr.StringConstant
 import com.github.mmrsic.ti99.basic.expr.StringExpr
 import com.github.mmrsic.ti99.basic.expr.TabFunction
 import com.github.mmrsic.ti99.basic.expr.toAsciiCode
+import java.awt.Image
+import java.awt.image.BufferedImage
 import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
@@ -673,8 +675,9 @@ class TiBasicModule : TiModule {
    }
 
    /** Read data from a file associated to a [fileNumber] into variables given by their [variables]. */
-   fun readFromFile(fileNumber: NumericExpr, recordNum: NumericExpr?, variables: List<Variable>, pendingMode: Boolean = false,
-                    programLineNumber: Int) {
+   fun readFromFile(
+      fileNumber: NumericExpr, recordNum: NumericExpr?, variables: List<Variable>, pendingMode: Boolean = false, programLineNumber: Int
+   ) {
       val fileNumberNative = fileNumber.value().toNative().roundToInt()
       if (fileNumberNative == 0) {
          setKeyboardInputProvider(object : KeyboardInputProvider {
@@ -846,6 +849,22 @@ class CharacterPattern(val hex: String) {
 
    val binary = buildString {
       for (c in hex) append(Integer.toBinaryString(Integer.parseInt(c.toString(), 16)).padStart(4, '0'))
+   }
+
+   /** The [Image] representing this character pattern for a given [TiCharacterColor]. */
+   fun getImage(colors: TiCharacterColor): Image {
+      val result = BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB)
+      binary.withIndex().forEach { indexedBit ->
+         val pixelX = indexedBit.index % TiBasicScreen.CHAR_PIXELS_X
+         val pixelY = indexedBit.index / TiBasicScreen.CHAR_PIXELS_X
+         val pixelColor = if (indexedBit.value != '0') colors.foreground else colors.background
+         try {
+            result.setRGB(pixelX, pixelY, pixelColor.rgb)
+         } catch (e: Exception) {
+            error("Failed to set pixel @$pixelX/$pixelY to ${pixelColor.rgb}")
+         }
+      }
+      return result
    }
 
    class Default {
