@@ -19,6 +19,12 @@ class TestHelperScreen {
          assertEquals(expText, actualText, "Print contents")
       }
 
+      fun assertPrintContents(expectedScreenContents: String, screen: Screen) {
+         val expText = toWrappedText(expectedScreenContents)
+         val actualText = toWrappedText(screen.strings.nonEmptyRightTrimmed())
+         assertEquals(expText, actualText, "Print contents")
+      }
+
       fun assertAllPatternsEqual(expectedPattern: String, screen: Screen) {
          screen.patterns.forEachCellDo { row, col, actualPattern ->
             assertEquals(expectedPattern, actualPattern.hex, "Pattern at row $row, column $col")
@@ -45,6 +51,18 @@ class TestHelperScreen {
 
       private fun toWrappedText(lines: Map<Int, String>) = buildString {
          for (line in lines) append(line).append("\n")
+      }
+
+      private fun toWrappedText(lines: String): String {
+         val lineStrings = lines.split('\n')
+         if (lineStrings.size > 24) throw IllegalArgumentException("Too many lines (${lineStrings.size}: $lines")
+         var lineIdx = 25 - lineStrings.size
+         val result = mutableMapOf<Int, String>()
+         lineStrings.forEach {
+            if (it.isNotBlank()) result[lineIdx] = it
+            lineIdx++
+         }
+         return toWrappedText(result)
       }
 
    }

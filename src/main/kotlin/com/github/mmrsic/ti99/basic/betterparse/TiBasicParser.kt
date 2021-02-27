@@ -1,17 +1,6 @@
 package com.github.mmrsic.ti99.basic.betterparse
 
-import com.github.h0tk3y.betterParse.combinators.and
-import com.github.h0tk3y.betterParse.combinators.asJust
-import com.github.h0tk3y.betterParse.combinators.leftAssociative
-import com.github.h0tk3y.betterParse.combinators.map
-import com.github.h0tk3y.betterParse.combinators.oneOrMore
-import com.github.h0tk3y.betterParse.combinators.optional
-import com.github.h0tk3y.betterParse.combinators.or
-import com.github.h0tk3y.betterParse.combinators.separated
-import com.github.h0tk3y.betterParse.combinators.separatedTerms
-import com.github.h0tk3y.betterParse.combinators.skip
-import com.github.h0tk3y.betterParse.combinators.use
-import com.github.h0tk3y.betterParse.combinators.zeroOrMore
+import com.github.h0tk3y.betterParse.combinators.*
 import com.github.h0tk3y.betterParse.grammar.Grammar
 import com.github.h0tk3y.betterParse.grammar.parseToEnd
 import com.github.h0tk3y.betterParse.grammar.parser
@@ -177,8 +166,17 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
       parser(::numericExpr) and skip(comma) and parser(::numericExpr) and skip(closeParenthesis) use { SegFunction(t1, t2, t3) }
    private val strFun by skip(str) and singleNumericArg use { StrFunction(this) }
    private val stringFun by chrFun or segFun or strFun
-   private val stringArrVarRef by stringVarName and (singleNumericArg or singleStringArg) use {
-      StringArrayAccess(t1.text, t2, machine)
+   private val stringArrVarRef by stringVarName and skip(openParenthesis) and parser(::numericExpr) and
+      optional(skip(comma) and parser(::numericExpr) and optional(skip(comma) and parser(::numericExpr))) and
+      skip(closeParenthesis) use {
+      val baseName = t1.text
+      val indexList = mutableListOf(t2)
+      if (t3 != null) {
+         val additionalIndexToken = t3!!
+         indexList.add(additionalIndexToken.t1)
+         if (additionalIndexToken.t2 != null) indexList.add(additionalIndexToken.t2!!)
+      }
+      StringArrayAccess(baseName, indexList, machine)
    }
    private val stringVarRef by stringVarName use { StringVariable(text) { varName -> machine.getStringVariableValue(varName) } }
    private val stringTerm: Parser<StringExpr> by stringConst or stringArrVarRef or stringVarRef or stringFun or
@@ -321,6 +319,16 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val assignNumberStmt by skip(optional(let)) and numericVarRef and skip(assign) and numericExpr use {
       LetNumberStatement(t1.name, t2)
    }
+   private val assignStringArrayElementStmt by skip(optional(let)) and stringVarRef and skip(openParenthesis) and numericExpr and
+      optional(skip(comma) and numericExpr and optional(skip(comma) and numericExpr)) and skip(closeParenthesis) and
+      skip(assign) and stringExpr use {
+      val subscripts = mutableListOf(t2)
+      t3?.let { additionalSubscripts ->
+         subscripts.add(additionalSubscripts.t1)
+         additionalSubscripts.t2?.let { thirdSubscript -> subscripts.add(thirdSubscript) }
+      }
+      LetStringArrayElementStatement(t1.name, subscripts.toList(), t4)
+   }
    private val assignStringStmt by skip(optional(let)) and stringVarRef and skip(assign) and stringExpr use {
       LetStringStatement(t1.name, t2)
    }
@@ -460,8 +468,8 @@ class TiBasicParser(private val machine: TiBasicModule) : Grammar<TiBasicExecuta
    private val cmdParser by newCmd or runCmd or byeCmd or numberCmd or resequenceCmd or breakCmd or continueCmd or unbreakCmd or
       traceCmd or untraceCmd or listDevice or listRangeCmd or listToCmd or listFromCmd or listLineCmd or listCmd or editCmd or
       saveCmd or oldCmd or deleteCmd
-   private val stmtParser by assignNumberArrayElementStmt or assignNumberStmt or assignStringStmt or endStmt or remarkStmt or
-      callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or inputStmt or
+   private val stmtParser by assignNumberArrayElementStmt or assignNumberStmt or assignStringArrayElementStmt or assignStringStmt or endStmt or
+      remarkStmt or callParser or breakStmt or unbreakStmt or traceCmd or forToStepStmt or nextStmt or stopStmt or ifStmt or inputStmt or
       gotoStmt or onGotoStmt or gosubStmt or onGosubStmt or returnStmt or dataStmt or readStmt or restoreFileStmt or
       restoreStmt or randomizeStmt or defNumericFunStmt or defStringFunStmt or dimStmt or optionBaseStmt or openStmt or
       closeStmt or inputFileStmt or printFileStmt or printStmt or untraceCmd or deleteCmd

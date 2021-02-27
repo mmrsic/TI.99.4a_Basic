@@ -3,6 +3,9 @@ package com.github.mmrsic.ti99.basic.expr
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.Variable
 
+/**
+ * An [Expression] with a [StringConstant] as a result when evaluated.
+ */
 abstract class StringExpr : Expression {
    val maxStringSize = 255
 
@@ -31,17 +34,22 @@ data class StringVariable(override val name: String, val calcValue: (String) -> 
    override fun listText(): String = name
 }
 
-data class StringArrayAccess(
-   override val name: String, val arrayIndex: Expression, override val basicModule: TiBasicModule
-) : StringExpr(), Variable, TiBasicModule.Dependent {
+data class StringArrayAccess(override val name: String, val arrayIndexList: List<NumericExpr>, override val basicModule: TiBasicModule)
+   : StringExpr(), Variable, TiBasicModule.Dependent {
 
    override fun value(lambda: (value: Constant) -> Any): StringConstant {
-      val result = basicModule.evaluateUserFunction(name, listOf(arrayIndex), null)
-      if (result !is StringConstant) throw IllegalArgumentException("Non-string user-function: $name")
-      return result
+      return basicModule.getStringArrayVariableValue(name, arrayIndexList)
    }
 
-   override fun listText() = "$name(${arrayIndex.listText()})"
+   override fun listText(): String {
+      return StringBuilder().apply {
+         append(name).append('(')
+         for (arrayIndex in arrayIndexList) {
+            append(arrayIndex.listText())
+         }
+         append(')')
+      }.toString()
+   }
 }
 
 data class StringConcatenation(val expressions: List<StringExpr>) : StringExpr() {

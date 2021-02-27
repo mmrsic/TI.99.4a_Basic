@@ -1,11 +1,6 @@
 package com.github.mmrsic.ti99.basic
 
-import com.github.mmrsic.ti99.basic.expr.Constant
-import com.github.mmrsic.ti99.basic.expr.Expression
-import com.github.mmrsic.ti99.basic.expr.NumericConstant
-import com.github.mmrsic.ti99.basic.expr.NumericExpr
-import com.github.mmrsic.ti99.basic.expr.StringConstant
-import com.github.mmrsic.ti99.basic.expr.StringExpr
+import com.github.mmrsic.ti99.basic.expr.*
 import com.github.mmrsic.ti99.hw.TiBasicModule
 import com.github.mmrsic.ti99.hw.Variable
 import com.github.mmrsic.ti99.hw.isCorrectLineNumber
@@ -110,10 +105,19 @@ class LetNumberArrayElementStatement(baseVarName: String, val subscripts: List<N
  * If the length of a evaluated string expression exceeds 255 characters, the string is truncated on the right and the
  * program continues. No warning is given.
  */
-class LetStringStatement(varName: String, override val expr: StringExpr) : LetStatement(varName) {
+open class LetStringStatement(varName: String, override val expr: StringExpr) : LetStatement(varName) {
 
    override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
       machine.setStringVariable(varName, expr)
+   }
+}
+
+/** A [LetStringStatement] for string arrays. */
+class LetStringArrayElementStatement(baseVarName: String, val subscripts: List<NumericExpr>, expr: StringExpr) :
+   LetStringStatement(baseVarName, expr) {
+
+   override fun execute(machine: TiBasicModule, programLineNumber: Int?) {
+      machine.setStringArrayVariable(varName, subscripts, expr.value())
    }
 }
 

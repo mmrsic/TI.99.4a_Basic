@@ -1,16 +1,7 @@
 package com.github.mmrsic.ti99.hw
 
 import com.github.mmrsic.ti99.basic.*
-import com.github.mmrsic.ti99.basic.expr.Constant
-import com.github.mmrsic.ti99.basic.expr.Expression
-import com.github.mmrsic.ti99.basic.expr.NumericConstant
-import com.github.mmrsic.ti99.basic.expr.NumericExpr
-import com.github.mmrsic.ti99.basic.expr.NumericVariable
-import com.github.mmrsic.ti99.basic.expr.PrintSeparator
-import com.github.mmrsic.ti99.basic.expr.StringConstant
-import com.github.mmrsic.ti99.basic.expr.StringExpr
-import com.github.mmrsic.ti99.basic.expr.TabFunction
-import com.github.mmrsic.ti99.basic.expr.toAsciiCode
+import com.github.mmrsic.ti99.basic.expr.*
 import java.awt.Image
 import java.awt.image.BufferedImage
 import kotlin.collections.set
@@ -139,12 +130,8 @@ class TiBasicModule : TiModule {
       setVariable(memoryVarName, stringValue.replace("\"\"", "\""))
    }
 
-   /**
-    * The current value of a string value given by its name.
-    * @param name a valid string variable name with a trailing $ sign
-    */
+   /** The current value of a string value given by its name. */
    fun getStringVariableValue(name: String): StringConstant {
-      if (name.last() != '$') throw IllegalArgumentException("Illegal string variable name: $name")
       if (name.length > 15) throw BadName()
       if (!stringVariables.containsKey(name)) stringVariables[name] = StringConstant((""))
       return stringVariables[name]!!
@@ -160,9 +147,20 @@ class TiBasicModule : TiModule {
    }
 
    /** Change the value of a string array variable of this module. */
-   fun setStringArrayVariable(name: String, indices: List<NumericConstant>, newValue: StringExpr) {
+   fun setStringArrayVariable(name: String, indices: List<NumericExpr>, newValue: StringExpr) {
       val nn = getArrayVariableName(name, indices)
       setStringVariable(nn, newValue)
+   }
+
+   /** The array variable value for a given variable name and index expression. */
+   fun getStringArrayVariableValue(name: String, indexList: List<NumericExpr>): StringConstant {
+      if (name.isEmpty() || name.last() != '$') throw IllegalArgumentException("Illegal name: '$name'")
+      if (userFunctions.containsKey(name)) {
+         val result = evaluateUserFunction(name, indexList, null)
+         if (result !is StringConstant) throw IllegalArgumentException("Not a string user defined function: $name = $result")
+         return result
+      }
+      return getStringVariableValue(getArrayVariableName(name, indexList))
    }
 
    /** All the string variable names and their string constant values currently known by this instance. */
